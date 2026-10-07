@@ -5,8 +5,6 @@ export const searchLimits = {
   /** Bir aramada getirilebilecek en çok firma ("Tümü" ve özel sayının üst sınırı). */
   maxResults: 100,
   defaultResults: 25,
-  /** Kullanıcı başına son 24 saatte açılabilecek arama sayısı. */
-  perDay: 5,
   /** Aynı anda devam eden arama bulunan kullanıcıya yeni arama açılmaz (dakika). */
   activeWindowMinutes: 15,
   /** Bir koşunun harcayabileceği en yüksek tutar (USD). 100 firma ≈ 0,40–0,50 $. */

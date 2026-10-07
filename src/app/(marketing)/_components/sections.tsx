@@ -61,7 +61,7 @@ const steps = [
   },
   {
     title: "Firmalar toplanır",
-    text: "Google Haritalar'daki işletmeler adres, telefon, web sitesi, puan ve yorum sayısıyla listelenir.",
+    text: "Bölgenizdeki işletmeler adres, telefon, web sitesi, puan ve yorum sayısıyla listelenir.",
   },
   {
     title: "Her firma puanlanır",
@@ -185,7 +185,7 @@ export function Modules() {
 export const faqs = [
   {
     q: "Firma verileri nereden geliyor?",
-    a: "Google Haritalar'daki herkese açık işletme bilgilerinden: ad, kategori, adres, telefon, web sitesi, puan ve yorum sayısı.",
+    a: "Herkese açık işletme bilgilerinden: ad, kategori, adres, telefon, web sitesi, puan ve yorum sayısı.",
   },
   {
     q: "Puanlar nasıl hesaplanıyor?",

@@ -121,7 +121,7 @@ export function ResultsArea({
     const text = opening
       ? "Kayıtlı sonuçlar getiriliyor."
       : collecting
-        ? "Google Haritalar taranıyor. İlk firmalar birkaç saniye içinde listelenecek."
+        ? "Bölgenizdeki firmalar taranıyor. İlk firmalar birkaç saniye içinde listelenecek."
         : `${view!.found} firma bulundu, hedef profilinize göre puanlanıyor.`;
     return (
       <div ref={bodyRef} role="status" className={`${bodyPlace} grid min-h-[28rem] scroll-mt-6 place-items-center rounded-panel bg-surface px-6 py-16 ring-1 ring-line`}>

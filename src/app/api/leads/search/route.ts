@@ -8,7 +8,7 @@ import { startPlacesRun } from "@/modules/leads/apify";
 import { searchLimits } from "@/modules/leads/config";
 import { isLikelyBusinessType } from "@/modules/leads/jev";
 import { canonicalDistrict, canonicalProvince, composeLocation } from "@/modules/leads/location";
-import { countSearchesSince, createSearch, hasActiveSearch, updateSearch } from "@/modules/leads/repository";
+import { createSearch, hasActiveSearch, updateSearch } from "@/modules/leads/repository";
 
 const bodySchema = z.object({
   query: z.string().trim().min(2, "Lütfen geçerli bir firma türü girin.").max(60, "Firma türü en fazla 60 karakter olabilir."),
@@ -50,19 +50,15 @@ export async function POST(req: NextRequest) {
 
   // Birbirinden bağımsız kontroller aynı anda yapılır (yanıt süresini kısaltır).
   const now = Date.now();
-  const [profile, active, today, validType] = await Promise.all([
+  const [profile, active, validType] = await Promise.all([
     getProfile(user.uid),
     hasActiveSearch(user.uid, new Date(now - searchLimits.activeWindowMinutes * 60_000)),
-    countSearchesSince(user.uid, new Date(now - 24 * 3_600_000)),
     isLikelyBusinessType(query),
   ]);
 
   if (!profile) return error("Önce hesap kurulumunu tamamlayın.", 409);
-  // Harcamayı sınırlayan korumalar: eşzamanlı tek arama ve günlük üst sınır.
+  // Harcamayı sınırlayan koruma: aynı anda yalnızca tek arama. (Günlük sınır şimdilik kapalı.)
   if (active) return error("Devam eden bir aramanız var. Bitmesini bekleyin.", 409);
-  if (today >= searchLimits.perDay) {
-    return error(`Günlük arama sınırına ulaştınız (${searchLimits.perDay}). Yarın tekrar deneyin.`, 429);
-  }
   // Saçma bir ifade Apify'a (ve bütçeye) gitmeden elenir.
   if (!validType) return error("Lütfen geçerli bir firma türü girin.", 422, "query");
 
