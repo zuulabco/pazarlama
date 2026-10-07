@@ -286,11 +286,12 @@ export function WorkWorkspace({
             label="Araç"
             items={[
               { key: "message", label: "Mesaj", pressed: tool === "message", onClick: () => go(firm.id, "message") },
-              { key: "email", label: "E-posta", pressed: tool === "email", onClick: () => go(firm.id, "email") },
+              { key: "email", label: "E-posta", pressed: tool === "email", onClick: () => go(firm.id, "email"), disabled: !firm.email },
             ]}
           />
         )}
       </div>
+      {firm && !firm.email && <p className="-mt-2 text-sm text-muted">Bu firmanın kayıtlı bir e-posta adresi yok; yalnızca mesaj taslağı hazırlanabilir.</p>}
 
       {!firm ? (
         <div className="rounded-panel bg-surface p-6 ring-1 ring-line">

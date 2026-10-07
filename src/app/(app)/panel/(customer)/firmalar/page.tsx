@@ -1,11 +1,10 @@
-import { BoardSkeleton } from "../../_components/skeletons";
+import { BoardSkeleton } from "../../../_components/skeletons";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
 import { FavoritesUnavailableError, listFavorites, type FavoriteWithNotes } from "@/modules/favorites/repository";
 import { getProfile } from "@/modules/profile/repository";
-import { customerTabs, SectionTabs } from "../../_components/section-tabs";
 import { FavoritesBoard } from "./_components/favorites-board";
 
 export const metadata: Metadata = { title: "Takip et" };
@@ -31,7 +30,6 @@ async function Content() {
 export default function FavoritesPage() {
   return (
     <>
-      <SectionTabs title="Müşteri" tabs={customerTabs} />
       <Suspense fallback={<BoardSkeleton />}>
         <Content />
       </Suspense>

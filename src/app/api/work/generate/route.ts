@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { chatJson, LlmUnavailableError } from "@/lib/llm/nvidia";
 import { buildMessages, goalValues, parseDraft, toneValues } from "@/modules/work/context";
 import { loadSender, loadWorkFirm } from "@/modules/work/load";
+import { proofread } from "@/modules/work/proofread";
 
 export const maxDuration = 60;
 
@@ -45,8 +46,8 @@ export async function POST(req: NextRequest) {
   if (!sender) return error("Önce hesap kurulumunu tamamlayın.", 409);
 
   try {
-    const raw = await chatJson(buildMessages({ kind, goal, tone, service: service || null, firm, sender }), { maxTokens: 1500, timeoutMs: 40_000, thinking: false });
-    return NextResponse.json(parseDraft(kind, raw));
+    const raw = await chatJson(buildMessages({ kind, goal, tone, service: service || null, firm, sender }), { maxTokens: 1500, timeoutMs: 40_000, thinking: false, temperature: 0.1 });
+    return NextResponse.json(await proofread(kind, parseDraft(kind, raw)));
   } catch (e) {
     if (e instanceof LlmUnavailableError || e instanceof z.ZodError || e instanceof SyntaxError) {
       console.error("Taslak üretilemedi:", e instanceof Error ? e.message : e);

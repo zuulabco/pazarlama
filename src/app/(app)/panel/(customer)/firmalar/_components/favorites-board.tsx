@@ -6,7 +6,7 @@ import { useState } from "react";
 import { ActionLink } from "@/components/ui/action-link";
 import { Collapse } from "@/components/ui/collapse";
 import { Disclosure } from "@/components/ui/disclosure";
-import { ArrowLeftIcon, ArrowRightIcon, BookmarkIcon, GlobeIcon, MailIcon, MapPinIcon, NoteIcon, PenIcon, PhoneIcon, SearchIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, GlobeIcon, MailIcon, MapPinIcon, NoteIcon, PenIcon, PhoneIcon, SearchIcon } from "@/components/ui/icons";
 import { toast, Toaster } from "@/components/ui/toast";
 import { fold } from "@/lib/text";
 import { safeUrl, telHref } from "@/lib/url";
@@ -114,7 +114,7 @@ function FavoriteCard({
   }
 
   return (
-    <li>
+    <li className="min-w-0">
       <Collapse open={!removed}>
         <article
           aria-label={fav.name}
@@ -152,33 +152,42 @@ function FavoriteCard({
               </span>
             }
           >
-          {(tel || savedEmail || website || maps) && (
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/panel/calis?firma=${fav.id}`}
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-forest px-4 text-sm font-medium text-white transition-colors hover:bg-forest-hover"
+            >
+              <PenIcon size={16} />
+              İletişim kur
+            </Link>
+            <div className="ml-auto flex items-center gap-2">
               {tel && <ActionLink iconOnly href={tel} icon={<PhoneIcon />} label={`Ara: ${fav.phone}`} />}
               {savedEmail && <ActionLink iconOnly href={`mailto:${savedEmail}`} icon={<MailIcon />} label={`E-posta: ${savedEmail}`} />}
               {website && <ActionLink iconOnly external href={website} icon={<GlobeIcon />} label="Web sitesi" />}
               {maps && <ActionLink iconOnly external href={maps} icon={<MapPinIcon />} label="Haritada aç" />}
             </div>
-          )}
-
-          <Link
-            href={`/panel/calis?firma=${fav.id}`}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-forest text-sm font-medium text-white transition-colors hover:bg-forest-hover"
-          >
-            <PenIcon size={16} />
-            Bu müşteriye ulaş
-          </Link>
+          </div>
 
           <div className="grid gap-2">
-            <button
-              type="button"
-              aria-expanded={noteOpen}
-              onClick={() => setNoteOpen((o) => !o)}
-              className="flex min-w-0 items-center gap-2 rounded-control text-left text-sm text-muted transition-colors hover:text-ink"
-            >
-              <NoteIcon size={16} />
-              <span className="truncate">{notes.length ? `${notes.length} mesaj · ${notes[0].body}` : "Mesaj ekle"}</span>
-            </button>
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                aria-expanded={noteOpen}
+                onClick={() => setNoteOpen((o) => !o)}
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-control text-left text-sm text-muted transition-colors hover:text-ink"
+              >
+                <NoteIcon size={16} />
+                <span className="truncate">{notes.length ? `${notes.length} mesaj · ${notes[0].body}` : "Mesaj ekle"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={remove}
+                aria-label={`${fav.name} firmasını takipten çıkar`}
+                className="shrink-0 rounded-full px-2.5 py-1 text-xs text-muted transition-colors hover:bg-sunken hover:text-danger"
+              >
+                Takipten çıkar
+              </button>
+            </div>
             <Collapse open={noteOpen}>
               <div className="grid gap-2.5">
                 {notes.length > 0 && (
@@ -230,32 +239,21 @@ function FavoriteCard({
             </Collapse>
           </div>
 
-          <div className="grid gap-2.5 border-t border-line pt-3 text-sm">
-            <div className="flex items-center justify-between gap-2">
-              {prev ? (
-                <button type="button" onClick={() => move(prev.value)} className="inline-flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-2 text-muted transition-colors hover:bg-sunken hover:text-ink">
-                  <ArrowLeftIcon size={15} />
-                  {prev.label}
-                </button>
-              ) : (
-                <span />
-              )}
-              {next && (
-                <button type="button" onClick={() => move(next.value)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft py-1 pr-2 pl-3 font-medium text-forest transition-colors hover:bg-line">
-                  {next.label}
-                  <ArrowRightIcon size={15} />
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={remove}
-              aria-label={`${fav.name} firmasını takipten çıkar`}
-              className="mx-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-muted transition-colors hover:bg-sunken hover:text-danger"
-            >
-              <BookmarkIcon size={15} filled />
-              Takipten çıkar
-            </button>
+          <div className="hidden items-center justify-between gap-2 border-t border-line pt-3 text-sm pointer-coarse:flex">
+            {prev ? (
+              <button type="button" onClick={() => move(prev.value)} className="inline-flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-2 text-muted transition-colors hover:bg-sunken hover:text-ink">
+                <ArrowLeftIcon size={15} />
+                {prev.label}
+              </button>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <button type="button" onClick={() => move(next.value)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft py-1 pr-2 pl-3 font-medium text-forest transition-colors hover:bg-line">
+                {next.label}
+                <ArrowRightIcon size={15} />
+              </button>
+            )}
           </div>
           </Disclosure>
         </article>
@@ -330,7 +328,7 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
         </p>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-3">
+      <div className="grid items-start gap-4 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
         {followStages.map((s) => {
           const items = visible.filter((f) => stageFor(f) === s.value);
           return (
@@ -354,7 +352,7 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
                 setOver(null);
                 if (fav) void moveTo(fav, s.value);
               }}
-              className={`rounded-panel p-3 ring-1 transition-[background-color,box-shadow] duration-200 ${
+              className={`min-w-0 rounded-panel p-3 ring-1 transition-[background-color,box-shadow] duration-200 ${
                 dragging && over === s.value ? "bg-forest-soft/70 ring-2 ring-forest" : "bg-sunken/50 ring-line"
               }`}
             >

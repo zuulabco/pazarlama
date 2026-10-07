@@ -1,4 +1,4 @@
-import { LeadsSkeleton } from "../../_components/skeletons";
+import { LeadsSkeleton } from "../../../_components/skeletons";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -17,7 +17,6 @@ import {
 } from "@/modules/leads/repository";
 import { favoritePlaceIds } from "@/modules/favorites/repository";
 import { getProfile } from "@/modules/profile/repository";
-import { customerTabs, SectionTabs } from "../../_components/section-tabs";
 import { LeadList } from "./_components/lead-list";
 import { LeadsWorkspace } from "./_components/leads-workspace";
 import type { ResultFilters, SearchView } from "./_components/types";
@@ -114,7 +113,6 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
 export default function LeadsPage(props: PageProps<"/panel/musteri-bul">) {
   return (
     <>
-      <SectionTabs title="Müşteri" tabs={customerTabs} />
       <Suspense fallback={<LeadsSkeleton />}>
         <Content searchParams={props.searchParams} />
       </Suspense>

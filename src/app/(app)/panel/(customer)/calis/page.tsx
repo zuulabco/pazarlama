@@ -7,8 +7,7 @@ import { FavoritesUnavailableError, listFavorites, type FavoriteWithNotes } from
 import { getProfile } from "@/modules/profile/repository";
 import { serviceLabel, suggestService } from "@/modules/work/context";
 import { loadWorkFirm } from "@/modules/work/load";
-import { customerTabs, SectionTabs } from "../../_components/section-tabs";
-import { PageSkeleton } from "../../_components/skeletons";
+import { PageSkeleton } from "../../../_components/skeletons";
 import { WorkWorkspace } from "./_components/work-workspace";
 
 export const metadata: Metadata = { title: "İletişim kur" };
@@ -40,7 +39,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/calis
     <WorkWorkspace
       favorites={favorites.map((f) => ({ id: f.id, name: f.name, district: f.city, category: f.category }))}
       firm={firm}
-      tool={one(sp.arac) === "email" ? "email" : "message"}
+      tool={one(sp.arac) === "email" && firm?.email ? "email" : "message"}
       services={profile.services.map((value) => ({ value, label: serviceLabel(value) }))}
       suggestedService={firm ? suggestService(profile.services, firm.hasWebsite) : null}
     />
@@ -50,7 +49,6 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/calis
 export default function WorkPage(props: PageProps<"/panel/calis">) {
   return (
     <>
-      <SectionTabs title="Müşteri" tabs={customerTabs} />
       <Suspense fallback={<PageSkeleton />}>
         <Content searchParams={props.searchParams} />
       </Suspense>

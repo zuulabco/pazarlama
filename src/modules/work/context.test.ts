@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMessages, deriveSignals, parseDraft, suggestService, whatsappHref, whatsappNumber, withOptOut, type WorkFirm, type WorkSender } from "./context";
+import { acceptProofread, buildMessages, deriveSignals, observations, parseDraft, suggestService, whatsappHref, whatsappNumber, withOptOut, type WorkFirm, type WorkSender } from "./context";
 
 const firm: WorkFirm = {
   id: "f1",
@@ -57,22 +57,60 @@ describe("whatsapp", () => {
   });
 });
 
+describe("observations", () => {
+  it("yalnızca gerçek gözlemleri doğal cümlelerle üretir", () => {
+    const o = observations(firm);
+    expect(o).toHaveLength(2);
+    expect(o[0]).toContain("web sitesi bağlantısı göremedim");
+    expect(o[1]).toContain("516 yorum ve 4,9 puan");
+    expect(observations({ ...firm, hasWebsite: true, reviews: 5 })).toEqual([]);
+  });
+});
+
 describe("buildMessages", () => {
-  it("firma verisini ve kuralları içerir, skorları gizlemeyi söyler", () => {
+  it("mesaj için: kurallar, örnek, sabit selamlama ve veri etiketleri", () => {
     const [system, user] = buildMessages({ kind: "message", goal: "ilk-temas", tone: "samimi", service: "web-tasarim", firm, sender });
     expect(system.content).toContain("Web tasarım");
-    expect(system.content).toContain("En çok 80 kelime");
-    expect(system.content).toContain("skorları ve \"skor\" kelimesini asla yazma");
-    expect(system.content).toContain("Hanım/Bey");
-    expect(system.content).toContain("yabancı kalıplar");
+    expect(system.content).toContain("en çok 70 kelime");
+    expect(system.content).toContain('"Merhaba,"');
+    expect(system.content).toContain("kopyalama");
+    expect(system.content).toContain("uzmanlık, deneyim ya da referans");
+    expect(system.content).toContain("görünürlüğünüz düşük");
+    expect(system.content).toContain("Skor, puanlama");
     expect(user.content).toContain("<firma>");
-    expect(user.content).toContain("Işık Diş Kliniği");
+    expect(user.content).toContain("gozlemler");
+    expect(user.content).not.toContain("ic_degerlendirme");
     expect(user.content).toContain("Pikselatölye");
   });
-  it("e-posta için konu satırı ister", () => {
+  it("profesyonel ton farklı selamlama ve örnek kullanır", () => {
+    const [system] = buildMessages({ kind: "message", goal: "ilk-temas", tone: "profesyonel", service: null, firm, sender });
+    expect(system.content).toContain('"İyi günler,"');
+    expect(system.content).not.toContain('"Merhaba,"');
+    expect(system.content).toContain("Belirli bir hizmet önerme");
+  });
+  it("e-posta için konu satırı ve imza ister", () => {
     const [system] = buildMessages({ kind: "email", goal: "takip", tone: "profesyonel", service: null, firm, sender });
     expect(system.content).toContain('"konu"');
-    expect(system.content).toContain("Belirli bir hizmet önerme");
+    expect(system.content).toContain("Deniz\nPikselatölye");
+  });
+  it("firma adına hitap etmeyi yasaklar", () => {
+    const [system] = buildMessages({ kind: "message", goal: "ilk-temas", tone: "samimi", service: null, firm, sender });
+    expect(system.content).toContain("Hanım/Bey");
+    expect(system.content).toContain("ekibi");
+  });
+});
+
+describe("acceptProofread", () => {
+  const original = { subject: "Konu", body: "Merhaba, ben Deniz. İşletme profilinizi inceleirken bir şey fark ettim ve yazmak istedim." };
+  it("küçük düzeltmeyi kabul eder", () => {
+    expect(acceptProofread(original, { subject: "Konu", body: original.body.replace("inceleirken", "incelerken") })).toBe(true);
+  });
+  it("içeriği şişiren ya da kısaltan çıktıyı reddeder", () => {
+    expect(acceptProofread(original, { subject: "Konu", body: original.body + " " + original.body })).toBe(false);
+    expect(acceptProofread(original, { subject: "Konu", body: "Merhaba." })).toBe(false);
+  });
+  it("konu satırı kaybolursa reddeder", () => {
+    expect(acceptProofread(original, { subject: null, body: original.body })).toBe(false);
   });
 });
 
