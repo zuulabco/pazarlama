@@ -289,3 +289,17 @@ export async function getLeadForUser(uid: string, leadId: string) {
   if (error) return fail("Firma okunamadı", error);
   return data;
 }
+
+/** Aramadaki tüm skorlanmış firmalar (soru kutusu için; bir arama en çok 100 firma içerir). */
+export async function listScoredLeads(uid: string, searchId: string) {
+  const { data, error } = await db()
+    .from("leads")
+    .select(leadColumns)
+    .eq("user_uid", uid)
+    .eq("search_id", searchId)
+    .not("lead_score", "is", null)
+    .limit(100)
+    .returns<LeadRow[]>();
+  if (error) return fail("Firmalar okunamadı", error);
+  return data;
+}

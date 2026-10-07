@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Select } from "@/components/ui/select";
 import { leadSorts, type LeadSort } from "@/modules/leads/sorts";
+import { AskBox } from "./ask-box";
 import { RotatingTips } from "./rotating-tips";
 import { ShapeLoader } from "./shape-loader";
 import { filterKeys, isActiveStatus, type Navigate, type ResultFilters, type SearchView } from "./types";
@@ -176,6 +177,8 @@ export function ResultsArea({
         </p>
       )}
       {view.status === "done" && view.error && <p className="text-sm text-muted">{view.error}</p>}
+
+      {view.scored > 0 && <AskBox key={view.id} searchId={view.id} />}
 
       {chips.length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label="Uygulanan süzgeçler">
