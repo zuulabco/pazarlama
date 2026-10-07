@@ -2,14 +2,11 @@
 
 import { useId, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { popularCities } from "@/modules/profile/options";
 import { ChipGroup } from "./choice-controls";
 
-const popular = ["İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Adana", "Konya", "Gaziantep"].map((c) => ({
-  value: c,
-  label: c,
-}));
-
-const MAX = 10;
+const MAX = 12;
+const popular = popularCities.map((c) => ({ value: c, label: c }));
 
 function titleCase(s: string) {
   return s
@@ -48,12 +45,12 @@ export function CityPicker({
   }
 
   return (
-    <div className="grid gap-4">
-      <ChipGroup legend="Hangi şehirlerde müşteri arıyorsunuz?" options={options} value={value} onChange={onChange} error={error} />
+    <div className="grid gap-5">
+      <ChipGroup legend="Şehirleri seçin" options={options} value={value} onChange={onChange} error={error} />
       <div className="flex items-end gap-2">
         <div className="grid flex-1 gap-1.5">
           <label htmlFor={id} className="text-sm text-muted">
-            Listede yoksa şehir ekleyin
+            Listede yoksa yazıp ekleyin
           </label>
           <input
             id={id}
@@ -62,10 +59,10 @@ export function CityPicker({
             onKeyDown={onKeyDown}
             maxLength={40}
             autoComplete="off"
-            className="h-11 rounded-control bg-surface px-3.5 ring-1 ring-line-strong ring-inset outline-none focus:ring-2 focus:ring-forest"
+            className="h-12 rounded-control bg-surface px-4 ring-1 ring-line-strong ring-inset outline-none focus:ring-2 focus:ring-forest"
           />
         </div>
-        <Button variant="secondary" size="lg" className="h-11" onClick={add} disabled={draft.trim().length < 2 || value.length >= MAX}>
+        <Button variant="secondary" size="lg" onClick={add} disabled={draft.trim().length < 2 || value.length >= MAX}>
           Ekle
         </Button>
       </div>

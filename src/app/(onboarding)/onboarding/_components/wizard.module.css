@@ -1,0 +1,92 @@
+/*
+ * Onboarding hareketleri. Hepsi bir kullanıcı eylemine (adım değiştirme, seçim yapma)
+ * ya da tek seferlik karşılama sahnesine karşılık gelir; süs amaçlı sürekli hareket yok.
+ */
+
+/* Yumuşak açılan alan: yüksekliği 0'dan içeriğine büyür */
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.5s var(--ease-out),
+    opacity 0.35s ease;
+}
+.reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.reveal > div {
+  min-height: 0;
+  overflow: hidden;
+  /* Kenar halkaları kesilmesin */
+  margin: -4px;
+  padding: 4px;
+}
+
+/* Progress çubuğu */
+.progress {
+  transform-origin: left center;
+  transition: transform 0.6s var(--ease-out);
+}
+
+/* Canlı profil: ağırlık çubukları */
+.weight {
+  transition: width 0.7s var(--ease-out);
+}
+
+/* Onay işareti çizilir */
+.check {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .forward {
+    animation: in-down 0.55s var(--ease-out) both;
+  }
+  .back {
+    animation: in-up 0.55s var(--ease-out) both;
+  }
+
+  /* Karşılama: öğeler sırayla belirir (sayfadaki tek orkestre sahne) */
+  .stagger > * {
+    animation: in-down 0.8s var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 110ms + 120ms);
+  }
+
+  .pop {
+    animation: pop 0.4s var(--ease-out) both;
+  }
+
+  .check {
+    animation: draw 0.6s var(--ease-out) 0.15s both;
+  }
+  .ring {
+    animation: pop 0.6s var(--ease-out) both;
+  }
+}
+
+@keyframes in-down {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@keyframes in-up {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 30;
+  }
+}

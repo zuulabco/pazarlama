@@ -1,43 +1,67 @@
 import "server-only";
 import { db } from "@/lib/supabase/server";
 import type { SessionUser } from "@/lib/auth/session";
-import type { ProfileInput } from "./schema";
+import { profileSchema, type ProfileInput } from "./schema";
 
-export type Profile = ProfileInput & {
-  completedAt: string;
-};
+export type Profile = ProfileInput & { completedAt: string };
 
 type Row = {
   business_name: string | null;
-  work_type: ProfileInput["workType"] | null;
-  services: ProfileInput["services"];
-  target_sectors: ProfileInput["targetSectors"];
+  work_type: string | null;
+  services: string[];
+  target_sectors: string[];
   target_cities: string[];
-  target_size: ProfileInput["targetSize"] | null;
-  deal_value: ProfileInput["dealValue"] | null;
+  target_size: string | null;
+  deal_value: string | null;
+  /** Sık değişen / yeni alanlar: primaryService, cityScope, signals, channels */
+  extra: Record<string, unknown> | null;
   onboarding_completed_at: string | null;
 };
 
 const columns =
-  "business_name, work_type, services, target_sectors, target_cities, target_size, deal_value, onboarding_completed_at";
+  "business_name, work_type, services, target_sectors, target_cities, target_size, deal_value, extra, onboarding_completed_at";
 
-/** Onboarding tamamlanmışsa profili, tamamlanmamışsa null döner. */
-export async function getProfile(uid: string): Promise<Profile | null> {
+async function readRow(uid: string) {
   const { data, error } = await db().from("profiles").select(columns).eq("firebase_uid", uid).maybeSingle<Row>();
   if (error) throw new Error(`Profil okunamadı: ${error.message}`);
-  if (!data?.onboarding_completed_at || !data.business_name || !data.work_type || !data.target_size || !data.deal_value) {
-    return null;
-  }
+  return data;
+}
+
+function toDraft(row: Row) {
+  const extra = row.extra ?? {};
   return {
-    businessName: data.business_name,
-    workType: data.work_type,
-    services: data.services,
-    targetSectors: data.target_sectors,
-    targetCities: data.target_cities,
-    targetSize: data.target_size,
-    dealValue: data.deal_value,
-    completedAt: data.onboarding_completed_at,
+    businessName: row.business_name ?? undefined,
+    workType: row.work_type ?? undefined,
+    services: row.services,
+    primaryService: extra.primaryService,
+    targetSectors: row.target_sectors,
+    targetSize: row.target_size ?? undefined,
+    cityScope: extra.cityScope,
+    targetCities: row.target_cities,
+    signals: extra.signals,
+    channels: extra.channels,
+    dealValue: row.deal_value ?? undefined,
   };
+}
+
+/** Onboarding eksiksiz tamamlanmışsa profili, aksi halde null döner. */
+export async function getProfile(uid: string): Promise<Profile | null> {
+  const row = await readRow(uid);
+  if (!row?.onboarding_completed_at) return null;
+  const parsed = profileSchema.safeParse(toDraft(row));
+  // Alanlar sonradan eklendiği için eski kayıtlar doğrulamadan geçemez; onboarding yeniden gösterilir.
+  return parsed.success ? { ...parsed.data, completedAt: row.onboarding_completed_at } : null;
+}
+
+/** Yarım kalmış ya da eski bir kayıttaki cevapları, sihirbazı önceden doldurmak için döndürür. */
+export async function getProfileDraft(uid: string): Promise<Partial<ProfileInput>> {
+  const row = await readRow(uid);
+  if (!row) return {};
+  const draft = toDraft(row);
+  // Geçerli (şemaya uyan) alanları al, geri kalanını boş bırak.
+  return Object.fromEntries(
+    Object.entries(draft).filter(([, v]) => v !== undefined && !(Array.isArray(v) && v.length === 0)),
+  ) as Partial<ProfileInput>;
 }
 
 export async function saveProfile(user: SessionUser, input: ProfileInput) {
@@ -55,6 +79,12 @@ export async function saveProfile(user: SessionUser, input: ProfileInput) {
         target_cities: input.targetCities,
         target_size: input.targetSize,
         deal_value: input.dealValue,
+        extra: {
+          primaryService: input.primaryService,
+          cityScope: input.cityScope,
+          signals: input.signals,
+          channels: input.channels,
+        },
         onboarding_completed_at: new Date().toISOString(),
       },
       { onConflict: "firebase_uid" },
