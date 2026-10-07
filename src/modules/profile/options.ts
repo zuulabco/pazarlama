@@ -1,9 +1,9 @@
 /** Onboarding seçenekleri. Değerler (value) DB'ye yazılır; etiketler (label) yalnızca arayüz içindir. */
 
 export const workTypes = [
-  { value: "ajans", label: "Ajans", hint: "Birden fazla müşteriye hizmet veren bir ekibim var" },
-  { value: "serbest", label: "Serbest çalışan", hint: "Kendi adıma çalışıyorum" },
-  { value: "urun", label: "Ürün ya da yazılım şirketi", hint: "Kendi ürünümü satıyorum" },
+  { value: "ajans", label: "Ajans" },
+  { value: "serbest", label: "Serbest çalışan" },
+  { value: "urun", label: "Ürün ya da yazılım şirketi" },
 ] as const;
 
 export const services = [
@@ -34,15 +34,15 @@ export const sectors = [
 ] as const;
 
 export const companySizes = [
-  { value: "mikro", label: "Mikro", hint: "1–9 çalışan" },
-  { value: "kucuk", label: "Küçük", hint: "10–49 çalışan" },
-  { value: "orta", label: "Orta", hint: "50 ve üzeri" },
-  { value: "farketmez", label: "Fark etmez", hint: "Hepsi uygun" },
+  { value: "mikro", label: "Mikro (1–9 kişi)" },
+  { value: "kucuk", label: "Küçük (10–49 kişi)" },
+  { value: "orta", label: "Orta (50+ kişi)" },
+  { value: "farketmez", label: "Fark etmez" },
 ] as const;
 
 export const cityScopes = [
-  { value: "cities", label: "Belirli şehirlerde", hint: "Hedeflediğim şehirleri seçeceğim" },
-  { value: "turkey", label: "Türkiye genelinde", hint: "Uzaktan çalışabilirim, şehir fark etmez" },
+  { value: "cities", label: "Belirli şehirlerde" },
+  { value: "turkey", label: "Türkiye genelinde" },
 ] as const;
 
 export const signals = [

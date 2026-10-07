@@ -1,43 +1,61 @@
 import { z } from "zod";
-import { channels, cityScopes, companySizes, dealValues, sectors, services, signals, values, workTypes } from "./options";
+import { cityScopes, companySizes, dealValues, signals, values } from "./options";
+
+/**
+ * Hizmet, sektör, şehir, kanal ve çalışma biçimi serbest metne açıktır: listedeki seçenekler
+ * "slug" olarak, kullanıcının kendi yazdıkları olduğu gibi saklanır (labelOf, bilinmeyen değeri aynen gösterir).
+ */
+const tag = z.string().trim().min(2, "En az 2 karakter yazın.").max(40, "En fazla 40 karakter.");
 
 const field = {
   businessName: z.string().trim().min(2, "İşletme veya marka adınızı yazın.").max(80, "En fazla 80 karakter."),
-  workType: z.enum(values(workTypes), "Bir seçenek belirleyin."),
-  services: z.array(z.enum(values(services))).min(1, "En az bir hizmet seçin."),
-  primaryService: z.enum(values(services), "En güçlü olduğunuz hizmeti seçin."),
-  targetSectors: z.array(z.enum(values(sectors))).min(1, "En az bir sektör seçin."),
+  workType: z.string().trim().min(2, "Nasıl çalıştığınızı seçin ya da yazın.").max(40, "En fazla 40 karakter."),
+  businessDescription: z.string().trim().max(500, "En fazla 500 karakter.").default(""),
+  services: z.array(tag).min(1, "En az bir hizmet seçin ya da yazın.").max(12, "En fazla 12 hizmet ekleyebilirsiniz."),
+  targetSectors: z.array(tag).min(1, "En az bir sektör seçin ya da yazın.").max(12, "En fazla 12 sektör ekleyebilirsiniz."),
   targetSize: z.enum(values(companySizes), "Bir seçenek belirleyin."),
   cityScope: z.enum(values(cityScopes), "Bir seçenek belirleyin."),
-  targetCities: z
-    .array(z.string().trim().min(2, "Şehir adı çok kısa.").max(40, "Şehir adı çok uzun."))
-    .max(12, "En fazla 12 şehir ekleyebilirsiniz."),
-  signals: z.array(z.enum(values(signals))).min(1, "En az bir işaret seçin."),
-  channels: z.array(z.enum(values(channels))).min(1, "En az bir kanal seçin."),
+  targetCities: z.array(tag).max(12, "En fazla 12 şehir ekleyebilirsiniz."),
+  channels: z.array(tag).min(1, "En az bir kanal seçin ya da yazın.").max(8, "En fazla 8 kanal ekleyebilirsiniz."),
   dealValue: z.enum(values(dealValues), "Bir seçenek belirleyin."),
+  signals: z.array(z.enum(values(signals))).max(6),
+  signalNotes: z.string().trim().max(500, "En fazla 500 karakter.").default(""),
 };
 
-type Cross = { services?: string[]; primaryService?: string; cityScope?: string; targetCities?: string[] };
+type Cross = { cityScope?: string; targetCities?: string[]; signals?: string[]; signalNotes?: string };
+type Check = [(v: Cross) => boolean, { path: string[]; message: string }];
 
-const primaryInServices: [(v: Cross) => boolean, { path: string[]; message: string }] = [
-  (v: Cross) => !v.services || !v.primaryService || v.services.includes(v.primaryService),
-  { path: ["primaryService"], message: "Seçtiğiniz hizmetlerden birini işaretleyin." },
+const citiesWhenScoped: Check = [
+  (v) => v.cityScope !== "cities" || (v.targetCities?.length ?? 0) > 0,
+  { path: ["targetCities"], message: "En az bir şehir seçin ya da yazın." },
 ];
 
-const citiesWhenScoped: [(v: Cross) => boolean, { path: string[]; message: string }] = [
-  (v: Cross) => v.cityScope !== "cities" || (v.targetCities?.length ?? 0) > 0,
-  { path: ["targetCities"], message: "En az bir şehir ekleyin." },
+const signalOrNotes: Check = [
+  (v) => (v.signals?.length ?? 0) > 0 || (v.signalNotes?.trim().length ?? 0) >= 3,
+  { path: ["signals"], message: "En az bir işaret seçin ya da aşağıya kendi cümlelerinizle yazın." },
 ];
 
 export const stepSchemas = {
-  about: z.object({ businessName: field.businessName, workType: field.workType }),
-  offer: z.object({ services: field.services, primaryService: field.primaryService }).refine(...primaryInServices),
-  audience: z.object({ targetSectors: field.targetSectors, targetSize: field.targetSize }),
-  where: z.object({ cityScope: field.cityScope, targetCities: field.targetCities }).refine(...citiesWhenScoped),
-  signals: z.object({ signals: field.signals }),
-  reach: z.object({ channels: field.channels, dealValue: field.dealValue }),
+  about: z.object({
+    businessName: field.businessName,
+    workType: field.workType,
+    businessDescription: field.businessDescription,
+  }),
+  target: z.object({ services: field.services, targetSectors: field.targetSectors, targetSize: field.targetSize }),
+  reach: z
+    .object({
+      cityScope: field.cityScope,
+      targetCities: field.targetCities,
+      channels: field.channels,
+      dealValue: field.dealValue,
+    })
+    .refine(...citiesWhenScoped),
+  fit: z.object({ signals: field.signals, signalNotes: field.signalNotes }).refine(...signalOrNotes),
 } as const;
 
-export const profileSchema = z.object(field).refine(...primaryInServices).refine(...citiesWhenScoped);
+export const profileSchema = z
+  .object(field)
+  .refine(...citiesWhenScoped)
+  .refine(...signalOrNotes);
 
 export type ProfileInput = z.infer<typeof profileSchema>;

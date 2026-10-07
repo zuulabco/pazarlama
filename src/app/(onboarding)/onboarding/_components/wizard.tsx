@@ -4,55 +4,52 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/ui/wordmark";
-import {
-  channels,
-  cityScopes,
-  companySizes,
-  dealValues,
-  labelOf,
-  sectors,
-  services,
-  signals,
-  workTypes,
-} from "@/modules/profile/options";
-import { stepSchemas } from "@/modules/profile/schema";
+import { channels, cityScopes, companySizes, dealValues, popularCities, sectors, services, signals, workTypes } from "@/modules/profile/options";
+import { profileSchema, stepSchemas } from "@/modules/profile/schema";
 import { completeOnboarding } from "../actions";
-import { CardGroup, ChipGroup } from "./choice-controls";
-import { CityPicker } from "./city-picker";
-import { LiveProfile, type Draft } from "./live-profile";
+import { CardGroup, ChipPicker } from "./choice-controls";
+import { draftFrom, type Draft } from "./draft";
+import { SummaryCard, type EditableStage } from "./summary-card";
 import styles from "./wizard.module.css";
 
 type Errors = Partial<Record<keyof Draft, string>>;
 
-const stages = ["intro", "about", "offer", "audience", "where", "signals", "reach", "review"] as const;
+const stages = ["intro", "about", "target", "reach", "fit", "review"] as const;
 type Stage = (typeof stages)[number];
 
-const copy: Record<Exclude<Stage, "intro">, { title: string; text: string }> = {
-  about: { title: "Sizi tanıyarak başlayalım", text: "Hesabınızı bu bilgilere göre hazırlayacağız." },
-  offer: { title: "Ne satıyorsunuz?", text: "Firmaları, bu hizmetlere ne kadar ihtiyaç duyduklarına göre puanlayacağız." },
-  audience: { title: "Kime satıyorsunuz?", text: "Aramalarınız bu sektörlere ve firma büyüklüğüne göre şekillenecek." },
-  where: { title: "Nerede müşteri arıyorsunuz?", text: "Aramalarda bu bölgeler varsayılan olarak seçili gelecek." },
-  signals: {
-    title: "İyi bir aday, hangi işaretlerle anlaşılır?",
-    text: "Bu seçimler, hangi firmaların öne çıkacağını belirler. Birden fazlasını seçebilirsiniz.",
+const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text: string }> = {
+  about: { short: "Sizi tanıyalım", title: "Sizi tanıyalım", text: "Kısa sorular. Hepsini sonradan değiştirebilirsiniz." },
+  target: {
+    short: "Hizmet ve hedef",
+    title: "Ne satıyorsunuz, kime?",
+    text: "Listede yoksa kendi ifadenizi yazıp ekleyebilirsiniz.",
   },
-  reach: { title: "Müşterilerle nasıl iletişim kuruyorsunuz?", text: "İletişim bilgisi bulunan firmaları buna göre değerlendireceğiz." },
-  review: { title: "Her şey doğru mu?", text: "Bunları panelden istediğiniz zaman değiştirebileceksiniz." },
+  reach: {
+    short: "Bölge ve iletişim",
+    title: "Nerede ve nasıl ulaşıyorsunuz?",
+    text: "İletişim bilgisi bulunan, bölgenizdeki firmaları öne çıkaracağız.",
+  },
+  fit: {
+    short: "İyi aday",
+    title: "İyi bir aday nasıl biri?",
+    text: "Bu seçimler, hangi firmaların listenizde öne çıkacağını belirler.",
+  },
+  review: {
+    short: "Bilgi kartı",
+    title: "Bilgi kartınız hazır",
+    text: "Her bölümü düzenleyebilirsiniz. Onayladığınızda hesabınız bu bilgilere göre kurulur.",
+  },
 };
 
-const empty: Draft = {
-  businessName: "",
-  workType: "",
-  services: [],
-  primaryService: "",
-  targetSectors: [],
-  targetSize: "",
-  cityScope: "",
-  targetCities: [],
-  signals: [],
-  channels: [],
-  dealValue: "",
-};
+const sizeOptions = companySizes.map((s) => ({ value: s.value, label: s.label }));
+const cityOptions = popularCities.map((c) => ({ value: c, label: c }));
+
+function titleCase(s: string) {
+  return s
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toLocaleUpperCase("tr") + w.slice(1).toLocaleLowerCase("tr"))
+    .join(" ");
+}
 
 function BigInput({
   label,
@@ -81,6 +78,39 @@ function BigInput({
   );
 }
 
+function TextArea({
+  label,
+  hint,
+  error,
+  ...props
+}: { label: string; hint?: string; error?: string } & Omit<React.ComponentProps<"textarea">, "className">) {
+  const id = useId();
+  return (
+    <div className="grid gap-2">
+      <label htmlFor={id} className="text-base font-medium">
+        {label}
+        {hint && <span className="mt-0.5 block text-sm font-normal text-muted">{hint}</span>}
+      </label>
+      <textarea
+        id={id}
+        rows={3}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className="resize-y rounded-row bg-surface px-4 py-3 leading-relaxed ring-1 ring-line-strong ring-inset transition-shadow outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger"
+        {...props}
+      />
+      <div className="flex justify-between gap-4 text-sm">
+        <p id={`${id}-error`} role={error ? "alert" : undefined} className="text-danger">
+          {error}
+        </p>
+        <p className="shrink-0 text-muted tabular-nums">
+          {String(props.value ?? "").length} / {props.maxLength}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** Soru açıkken yumuşakça açılan, kapalıyken etkisizleşen alan. */
 function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
   return (
@@ -90,29 +120,14 @@ function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
   );
 }
 
-function SummaryRow({ title, value, onEdit }: { title: string; value: string; onEdit: () => void }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-line py-4">
-      <div className="min-w-0">
-        <p className="text-sm text-muted">{title}</p>
-        <p className="mt-0.5 font-medium">{value || "—"}</p>
-      </div>
-      <Button variant="quiet" onClick={onEdit} aria-label={`${title} bilgisini düzenle`}>
-        Düzenle
-      </Button>
-    </div>
-  );
-}
-
 export function Wizard({ defaultName, initial }: { defaultName: string; initial: Partial<Draft> }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("intro");
+  const [furthest, setFurthest] = useState(0);
+  /** Bilgi kartından düzenlemeye gelindiyse, kaydedince doğrudan karta dönülür. */
+  const [editing, setEditing] = useState(false);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
-  const [draft, setDraft] = useState<Draft>(() => ({
-    ...empty,
-    ...initial,
-    businessName: initial.businessName ?? defaultName,
-  }));
+  const [draft, setDraft] = useState<Draft>(() => draftFrom(initial));
   const [errors, setErrors] = useState<Errors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -127,19 +142,12 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
     setErrors((e) => ({ ...e, [key]: undefined }));
   }
 
-  function setServices(next: string[]) {
-    setDraft((d) => ({
-      ...d,
-      services: next,
-      // Tek hizmet varsa en güçlü olan odur; seçimden çıkan hizmet "en güçlü" kalamaz.
-      primaryService: next.length === 1 ? next[0] : next.includes(d.primaryService) ? d.primaryService : "",
-    }));
-    setErrors((e) => ({ ...e, services: undefined, primaryService: undefined }));
-  }
-
-  function goTo(next: Stage) {
-    setDirection(stages.indexOf(next) >= index ? "forward" : "back");
+  function goTo(next: Stage, keepEditing = false) {
+    const nextIndex = stages.indexOf(next);
+    setDirection(nextIndex >= index ? "forward" : "back");
     setStage(next);
+    setEditing(keepEditing);
+    setFurthest((f) => Math.max(f, nextIndex));
     setSaveError(null);
   }
 
@@ -148,89 +156,140 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
     if (stage !== "intro") headingRef.current?.focus({ preventScroll: true });
   }, [stage]);
 
-  function validate(): boolean {
-    if (stage === "intro" || stage === "review") return true;
-    const result = stepSchemas[stage].safeParse(draft);
-    if (result.success) return true;
+  function collect(issues: { path: PropertyKey[]; message: string }[]) {
     const next: Errors = {};
-    for (const issue of result.error.issues) {
+    for (const issue of issues) {
       const field = issue.path[0] as keyof Draft;
       next[field] ??= issue.message;
     }
     setErrors(next);
+  }
+
+  function validate(): boolean {
+    if (stage === "intro" || stage === "review") return true;
+    const result = stepSchemas[stage].safeParse(draft);
+    if (result.success) return true;
+    collect(result.error.issues);
     return false;
+  }
+
+  /** Kaydetmeden önce tüm adımları kontrol eder; ilk hatalı adıma döner. */
+  function firstInvalidStage(): Exclude<Stage, "intro" | "review"> | null {
+    for (const s of ["about", "target", "reach", "fit"] as const) {
+      const result = stepSchemas[s].safeParse(draft);
+      if (!result.success) {
+        collect(result.error.issues);
+        return s;
+      }
+    }
+    return profileSchema.safeParse(draft).success ? null : "about";
   }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (stage === "intro") return goTo("about");
-    if (!validate()) return;
-    if (stage !== "review") return goTo(stages[index + 1]);
 
-    startTransition(async () => {
-      const result = await completeOnboarding(draft);
-      if (!result.ok) return setSaveError(result.error);
-      setDone(true);
-      setTimeout(() => router.replace("/panel"), 1800);
-    });
+    if (stage === "review") {
+      const invalid = firstInvalidStage();
+      if (invalid) return goTo(invalid, true);
+      startTransition(async () => {
+        const result = await completeOnboarding(draft);
+        if (!result.ok) return setSaveError(result.error);
+        setDone(true);
+        setTimeout(() => router.replace("/panel"), 1800);
+      });
+      return;
+    }
+
+    if (!validate()) return;
+    goTo(editing ? "review" : stages[index + 1]);
   }
 
+  const steps = ["about", "target", "reach", "fit", "review"] as const;
   const animation = direction === "forward" ? styles.forward : styles.back;
-  const progress = index / (stages.length - 1);
+  const lastQuestion = stage === "fit";
 
   return (
-    <div className="grid min-h-dvh flex-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-      <div className="flex flex-col px-5 py-6 sm:px-10 lg:px-16 xl:px-24">
+    <div className="flex min-h-dvh flex-1 flex-col px-4 py-6 sm:px-8">
+      <div className="mx-auto flex w-full max-w-[44rem] flex-1 flex-col">
         <header className="flex items-center justify-between">
           <Wordmark />
           {stage !== "intro" && !done && (
             <p className="text-sm text-muted" aria-live="polite">
-              Adım {index} / {stages.length - 1}
+              Adım {index} / {steps.length}
             </p>
           )}
         </header>
-        <div className="mt-5 h-1 overflow-hidden rounded-full bg-line" aria-hidden="true">
-          <div className={`${styles.progress} h-full w-full rounded-full bg-forest`} style={{ transform: `scaleX(${done ? 1 : progress})` }} />
-        </div>
 
-        <form onSubmit={onSubmit} className="flex flex-1 flex-col justify-center py-10" noValidate>
-          <div className="mx-auto w-full max-w-[34rem]">
-            {done ? (
-              <div className={`${styles.forward} grid justify-items-start gap-5`} role="status">
-                <span className={`${styles.ring} grid size-16 place-items-center rounded-full bg-forest`}>
-                  <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
-                    <path className={styles.check} d="m5.5 12.5 4.2 4.2 8.8-9.4" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">Hesabınız hazır</h1>
-                <p className="text-lg text-muted">Panele yönlendiriyoruz. İlk müşteri listenizi oluşturmaya hazırsınız.</p>
-                <Button size="lg" onClick={() => router.replace("/panel")}>
-                  Panele geç
+        {stage !== "intro" && (
+          <nav aria-label="Adımlar" className="mt-3">
+            <ol className="flex gap-1.5">
+              {steps.map((s, i) => {
+                const n = i + 1;
+                return (
+                  <li key={s} className="flex-1">
+                    <button
+                      type="button"
+                      disabled={n > furthest || pending || done}
+                      onClick={() => goTo(s)}
+                      aria-label={`Adım ${n}: ${copy[s].short}`}
+                      aria-current={stage === s ? "step" : undefined}
+                      className="group block w-full cursor-pointer py-2.5 disabled:cursor-default"
+                    >
+                      <span
+                        className={`block h-1 rounded-full transition-colors duration-300 ${n <= index || done ? "bg-forest" : "bg-line"} ${n <= furthest && n > index ? "group-hover:bg-line-strong" : ""}`}
+                      />
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+        )}
+
+        <form onSubmit={onSubmit} className="flex flex-1 flex-col justify-center py-8 sm:py-12" noValidate>
+          {done ? (
+            <div className={`${styles.forward} grid justify-items-center gap-5 text-center`} role="status">
+              <span className={`${styles.ring} grid size-16 place-items-center rounded-full bg-forest`}>
+                <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
+                  <path className={styles.check} d="m5.5 12.5 4.2 4.2 8.8-9.4" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">Hesabınız hazır</h1>
+              <p className="max-w-[28rem] text-lg text-muted">Panele yönlendiriyoruz. İlk müşteri listenizi oluşturmaya hazırsınız.</p>
+              <Button size="lg" onClick={() => router.replace("/panel")}>
+                Panele geç
+              </Button>
+            </div>
+          ) : stage === "intro" ? (
+            <div className={`${styles.stagger} grid justify-items-center gap-6 text-center`}>
+              <h1 style={{ "--i": 0 } as React.CSSProperties} className="text-display font-semibold tracking-display">
+                {firstName ? `Hoş geldiniz, ${firstName}.` : "Hoş geldiniz."}
+              </h1>
+              <p style={{ "--i": 1 } as React.CSSProperties} className="max-w-[30rem] text-lg text-muted">
+                Sinyal&apos;i size göre kuralım. Dört kısa soruyla ne sattığınızı ve kime sattığınızı öğreneceğiz; listeniz
+                buna göre puanlanacak. Bir dakika sürer.
+              </p>
+              <div style={{ "--i": 2 } as React.CSSProperties}>
+                <Button type="submit" size="lg">
+                  Başlayalım
                 </Button>
               </div>
-            ) : stage === "intro" ? (
-              <div className={`${styles.stagger} grid justify-items-start gap-6`}>
-                <h1 style={{ "--i": 0 } as React.CSSProperties} className="text-display font-semibold tracking-display">
-                  {firstName ? `Hoş geldiniz, ${firstName}.` : "Hoş geldiniz."}
-                </h1>
-                <p style={{ "--i": 1 } as React.CSSProperties} className="max-w-[30rem] text-lg text-muted">
-                  Sinyal&apos;i size göre kuralım. Birkaç kısa soruyla kime, neyi sattığınızı öğreneceğiz; ilk listeniz
-                  buna göre puanlanacak. Yaklaşık iki dakika sürer.
-                </p>
-                <div style={{ "--i": 2 } as React.CSSProperties}>
-                  <Button type="submit" size="lg">
-                    Başlayalım
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div key={stage} className={animation}>
-                <h1 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold tracking-display outline-none sm:text-4xl">
-                  {copy[stage].title}
-                </h1>
-                <p className="mt-4 mb-9 text-lg text-muted">{copy[stage].text}</p>
+            </div>
+          ) : (
+            <div key={stage} className={animation}>
+              <h1 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold tracking-display outline-none sm:text-4xl">
+                {copy[stage].title}
+              </h1>
+              <p className="mt-3 mb-8 max-w-[34rem] text-lg text-muted">{copy[stage].text}</p>
 
-                <div className="grid gap-8">
+              {stage === "review" ? (
+                <SummaryCard
+                  draft={draft}
+                  onEdit={(s: EditableStage) => goTo(s, true)}
+                />
+              ) : (
+                <div className="grid gap-9 rounded-panel bg-surface p-6 shadow-float ring-1 ring-line sm:p-9">
                   {stage === "about" && (
                     <>
                       <BigInput
@@ -241,163 +300,164 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                         autoComplete="organization"
                         maxLength={80}
                       />
-                      <CardGroup
+                      <ChipPicker
                         legend="Nasıl çalışıyorsunuz?"
                         name="workType"
                         options={workTypes}
                         value={draft.workType ? [draft.workType] : []}
-                        onChange={([v]) => update("workType", v)}
+                        onChange={([v]) => update("workType", v ?? "")}
+                        single
+                        allowCustom
+                        customLabel="Size uyan yoksa kendi ifadenizi yazın"
                         error={errors.workType}
+                      />
+                      <TextArea
+                        label="Ne yaptığınızı kısaca anlatın"
+                        hint="İsteğe bağlı. Satış mesajlarını sizin dilinizle yazabilmemiz için kullanılır."
+                        value={draft.businessDescription}
+                        onChange={(e) => update("businessDescription", e.target.value)}
+                        maxLength={500}
+                        error={errors.businessDescription}
                       />
                     </>
                   )}
 
-                  {stage === "offer" && (
+                  {stage === "target" && (
                     <>
-                      <CardGroup
+                      <ChipPicker
+                        legend="Sattığınız hizmetler"
                         name="services"
                         options={services}
                         value={draft.services}
-                        onChange={setServices}
-                        multiple
-                        columns={2}
+                        onChange={(v) => update("services", v)}
+                        allowCustom
+                        customLabel="Listede olmayan hizmeti yazıp ekleyin"
                         error={errors.services}
                       />
-                      <Reveal open={draft.services.length > 1}>
-                        <CardGroup
-                          legend="En çok hangisinde güçlüsünüz?"
-                          name="primaryService"
-                          options={services.filter((s) => draft.services.includes(s.value))}
-                          value={draft.primaryService ? [draft.primaryService] : []}
-                          onChange={([v]) => update("primaryService", v)}
-                          columns={2}
-                          error={errors.primaryService}
-                        />
-                      </Reveal>
-                    </>
-                  )}
-
-                  {stage === "audience" && (
-                    <>
-                      <ChipGroup
-                        legend="Hangi sektörlere hizmet veriyorsunuz?"
+                      <ChipPicker
+                        legend="Hizmet verdiğiniz sektörler"
+                        name="sectors"
                         options={sectors}
                         value={draft.targetSectors}
                         onChange={(v) => update("targetSectors", v)}
+                        allowCustom
+                        customLabel="Listede olmayan sektörü yazıp ekleyin"
                         error={errors.targetSectors}
                       />
-                      <CardGroup
+                      <ChipPicker
                         legend="Hedef firma büyüklüğü"
                         name="targetSize"
-                        options={companySizes}
+                        options={sizeOptions}
                         value={draft.targetSize ? [draft.targetSize] : []}
-                        onChange={([v]) => update("targetSize", v)}
-                        columns={2}
+                        onChange={([v]) => update("targetSize", v ?? "")}
+                        single
                         error={errors.targetSize}
                       />
                     </>
                   )}
 
-                  {stage === "where" && (
+                  {stage === "reach" && (
                     <>
-                      <CardGroup
+                      <ChipPicker
+                        legend="Hangi bölgede müşteri arıyorsunuz?"
                         name="cityScope"
                         options={cityScopes}
                         value={draft.cityScope ? [draft.cityScope] : []}
-                        onChange={([v]) => update("cityScope", v)}
+                        onChange={([v]) => update("cityScope", v ?? "")}
+                        single
                         error={errors.cityScope}
                       />
                       <Reveal open={draft.cityScope === "cities"}>
-                        <CityPicker value={draft.targetCities} onChange={(v) => update("targetCities", v)} error={errors.targetCities} />
+                        <ChipPicker
+                          legend="Şehirler"
+                          name="cities"
+                          options={cityOptions}
+                          value={draft.targetCities}
+                          onChange={(v) => update("targetCities", v)}
+                          allowCustom
+                          customLabel="Listede olmayan şehri ya da ilçeyi yazıp ekleyin"
+                          normalize={titleCase}
+                          error={errors.targetCities}
+                        />
                       </Reveal>
-                    </>
-                  )}
-
-                  {stage === "signals" && (
-                    <CardGroup
-                      name="signals"
-                      options={signals}
-                      value={draft.signals}
-                      onChange={(v) => update("signals", v)}
-                      multiple
-                      error={errors.signals}
-                    />
-                  )}
-
-                  {stage === "reach" && (
-                    <>
-                      <ChipGroup
-                        legend="Hangi kanalları kullanıyorsunuz?"
+                      <ChipPicker
+                        legend="Müşterilere hangi kanallardan ulaşıyorsunuz?"
+                        name="channels"
                         options={channels}
                         value={draft.channels}
                         onChange={(v) => update("channels", v)}
+                        allowCustom
+                        max={8}
+                        customLabel="Başka bir kanal yazıp ekleyin"
                         error={errors.channels}
                       />
-                      <CardGroup
+                      <ChipPicker
                         legend="Bir projeden ortalama ne kazanırsınız?"
                         name="dealValue"
                         options={dealValues}
                         value={draft.dealValue ? [draft.dealValue] : []}
-                        onChange={([v]) => update("dealValue", v)}
-                        columns={2}
+                        onChange={([v]) => update("dealValue", v ?? "")}
+                        single
                         error={errors.dealValue}
                       />
                     </>
                   )}
 
-                  {stage === "review" && (
-                    <div className="-mt-2">
-                      <SummaryRow title="İşletme" value={`${draft.businessName}, ${labelOf(workTypes, draft.workType).toLocaleLowerCase("tr")}`} onEdit={() => goTo("about")} />
-                      <SummaryRow
-                        title="Hizmetler"
-                        value={draft.services.map((s) => (s === draft.primaryService && draft.services.length > 1 ? `${labelOf(services, s)} (en güçlü)` : labelOf(services, s))).join(", ")}
-                        onEdit={() => goTo("offer")}
+                  {stage === "fit" && (
+                    <>
+                      <CardGroup
+                        legend="Hangi işaretler, bir firmanın sizin için iyi aday olduğunu gösterir?"
+                        name="signals"
+                        options={signals}
+                        value={draft.signals}
+                        onChange={(v) => update("signals", v)}
+                        error={errors.signals}
                       />
-                      <SummaryRow
-                        title="Hedef müşteri"
-                        value={`${draft.targetSectors.map((s) => labelOf(sectors, s)).join(", ")} · ${labelOf(companySizes, draft.targetSize)}`}
-                        onEdit={() => goTo("audience")}
+                      <TextArea
+                        label="Eklemek istedikleriniz"
+                        hint="İsteğe bağlı. İdeal müşterinizi kendi cümlelerinizle anlatın."
+                        value={draft.signalNotes}
+                        onChange={(e) => update("signalNotes", e.target.value)}
+                        maxLength={500}
+                        error={errors.signalNotes}
                       />
-                      <SummaryRow
-                        title="Bölge"
-                        value={draft.cityScope === "turkey" ? "Türkiye geneli" : draft.targetCities.join(", ")}
-                        onEdit={() => goTo("where")}
-                      />
-                      <SummaryRow title="İyi aday işaretleri" value={draft.signals.map((s) => labelOf(signals, s)).join(", ")} onEdit={() => goTo("signals")} />
-                      <SummaryRow
-                        title="İletişim ve proje bedeli"
-                        value={`${draft.channels.map((c) => labelOf(channels, c)).join(", ")} · ${labelOf(dealValues, draft.dealValue)}`}
-                        onEdit={() => goTo("reach")}
-                      />
-                    </div>
+                    </>
                   )}
                 </div>
+              )}
 
-                {saveError && (
-                  <p role="alert" className="mt-6 rounded-control bg-danger-soft px-4 py-3 text-sm text-danger">
-                    {saveError}
-                  </p>
-                )}
+              {saveError && (
+                <p role="alert" className="mt-6 rounded-control bg-danger-soft px-4 py-3 text-sm text-danger">
+                  {saveError}
+                </p>
+              )}
 
-                <div className="mt-10 flex items-center justify-between gap-3">
+              <div className="mt-8 flex items-center justify-between gap-3">
+                {editing ? (
+                  <Button variant="quiet" size="lg" onClick={() => goTo("review")} disabled={pending}>
+                    Karta dön
+                  </Button>
+                ) : (
                   <Button variant="quiet" size="lg" onClick={() => goTo(stages[index - 1])} disabled={pending}>
                     Geri
                   </Button>
-                  <Button type="submit" size="lg" disabled={pending}>
-                    {stage === "review" ? (pending ? "Hesabınız hazırlanıyor…" : "Hesabımı hazırla") : "Devam"}
-                  </Button>
-                </div>
+                )}
+                <Button type="submit" size="lg" disabled={pending}>
+                  {stage === "review"
+                    ? pending
+                      ? "Hesabınız hazırlanıyor…"
+                      : "Hesabımı hazırla"
+                    : editing
+                      ? "Kaydet"
+                      : lastQuestion
+                        ? "Bilgi kartını gör"
+                        : "Devam"}
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </form>
       </div>
-
-      <aside className="hidden p-4 lg:block" aria-label="Hedef profil önizlemesi">
-        <div className="sticky top-4 flex h-[calc(100dvh-2rem)] items-center justify-center overflow-y-auto rounded-panel bg-forest p-10">
-          <LiveProfile draft={draft} />
-        </div>
-      </aside>
     </div>
   );
 }

@@ -13,7 +13,7 @@ type Row = {
   target_cities: string[];
   target_size: string | null;
   deal_value: string | null;
-  /** Sık değişen / yeni alanlar: primaryService, cityScope, signals, channels */
+  /** Sık değişen / yeni alanlar: businessDescription, cityScope, channels, signals, signalNotes */
   extra: Record<string, unknown> | null;
   onboarding_completed_at: string | null;
 };
@@ -32,15 +32,16 @@ function toDraft(row: Row) {
   return {
     businessName: row.business_name ?? undefined,
     workType: row.work_type ?? undefined,
+    businessDescription: extra.businessDescription,
     services: row.services,
-    primaryService: extra.primaryService,
     targetSectors: row.target_sectors,
     targetSize: row.target_size ?? undefined,
     cityScope: extra.cityScope,
     targetCities: row.target_cities,
-    signals: extra.signals,
     channels: extra.channels,
     dealValue: row.deal_value ?? undefined,
+    signals: extra.signals,
+    signalNotes: extra.signalNotes,
   };
 }
 
@@ -80,10 +81,11 @@ export async function saveProfile(user: SessionUser, input: ProfileInput) {
         target_size: input.targetSize,
         deal_value: input.dealValue,
         extra: {
-          primaryService: input.primaryService,
+          businessDescription: input.businessDescription,
           cityScope: input.cityScope,
-          signals: input.signals,
           channels: input.channels,
+          signals: input.signals,
+          signalNotes: input.signalNotes,
         },
         onboarding_completed_at: new Date().toISOString(),
       },
