@@ -1,16 +1,24 @@
 "use client";
 
-import { useId, useRef, useState, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Collapse } from "@/components/ui/collapse";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { AskItem, AskResult } from "@/modules/leads/ask/run";
-import { ShapeLoader } from "./shape-loader";
+import styles from "./ask-box.module.css";
 
 const examples = [
   "Web sitesi olmayan firmaları göster",
   "Dijital ihtiyacı en yüksek ilk 3 firma",
   "Önce hangi firmayı aramalıyım ve neden?",
 ];
+
+/** Dört köşeli pırıltı simgesi. */
+function Sparkle({ size = 20 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="currentColor">
+      <path d="M12 2.5c.5 4.6 2.4 7 7 7.5-4.6.5-6.5 2.9-7 7.5-.5-4.6-2.4-7-7-7.5 4.6-.5 6.5-2.9 7-7.5Z" />
+      <path d="M19 15c.25 2.1 1.15 3 3 3.25-1.85.25-2.75 1.15-3 3.25-.25-2.1-1.15-3-3-3.25 1.85-.25 2.75-1.15 3-3.25Z" opacity=".85" />
+    </svg>
+  );
+}
 
 function Meter({ label, value }: { label: string; value: number }) {
   return (
@@ -45,23 +53,38 @@ function Item({ item }: { item: AskItem }) {
 }
 
 /**
- * Sonuçlar hakkında soru kutusu. Süzgeç, sıralama ve sayım soruları sunucuda kurallarla ve gerçek
- * verilerle yanıtlanır; yorum soruları en iyi adaylar seçildikten sonra yapay zekâya gider.
+ * Sonuçlar hakkında soru kutusu: ekranın alt ortasında sabit, açılıp kapanabilen yapay zekâ girişi.
+ * Süzgeç, sıralama ve sayım soruları sunucuda kurallarla ve gerçek verilerle yanıtlanır; yorum
+ * soruları en iyi adaylar seçildikten sonra yapay zekâya gider. Yanıt, girişin üstünde açılır.
  */
 export function AskBox({ searchId }: { searchId: string }) {
   const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dockOpen, setDockOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AskResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
   const controller = useRef<AbortController | null>(null);
+
+  // Escape: önce yanıt panelini, sonra kutuyu kapatır.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (panelOpen) setPanelOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [panelOpen]);
 
   async function ask(text: string) {
     const q = text.trim();
     if (q.length < 3 || busy) return;
     setBusy(true);
     setError(null);
+    setResult(null);
+    setPanelOpen(true);
     controller.current?.abort();
     const ac = (controller.current = new AbortController());
     try {
@@ -77,7 +100,6 @@ export function AskBox({ searchId }: { searchId: string }) {
         return;
       }
       setResult(body);
-      setOpen(true);
     } catch (e) {
       if (!(e instanceof DOMException && e.name === "AbortError")) setError("Bağlantı kurulamadı. Tekrar deneyin.");
     } finally {
@@ -90,91 +112,137 @@ export function AskBox({ searchId }: { searchId: string }) {
     void ask(question);
   }
 
+  const showExamples = !result && !error && !busy;
+
   return (
-    <section aria-labelledby={`${inputId}-title`} className="grid gap-3.5 rounded-panel bg-surface p-5 ring-1 ring-line">
-      <div>
-        <h3 id={`${inputId}-title`} className="font-semibold tracking-tight">
-          Sonuçlara soru sor
-        </h3>
-        <p className="text-sm text-muted">
-          Süzgeç, sıralama ve sayı sorularını anında yanıtlarız. “Neden”, “nasıl” gibi yorum sorularında en iyi adayları yapay zekâ değerlendirir.
-        </p>
-      </div>
+    <>
+      <div className={styles.dock}>
+        <div className={styles.stack} data-open={dockOpen} inert={!dockOpen}>
+          <section
+            className={styles.panel}
+            data-open={panelOpen && dockOpen}
+            aria-label="Soru kutusu yanıtı"
+            aria-live="polite"
+          >
+            <div className="grid gap-3.5">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm font-medium text-muted">
+                  {busy ? "Verilere bakılıyor…" : showExamples ? "Örnek sorular" : "Yanıt"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPanelOpen(false)}
+                  aria-label="Yanıt panelini kapat"
+                  className="rounded-control px-2 py-1 text-sm text-muted hover:text-ink"
+                >
+                  Kapat
+                </button>
+              </div>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-2.5 sm:flex-row">
-        <label htmlFor={inputId} className="sr-only">
-          Sorunuz
-        </label>
-        <input
-          id={inputId}
-          value={question}
-          maxLength={200}
-          placeholder="Örn. Telefonu olan ama web sitesi olmayan firmalar"
-          onChange={(e) => setQuestion(e.target.value)}
-          className="h-11 min-w-0 flex-1 rounded-control bg-surface px-4 text-base text-ink ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest"
-        />
-        <Button type="submit" disabled={busy || question.trim().length < 3}>
-          {busy ? "Yanıtlanıyor…" : "Sor"}
-        </Button>
-      </form>
+              {showExamples && (
+                <ul className="flex flex-wrap gap-2" aria-label="Örnek sorular">
+                  {examples.map((ex) => (
+                    <li key={ex}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuestion(ex);
+                          void ask(ex);
+                        }}
+                        className="h-8 rounded-full bg-sunken px-3.5 text-sm text-muted transition-colors hover:bg-forest-soft hover:text-forest"
+                      >
+                        {ex}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-      <ul className="flex flex-wrap gap-2" aria-label="Örnek sorular">
-        {examples.map((ex) => (
-          <li key={ex}>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                setQuestion(ex);
-                void ask(ex);
-              }}
-              className="h-8 rounded-full bg-sunken px-3.5 text-sm text-muted transition-colors hover:bg-forest-soft hover:text-forest disabled:opacity-50"
-            >
-              {ex}
-            </button>
-          </li>
-        ))}
-      </ul>
+              {error && (
+                <p role="alert" className="rounded-control bg-danger-soft px-4 py-3 text-sm text-danger">
+                  {error}
+                </p>
+              )}
 
-      {busy && (
-        <div role="status" className="flex items-center gap-3.5 rounded-control bg-forest-soft px-4 py-3">
-          <ShapeLoader size="sm" />
-          <p className="text-sm">Verilere bakılıyor…</p>
-        </div>
-      )}
+              {result && !error && (
+                <div className="grid gap-3.5">
+                  <p className="whitespace-pre-line">{result.answer}</p>
+                  {result.applied.length > 0 && (
+                    <p className="text-sm text-muted">Uygulanan süzgeçler: {result.applied.join(" · ")}</p>
+                  )}
+                  {result.items.length > 0 && (
+                    <ul className="divide-y divide-line">
+                      {result.items.map((i) => (
+                        <Item key={i.id} item={i} />
+                      ))}
+                    </ul>
+                  )}
+                  <p className="text-xs text-muted">
+                    {result.usedAi
+                      ? "Bu yanıt yapay zekâ ile yorumlandı; skorlar ve veriler arama sonuçlarından alındı."
+                      : "Bu yanıt doğrudan arama verilerinden hesaplandı."}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
 
-      {error && (
-        <p role="alert" className="rounded-control bg-danger-soft px-4 py-3 text-sm text-danger">
-          {error}
-        </p>
-      )}
-
-      <Collapse open={open && result !== null}>
-        {result && (
-          <div className="grid gap-3.5 rounded-control bg-sunken p-4" aria-live="polite">
-            <div className="flex items-start justify-between gap-4">
-              <p className="whitespace-pre-line">{result.answer}</p>
+          <form onSubmit={onSubmit} className={styles.frame} data-busy={busy} role="search" aria-label="Sonuçlara soru sor">
+            <div className={styles.field}>
+              <label htmlFor={inputId} className="sr-only">
+                Sonuçlara soru sor
+              </label>
+              <input
+                id={inputId}
+                ref={inputRef}
+                value={question}
+                maxLength={200}
+                autoComplete="off"
+                placeholder="Firmalar hakkında sor…"
+                onFocus={() => setPanelOpen(true)}
+                onChange={(e) => setQuestion(e.target.value)}
+                className={styles.input}
+              />
               <button
                 type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Yanıtı kapat"
-                className="shrink-0 rounded-control px-2 py-1 text-sm text-muted hover:text-ink"
+                onClick={() => {
+                  setDockOpen(false);
+                  setPanelOpen(false);
+                }}
+                aria-label="Soru kutusunu küçült"
+                className={styles.collapseBtn}
               >
-                Kapat
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                  <path d="m3.5 6 4.5 4.5L12.5 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="submit"
+                disabled={busy || question.trim().length < 3}
+                aria-label={busy ? "Yanıtlanıyor" : "Soruyu gönder"}
+                data-busy={busy}
+                className={styles.send}
+              >
+                <Sparkle />
               </button>
             </div>
-            {result.applied.length > 0 && (
-              <p className="text-sm text-muted">Uygulanan süzgeçler: {result.applied.join(" · ")}</p>
-            )}
-            {result.items.length > 0 && <ul className="divide-y divide-line">{result.items.map((i) => <Item key={i.id} item={i} />)}</ul>}
-            <p className="text-xs text-muted">
-              {result.usedAi
-                ? "Bu yanıt yapay zekâ ile yorumlandı; skorlar ve veriler arama sonuçlarından alındı."
-                : "Bu yanıt doğrudan arama verilerinden hesaplandı."}
-            </p>
-          </div>
-        )}
-      </Collapse>
-    </section>
+          </form>
+        </div>
+
+        <button
+          type="button"
+          className={styles.fab}
+          data-open={dockOpen}
+          inert={dockOpen}
+          aria-label="Soru kutusunu aç"
+          onClick={() => {
+            setDockOpen(true);
+            requestAnimationFrame(() => inputRef.current?.focus());
+          }}
+        >
+          <Sparkle size={24} />
+        </button>
+      </div>
+    </>
   );
 }

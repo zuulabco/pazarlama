@@ -203,6 +203,7 @@ export function ResultsArea({
       <div className={`transition-opacity duration-200 ${pending ? "opacity-50" : ""}`} aria-busy={pending}>
         {children}
       </div>
+      {view.scored > 0 && <div className="h-24" aria-hidden="true" />}
     </div>
   );
 }

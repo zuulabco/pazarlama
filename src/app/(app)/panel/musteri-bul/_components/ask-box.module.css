@@ -1,0 +1,227 @@
+/*
+ * Soru kutusu: ekranın alt ortasına sabitlenen, tam yuvarlak uçlu yapay zekâ girişi.
+ * Kapalıyken yalnızca yuvarlak bir düğme kalır. Yükleme sırasında çerçeve dalga gibi akar.
+ */
+.dock {
+  position: fixed;
+  inset: auto 0 1rem;
+  z-index: 40;
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding-inline: 1rem;
+  pointer-events: none;
+}
+.dock > * {
+  pointer-events: auto;
+}
+
+.stack {
+  display: grid;
+  gap: 0.75rem;
+  width: min(42rem, 100%);
+  transform-origin: bottom center;
+  transition:
+    opacity 0.28s ease,
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+.stack[data-open="false"] {
+  opacity: 0;
+  transform: translateY(14px) scale(0.96);
+  visibility: hidden;
+  position: absolute;
+  transition:
+    opacity 0.22s ease,
+    transform 0.28s ease,
+    visibility 0s linear 0.28s;
+}
+
+/* Yanıt paneli: girişin hemen üstünde yukarı doğru açılır. */
+.panel {
+  display: grid;
+  max-height: min(60vh, 30rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 1.5rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-float);
+  outline: 1px solid var(--color-line);
+  outline-offset: -1px;
+  padding: 1.125rem 1.25rem;
+  transform-origin: bottom center;
+  transition:
+    opacity 0.26s ease,
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    display 0.32s allow-discrete;
+}
+.panel[data-open="false"] {
+  display: none;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+@starting-style {
+  .panel[data-open="true"] {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+/* Çerçeve: durağanken ince gri halka; meşgulken akan renkli dalga. */
+.frame {
+  position: relative;
+  border-radius: 9999px;
+  padding: 2px;
+  background: var(--color-line-strong);
+  box-shadow: var(--shadow-float);
+  transition: background-color 0.3s ease;
+}
+.frame:focus-within {
+  background: var(--color-forest);
+}
+.frame[data-busy="true"] {
+  background: linear-gradient(
+    100deg,
+    var(--color-forest) 0%,
+    var(--color-pollen) 22%,
+    var(--color-score-mid) 44%,
+    var(--color-forest) 66%,
+    var(--color-pollen) 88%,
+    var(--color-forest) 100%
+  );
+  background-size: 300% 100%;
+  animation: flow 2.2s linear infinite;
+}
+/* Çerçevenin arkasında dalgalanan yumuşak ışıma. */
+.frame[data-busy="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border-radius: inherit;
+  background: inherit;
+  background-size: 300% 100%;
+  filter: blur(14px);
+  opacity: 0.55;
+  animation:
+    flow 2.2s linear infinite,
+    breathe 1.8s ease-in-out infinite;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: inherit;
+  background: var(--color-surface);
+  padding: 0.375rem 0.375rem 0.375rem 1.25rem;
+}
+.input {
+  min-width: 0;
+  flex: 1;
+  height: 2.75rem;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: 1rem;
+  outline: none;
+}
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+.send {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background: var(--color-forest);
+  color: var(--color-white);
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+.send:hover:not(:disabled) {
+  background: var(--color-forest-hover);
+  transform: scale(1.05);
+}
+.send:disabled {
+  opacity: 0.45;
+}
+.send[data-busy="true"] svg {
+  animation: spin 1.6s linear infinite;
+}
+
+/* Kapalı durumdaki yuvarlak düğme. */
+.fab {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  background: var(--color-forest);
+  color: var(--color-white);
+  box-shadow: var(--shadow-float);
+  transition:
+    opacity 0.26s ease,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease;
+}
+.fab:hover {
+  background: var(--color-forest-hover);
+  transform: scale(1.06);
+}
+.fab[data-open="true"] {
+  opacity: 0;
+  transform: scale(0.6);
+  visibility: hidden;
+  position: absolute;
+  pointer-events: none;
+}
+
+.collapseBtn {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: var(--color-muted);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+.collapseBtn:hover {
+  background: var(--color-sunken);
+  color: var(--color-ink);
+}
+
+@keyframes flow {
+  to {
+    background-position: -300% 0;
+  }
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.25;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack,
+  .panel,
+  .fab {
+    transition: none;
+  }
+  .frame[data-busy="true"],
+  .frame[data-busy="true"]::before,
+  .send[data-busy="true"] svg {
+    animation: none;
+  }
+}
