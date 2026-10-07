@@ -106,6 +106,10 @@ function SectionCard({ def, profile }: { def: SectionDef; profile: Draft }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Kaydedilen değerler, sunucudan yenisi gelene kadar anında gösterilir (eski değerler bir an görünmesin).
+  // Sunucu yeni veri gönderince `profile` nesnesi değişir ve bu kayıt kendiliğinden devre dışı kalır.
+  const [justSaved, setJustSaved] = useState<{ base: Draft; value: Draft } | null>(null);
+  const shown = justSaved && justSaved.base === profile ? justSaved.value : profile;
 
   // Kaydedildi bildirimi birkaç saniye sonra kaybolur.
   useEffect(() => {
@@ -144,16 +148,17 @@ function SectionCard({ def, profile }: { def: SectionDef; profile: Draft }) {
       {editing ? (
         <SectionEditor
           def={def}
-          profile={profile}
+          profile={shown}
           onCancel={() => setEditing(false)}
-          onSaved={() => {
+          onSaved={(value) => {
+            setJustSaved({ base: profile, value });
             setEditing(false);
             setSaved(true);
             router.refresh();
           }}
         />
       ) : (
-        <div className="mt-6 grid gap-5">{def.view(profile)}</div>
+        <div className="mt-6 grid gap-5">{def.view(shown)}</div>
       )}
     </section>
   );
@@ -169,7 +174,7 @@ function SectionEditor({
   def: SectionDef;
   profile: Draft;
   onCancel: () => void;
-  onSaved: () => void;
+  onSaved: (saved: Draft) => void;
 }) {
   const [draft, setDraft] = useState<Draft>(() => draftFrom(profile));
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -196,7 +201,7 @@ function SectionEditor({
     startTransition(async () => {
       try {
         const result = await saveProfileSection(def.id, draft);
-        if (result.ok) return onSaved();
+        if (result.ok) return onSaved(draft);
         setError(result.error);
         if (result.fields) setErrors(result.fields as FieldErrors);
       } catch {
