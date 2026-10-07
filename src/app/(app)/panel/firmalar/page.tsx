@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
-import { FavoritesUnavailableError, listFavorites, type Favorite } from "@/modules/favorites/repository";
+import { FavoritesUnavailableError, listFavorites, type FavoriteWithNotes } from "@/modules/favorites/repository";
 import { getProfile } from "@/modules/profile/repository";
 import { customerTabs, SectionTabs } from "../../_components/section-tabs";
 import { FavoritesBoard } from "./_components/favorites-board";
@@ -13,7 +13,7 @@ async function Content() {
   const user = await requireUser();
   if (!(await getProfile(user.uid))) redirect("/onboarding");
 
-  let favorites: Favorite[] = [];
+  let favorites: FavoriteWithNotes[] = [];
   try {
     favorites = await listFavorites(user.uid);
   } catch (e) {

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { ActionLink } from "@/components/ui/action-link";
 import { Disclosure } from "@/components/ui/disclosure";
+import { BookmarkIcon, GlobeIcon, MapPinIcon, PhoneIcon } from "@/components/ui/icons";
 import { toast } from "@/components/ui/toast";
 import { scoreTone } from "@/lib/score";
 import { safeUrl, telHref } from "@/lib/url";
@@ -16,22 +18,6 @@ const criteria: { key: keyof Lead; label: string }[] = [
   { key: "reachability", label: "Ulaşılabilirlik" },
   { key: "priority", label: "Öncelik" },
 ];
-
-const linkClass = "rounded-control px-3 py-1.5 text-sm font-medium ring-1 ring-line-strong ring-inset hover:bg-sunken";
-
-function BookmarkIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true" className="transition-transform duration-200 group-active:scale-90">
-      <path
-        d="M7.5 4h9a1 1 0 0 1 1 1v14.5l-5.5-3.7-5.5 3.7V5a1 1 0 0 1 1-1Z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 const rankAccent = [1, 0.65, 0.4];
 
@@ -154,26 +140,14 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
               type="button"
               onClick={toggle}
               aria-pressed={fav}
-              className="group inline-flex items-center gap-1.5 rounded-control bg-surface px-3 py-1.5 text-sm font-medium text-forest ring-1 ring-forest/40 ring-inset transition-colors hover:bg-forest-soft aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
+              className="group inline-flex h-9 items-center gap-2 rounded-full bg-surface px-3.5 text-sm font-medium text-forest ring-1 ring-forest/40 ring-inset transition-[background-color,color] duration-200 hover:bg-forest-soft aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
             >
-              <BookmarkIcon filled={fav} />
+              <BookmarkIcon size={16} filled={fav} />
               {fav ? "Takipte" : "Takibe al"}
             </button>
-            {tel && (
-              <a href={tel} className={linkClass}>
-                {lead.phone}
-              </a>
-            )}
-            {website && (
-              <a href={website} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                Web sitesi
-              </a>
-            )}
-            {maps && (
-              <a href={maps} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                Haritada aç
-              </a>
-            )}
+            {tel && <ActionLink href={tel} icon={<PhoneIcon />} label={lead.phone ?? "Ara"} />}
+            {website && <ActionLink href={website} icon={<GlobeIcon />} label="Web sitesi" external />}
+            {maps && <ActionLink href={maps} icon={<MapPinIcon />} label="Haritada aç" external />}
           </div>
         </div>
       </Disclosure>

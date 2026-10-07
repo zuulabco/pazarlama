@@ -21,12 +21,23 @@ export type Favorite = {
   priority: number | null;
   source: string | null;
   status: FollowStatus;
-  note: string;
   created_at: string;
 };
 
+export type FavoriteNote = { id: string; body: string; created_at: string };
+export type FavoriteWithNotes = Favorite & { notes: FavoriteNote[] };
+
+/** Notlar tablosu henüz oluşturulmadıysa (0004 migration'ı çalıştırılmadıysa) fırlatılır. */
+export class NotesUnavailableError extends Error {
+  constructor() {
+    super("Notlar tablosu bulunamadı. supabase/migrations/0004_favorite_notes.sql çalıştırılmalı.");
+  }
+}
+
+export const maxNotesPerFavorite = 100;
+
 const columns =
-  "id, place_id, name, category, address, city, phone, website, maps_url, rating, review_count, lead_score, digital_need, reachability, priority, source, status, note, created_at";
+  "id, place_id, name, category, address, city, phone, website, maps_url, rating, review_count, lead_score, digital_need, reachability, priority, source, status, created_at";
 
 /** Favoriler tablosu henüz oluşturulmadıysa (0003 migration'ı çalıştırılmadıysa) fırlatılır. */
 export class FavoritesUnavailableError extends Error {
@@ -44,7 +55,7 @@ function check(what: string, error: DbError | null) {
   throw new Error(`${what}: ${error.message}`);
 }
 
-export async function listFavorites(uid: string) {
+export async function listFavorites(uid: string): Promise<FavoriteWithNotes[]> {
   const { data, error } = await db()
     .from("favorites")
     .select(columns)
@@ -52,7 +63,28 @@ export async function listFavorites(uid: string) {
     .order("created_at", { ascending: false })
     .returns<Favorite[]>();
   check("Favoriler okunamadı", error);
-  return data ?? [];
+  const favorites = data ?? [];
+  if (favorites.length === 0) return [];
+
+  // Notlar ayrı tabloda; tablo henüz yoksa firmalar notsuz listelenir.
+  const notes = await db()
+    .from("favorite_notes")
+    .select("id, favorite_id, body, created_at")
+    .eq("user_uid", uid)
+    .in("favorite_id", favorites.map((f) => f.id))
+    .order("created_at", { ascending: false })
+    .returns<(FavoriteNote & { favorite_id: string })[]>();
+  const byFavorite = new Map<string, FavoriteNote[]>();
+  if (!notes.error) {
+    for (const n of notes.data ?? []) {
+      const list = byFavorite.get(n.favorite_id) ?? [];
+      list.push({ id: n.id, body: n.body, created_at: n.created_at });
+      byFavorite.set(n.favorite_id, list);
+    }
+  } else if (notes.error.code !== "42P01" && notes.error.code !== "PGRST205") {
+    throw new Error(`Notlar okunamadı: ${notes.error.message}`);
+  }
+  return favorites.map((f) => ({ ...f, notes: byFavorite.get(f.id) ?? [] }));
 }
 
 /** Verilen firmalardan hangileri kullanıcının takibinde? Tablo yoksa boş küme döner (liste yine çizilir). */
@@ -106,8 +138,43 @@ export async function removeFavorite(uid: string, placeId: string) {
   check("Favori kaldırılamadı", error);
 }
 
-export async function updateFavorite(uid: string, id: string, patch: { status?: FollowStatus; note?: string }) {
+export async function updateFavorite(uid: string, id: string, patch: { status?: FollowStatus }) {
   const { data, error } = await db().from("favorites").update(patch).eq("id", id).eq("user_uid", uid).select("id");
   check("Favori güncellenemedi", error);
   return (data?.length ?? 0) > 0;
+}
+
+const isMissing = (e: DbError) => e.code === "42P01" || e.code === "PGRST205";
+
+/** Takipteki firmaya yeni bir not ekler. Firma kullanıcıya ait değilse null döner. */
+export async function addNote(uid: string, favoriteId: string, body: string): Promise<FavoriteNote | null> {
+  const owner = await db().from("favorites").select("id").eq("id", favoriteId).eq("user_uid", uid).maybeSingle();
+  check("Favori okunamadı", owner.error);
+  if (!owner.data) return null;
+
+  const count = await db().from("favorite_notes").select("id", { count: "exact", head: true }).eq("favorite_id", favoriteId);
+  if (count.error) {
+    if (isMissing(count.error)) throw new NotesUnavailableError();
+    throw new Error(`Notlar okunamadı: ${count.error.message}`);
+  }
+  if ((count.count ?? 0) >= maxNotesPerFavorite) throw new Error(`Bir firmaya en fazla ${maxNotesPerFavorite} not eklenebilir.`);
+
+  const { data, error } = await db()
+    .from("favorite_notes")
+    .insert({ user_uid: uid, favorite_id: favoriteId, body })
+    .select("id, body, created_at")
+    .single<FavoriteNote>();
+  if (error) {
+    if (isMissing(error)) throw new NotesUnavailableError();
+    throw new Error(`Not eklenemedi: ${error.message}`);
+  }
+  return data;
+}
+
+export async function deleteNote(uid: string, favoriteId: string, noteId: string) {
+  const { error } = await db().from("favorite_notes").delete().eq("id", noteId).eq("favorite_id", favoriteId).eq("user_uid", uid);
+  if (error) {
+    if (isMissing(error)) throw new NotesUnavailableError();
+    throw new Error(`Not silinemedi: ${error.message}`);
+  }
 }

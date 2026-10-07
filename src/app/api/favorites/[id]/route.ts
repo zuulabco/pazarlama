@@ -9,12 +9,10 @@ const error = (message: string, status: number) => NextResponse.json({ error: me
 
 const patchSchema = z
   .object({
-    status: z.enum(followStatusValues).optional(),
-    note: z.string().trim().max(500, "Not en fazla 500 karakter olabilir.").optional(),
-  })
-  .refine((v) => v.status !== undefined || v.note !== undefined, "Güncellenecek bir alan yok.");
+    status: z.enum(followStatusValues),
+  });
 
-/** Takipteki firmanın aşamasını ve notunu günceller. */
+/** Takipteki firmanın aşamasını günceller. */
 export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/favorites/[id]">) {
   if (!isSameOrigin(req)) return error("Geçersiz istek kaynağı.", 403);
   const user = await getSessionUser();
