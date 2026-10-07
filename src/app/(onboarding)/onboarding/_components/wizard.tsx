@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/ui/wordmark";
-import { channels, cityScopes, companySizes, dealValues, popularCities, sectors, services, signals, workTypes } from "@/modules/profile/options";
+import { channels, cityScopes, companySizes, dealValues, sectors, services, signals, workTypes } from "@/modules/profile/options";
+import { titleCase } from "@/lib/text";
+import { provinces } from "@/modules/profile/cities";
 import { profileSchema, stepSchemas } from "@/modules/profile/schema";
 import { completeOnboarding } from "../actions";
 import { ComboField } from "./combo-field";
@@ -44,14 +46,7 @@ const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text
 };
 
 const sizeOptions = companySizes.map((s) => ({ value: s.value, label: s.label }));
-const cityOptions = popularCities.map((c) => ({ value: c, label: c }));
-
-function titleCase(s: string) {
-  return s
-    .split(/\s+/)
-    .map((w) => w.charAt(0).toLocaleUpperCase("tr") + w.slice(1).toLocaleLowerCase("tr"))
-    .join(" ");
-}
+const cityOptions = provinces.map((c) => ({ value: c, label: c }));
 
 function BigInput({
   label,
@@ -129,7 +124,10 @@ function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
         if (e.target === e.currentTarget && e.propertyName === "grid-template-rows") setSettled(open);
       }}
     >
-      <div inert={!open}>{children}</div>
+      {/* Üst dolgu, formun alanlar arası boşluğudur (gap-9). Boşluk alanın içinde olduğundan kapalıyken yer kaplamaz. */}
+      <div inert={!open}>
+        <div className="pt-9">{children}</div>
+      </div>
     </div>
   );
 }
@@ -398,27 +396,30 @@ export function Wizard({
 
                   {stage === "reach" && (
                     <>
-                      <ComboField
-                        legend="Hangi bölgede müşteri arıyorsunuz?"
-                        options={cityScopes}
-                        value={draft.cityScope ? [draft.cityScope] : []}
-                        onChange={([v]) => update("cityScope", v ?? "")}
-                        single
-                        placeholder="Seçin"
-                        error={errors.cityScope}
-                      />
-                      <Reveal open={draft.cityScope === "cities"}>
+                      {/* Şehir alanı bölge sorusunun altında açılır; kapalıyken araya boşluk girmez. */}
+                      <div>
                         <ComboField
-                          legend="Şehirler"
-                          options={cityOptions}
-                          value={draft.targetCities}
-                          onChange={(v) => update("targetCities", v)}
-                          allowCustom
-                          normalize={titleCase}
-                          placeholder="Şehir ya da ilçe seçin, yazın"
-                          error={errors.targetCities}
+                          legend="Hangi bölgede müşteri arıyorsunuz?"
+                          options={cityScopes}
+                          value={draft.cityScope ? [draft.cityScope] : []}
+                          onChange={([v]) => update("cityScope", v ?? "")}
+                          single
+                          placeholder="Seçin"
+                          error={errors.cityScope}
                         />
-                      </Reveal>
+                        <Reveal open={draft.cityScope === "cities"}>
+                          <ComboField
+                            legend="Şehirler"
+                            options={cityOptions}
+                            value={draft.targetCities}
+                            onChange={(v) => update("targetCities", v)}
+                            allowCustom
+                            normalize={titleCase}
+                            placeholder="İl seçin ya da ilçe yazın"
+                            error={errors.targetCities}
+                          />
+                        </Reveal>
+                      </div>
                       <ComboField
                         legend="Müşterilere hangi kanallardan ulaşıyorsunuz?"
                         options={channels}

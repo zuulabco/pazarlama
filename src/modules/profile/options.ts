@@ -70,21 +70,6 @@ export const dealValues = [
   { value: "150k-ustu", label: "150 bin ₺ üzeri" },
 ] as const;
 
-export const popularCities = [
-  "İstanbul",
-  "Ankara",
-  "İzmir",
-  "Bursa",
-  "Antalya",
-  "Adana",
-  "Konya",
-  "Gaziantep",
-  "Kocaeli",
-  "Mersin",
-  "Kayseri",
-  "Eskişehir",
-] as const;
-
 type Option = { readonly value: string };
 export const values = <T extends readonly Option[]>(list: T) => list.map((o) => o.value) as [T[number]["value"], ...T[number]["value"][]];
 

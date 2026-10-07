@@ -26,7 +26,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
                 </li>
                 <li>
                   <Link href="/onboarding?edit=1" className="rounded-control px-3 py-2 transition-colors hover:text-ink">
-                    Bilgi kartım
+                    Profilim
                   </Link>
                 </li>
               </ul>

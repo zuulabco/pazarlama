@@ -19,7 +19,12 @@ async function PanelHeading() {
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         {firstName ? `Merhaba ${firstName}` : "Merhaba"}
       </h1>
-      <p className="mt-2 max-w-prose text-muted">{profile.businessName} için neyle başlamak istersiniz?</p>
+      <p className="mt-2 max-w-prose text-muted">
+        {profile.businessName} için neyle başlamak istersiniz?{" "}
+        <Link href="/onboarding?edit=1" className="whitespace-nowrap text-forest underline underline-offset-4 hover:no-underline">
+          Profilimi düzenle
+        </Link>
+      </p>
     </>
   );
 }

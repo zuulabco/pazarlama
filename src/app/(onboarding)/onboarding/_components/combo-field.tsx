@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { capitalize, fold } from "@/lib/text";
 import styles from "./wizard.module.css";
 
 export type Option = { readonly value: string; readonly label: string; readonly hint?: string };
@@ -22,8 +23,6 @@ type Props = {
   error?: string;
 };
 
-const fold = (s: string) => s.toLocaleLowerCase("tr");
-
 type Item = { kind: "option"; option: Option } | { kind: "custom"; text: string };
 
 /**
@@ -40,7 +39,8 @@ export function ComboField({
   allowCustom = false,
   placeholder,
   max = 12,
-  normalize = (t) => t,
+  // Kullanıcının yazdıkları büyük harfle başlar; böylece hazır seçeneklerin (küçük harfli) kodlarıyla karışmaz.
+  normalize = capitalize,
   error,
 }: Props) {
   const id = useId();
@@ -54,17 +54,22 @@ export function ComboField({
 
   const query = fold(text.trim());
   const typed = normalize(text.trim());
-  const matches = options.filter(
-    (o) => (single || !value.includes(o.value)) && (!query || fold(o.label).includes(query)),
-  );
-  const known = options.some((o) => fold(o.label) === fold(typed) || fold(o.value) === fold(typed));
+  // Önce yazılanla başlayanlar, sonra içinde geçenler. Arama Türkçe karakterlere duyarsızdır.
+  const matches = options
+    .filter((o) => (single || !value.includes(o.value)) && (!query || fold(o.label).includes(query)))
+    .sort((a, b) => Number(!fold(a.label).startsWith(query)) - Number(!fold(b.label).startsWith(query)));
+  // "Ekle" yalnızca yazılan, bir seçeneğin adıyla ya da seçili bir etiketle birebir aynı değilse çıkar.
+  // (Seçeneklerin iç kodlarıyla karşılaştırılmaz: "reklam" yazmak "Reklam" eklemeyi engellememeli.)
+  const exists = (label: string) => fold(label) === fold(typed);
   const canAdd =
-    allowCustom && !full && typed.length >= 2 && !known && !value.some((v) => fold(v) === fold(typed));
+    allowCustom && !full && typed.length >= 2 && !options.some((o) => exists(o.label)) && !value.some((v) => exists(labelOf(v)));
 
   const items: Item[] = [
     ...matches.map((option) => ({ kind: "option" as const, option })),
     ...(canAdd ? [{ kind: "custom" as const, text: typed }] : []),
   ];
+  // Yazarken ilk öneri otomatik vurgulanır: Enter onu seçer. Ok tuşları ya da fare vurguyu değiştirir.
+  const current = active >= 0 ? Math.min(active, items.length - 1) : query && items.length > 0 ? 0 : -1;
 
   function pick(item: Item) {
     const v = item.kind === "option" ? item.option.value : item.text;
@@ -81,20 +86,17 @@ export function ComboField({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setOpen(true);
-      setActive((i) => Math.min(items.length - 1, i + 1));
+      setActive(Math.min(items.length - 1, current + 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActive((i) => Math.max(0, i - 1));
+      setActive(Math.max(0, current - 1));
     } else if (e.key === "Enter") {
-      // Enter formu göndermez. Ok tuşuyla bir öneri seçildiyse onu, değilse yazılan metni ekler
-      // (serbest metin kısıtlanmasın); eklenemiyorsa en yakın öneriyi seçer.
-      if (open && active >= 0 && items[active]) {
+      // Enter formu göndermez; vurgulu öneriyi seçer. Kendi ifadeni eklemek için listedeki "ekle" satırını seç.
+      if (open && current >= 0) {
         e.preventDefault();
-        pick(items[active]);
+        pick(items[current]);
       } else if (text.trim()) {
         e.preventDefault();
-        const target = items.find((i) => i.kind === "custom") ?? items[0];
-        if (target) pick(target);
       }
     } else if (e.key === "Escape") {
       setOpen(false);
@@ -163,7 +165,7 @@ export function ComboField({
           aria-expanded={open}
           aria-controls={listId}
           aria-autocomplete="list"
-          aria-activedescendant={active >= 0 ? `${id}-opt-${active}` : undefined}
+          aria-activedescendant={open && current >= 0 ? `${id}-opt-${current}` : undefined}
           aria-invalid={error ? true : undefined}
           value={text}
           onChange={(e) => {
@@ -208,7 +210,7 @@ export function ComboField({
                     id={`${id}-opt-${i}`}
                     role="option"
                     aria-selected={selected}
-                    data-active={i === active}
+                    data-active={i === current}
                     onPointerDown={(e) => e.preventDefault()} // girdi odağını kaybetmesin
                     onClick={() => pick(item)}
                     onMouseMove={() => setActive(i)}
