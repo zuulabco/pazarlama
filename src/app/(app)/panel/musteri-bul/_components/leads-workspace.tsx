@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useTransition, type ReactNode } from "react";
+import type { Facets } from "@/modules/leads/facets";
 import { FiltersPanel } from "./filters-panel";
 import { ResultsArea } from "./results-area";
 import type { Navigate, ResultFilters, SearchView } from "./types";
@@ -16,6 +17,7 @@ export function LeadsWorkspace({
   filters,
   total,
   shown,
+  facets,
   defaults,
   children,
 }: {
@@ -24,6 +26,8 @@ export function LeadsWorkspace({
   filters: ResultFilters;
   total: number;
   shown: number;
+  /** Süzgeç sayıları (Apollo tarzı). */
+  facets: Facets;
   defaults: { province: string; district: string };
   /** Sunucuda çizilen firma listesi. */
   children: ReactNode;
@@ -31,6 +35,7 @@ export function LeadsWorkspace({
   const router = useRouter();
   const params = useSearchParams();
   const [filtering, startFiltering] = useTransition();
+  const [opening, startOpening] = useTransition();
   const [submitting, setSubmitting] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(!search);
@@ -43,6 +48,12 @@ export function LeadsWorkspace({
     startFiltering(() => router.replace(`/panel/musteri-bul?${next}`, { scroll: false }));
   };
 
+  /** Geçmiş bir aramayı açar; sunucudan gelene kadar yükleme animasyonu gösterilir. */
+  const openSearch = (id: string) => {
+    setPanelOpen(false);
+    startOpening(() => router.push(`/panel/musteri-bul?s=${id}`));
+  };
+
   // Sayfa yeni oluşturulan aramaya ulaşınca bekleme biter. (Props değişince durumu render sırasında
   // düzeltmek, React'in önerdiği yöntemdir; efekt gerekmez.)
   const [seenId, setSeenId] = useState(search?.id ?? null);
@@ -53,8 +64,23 @@ export function LeadsWorkspace({
   const waiting = submitting;
 
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)] xl:gap-8">
-      <div className="grid gap-3">
+    <div className="grid items-start gap-5 lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-0 xl:gap-x-8">
+      <ResultsArea
+        search={search}
+        filters={filters}
+        total={total}
+        shown={shown}
+        waiting={waiting}
+        pending={filtering}
+        navigate={navigate}
+        bodyRef={resultsRef}
+        opening={opening}
+        hasHistory={searches.length > 0}
+      >
+        {children}
+      </ResultsArea>
+
+      <div className="order-2 grid gap-3 lg:order-none lg:col-start-1 lg:row-start-2">
         <button
           type="button"
           aria-expanded={panelOpen}
@@ -71,6 +97,8 @@ export function LeadsWorkspace({
             searches={searches}
             selectedId={search?.id ?? null}
             navigate={navigate}
+            facets={total > 0 ? facets : null}
+            onOpenSearch={openSearch}
             busy={waiting}
             onSubmitStart={() => {
               setSubmitting(true);
@@ -91,20 +119,6 @@ export function LeadsWorkspace({
             }}
           />
         </div>
-      </div>
-
-      <div ref={resultsRef} className="min-w-0 scroll-mt-6">
-      <ResultsArea
-        search={search}
-        filters={filters}
-        total={total}
-        shown={shown}
-        waiting={waiting}
-        pending={filtering}
-        navigate={navigate}
-      >
-        {children}
-      </ResultsArea>
       </div>
     </div>
   );

@@ -18,13 +18,13 @@ const criteria: { key: keyof Lead; label: string }[] = [
 
 const linkClass = "rounded-control px-3 py-1.5 text-sm font-medium ring-1 ring-line-strong ring-inset hover:bg-sunken";
 
-function StarIcon({ filled }: { filled: boolean }) {
+function BookmarkIcon({ filled }: { filled: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" className="transition-transform duration-200 group-active:scale-90">
+    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true" className="transition-transform duration-200 group-active:scale-90">
       <path
-        d="m12 3.6 2.55 5.2 5.7.83-4.13 4.03.98 5.69L12 16.66 6.9 19.35l.98-5.69L3.75 9.63l5.7-.83L12 3.6Z"
-        fill={filled ? "var(--color-pollen)" : "none"}
-        stroke={filled ? "var(--color-forest)" : "currentColor"}
+        d="M7.5 4h9a1 1 0 0 1 1 1v14.5l-5.5-3.7-5.5 3.7V5a1 1 0 0 1 1-1Z"
+        fill={filled ? "currentColor" : "none"}
+        stroke="currentColor"
         strokeWidth="1.7"
         strokeLinejoin="round"
       />
@@ -32,8 +32,10 @@ function StarIcon({ filled }: { filled: boolean }) {
   );
 }
 
-/** Bir firma satırı: yıldızla takibe alma + yumuşakça açılan detay paneli. */
-export function LeadRow({ lead, favorited }: { lead: Lead; favorited: boolean }) {
+const rankAccent = [1, 0.65, 0.4];
+
+/** Bir firma satırı: takibe alma (yer imi) + yumuşakça açılan detay paneli. `rank`, listenin ilk üç sırasını (0-2) vurgular. */
+export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: boolean; rank?: number }) {
   const [fav, setFav] = useState(favorited);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,27 +71,39 @@ export function LeadRow({ lead, favorited }: { lead: Lead; favorited: boolean })
     }
   }
 
+  const top = rank !== undefined && rank < 3;
+
   return (
-    <li>
+    <li className={`relative transition-colors ${top ? "bg-forest-soft/30 hover:bg-forest-soft/55" : "hover:bg-sunken/40"}`}>
+      {top && <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-forest" style={{ opacity: rankAccent[rank!] }} />}
       <Disclosure
-        leading={
+        headerClassName="relative"
+        indicatorClassName="absolute right-4 bottom-3.5"
+        trailing={
           <button
             type="button"
             onClick={toggle}
             aria-pressed={fav}
             aria-label={fav ? `${lead.name} firmasını takipten çıkar` : `${lead.name} firmasını takibe al`}
             title={fav ? "Takipten çıkar" : "Takibe al"}
-            className="group ml-3 grid size-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-forest aria-pressed:text-forest"
+            className="group absolute top-2.5 right-2.5 z-10 grid size-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-forest aria-pressed:text-forest"
           >
-            <StarIcon filled={fav} />
+            <BookmarkIcon filled={fav} />
           </button>
         }
-        buttonClassName="py-4 pr-5 pl-3 hover:bg-sunken/40"
+        buttonClassName={`min-h-[5.25rem] py-4 pr-14 pl-5 ${top ? "sm:py-5" : ""}`}
         panelClassName="grid gap-6 border-t border-line bg-paper/60 px-5 py-5 md:grid-cols-2"
         summary={
           <span className="grid min-w-0 flex-1 grid-cols-[1fr_auto] items-center gap-4 sm:grid-cols-[1fr_8rem_auto]">
             <span className="min-w-0">
-              <span className="block truncate font-medium">{lead.name}</span>
+              <span className={`block truncate font-medium ${top ? "text-lg" : ""}`}>
+                {top && (
+                  <span className="mr-2 inline-grid size-5 place-items-center rounded-full bg-forest align-[0.1em] text-xs font-semibold text-white" aria-label={`${rank! + 1}. sıra`}>
+                    {rank! + 1}
+                  </span>
+                )}
+                {lead.name}
+              </span>
               <span className="block truncate text-sm text-muted">
                 {[lead.category, lead.city].filter(Boolean).join(" · ")}
                 {lead.rating ? ` · ${String(lead.rating).replace(".", ",")} puan` : ""}
@@ -129,6 +143,15 @@ export function LeadRow({ lead, favorited }: { lead: Lead; favorited: boolean })
         <div className="grid content-start gap-3 text-sm">
           {lead.address && <p className="text-muted">{lead.address}</p>}
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={toggle}
+              aria-pressed={fav}
+              className="group inline-flex items-center gap-1.5 rounded-control bg-surface px-3 py-1.5 text-sm font-medium text-forest ring-1 ring-forest/40 ring-inset transition-colors hover:bg-forest-soft aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
+            >
+              <BookmarkIcon filled={fav} />
+              {fav ? "Takipte" : "Takibe al"}
+            </button>
             {tel && (
               <a href={tel} className={linkClass}>
                 {lead.phone}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import type { AskItem, AskResult } from "@/modules/leads/ask/run";
 import styles from "./ask-box.module.css";
 
@@ -59,8 +60,13 @@ function Item({ item }: { item: AskItem }) {
  */
 export function AskBox({ searchId }: { searchId: string }) {
   const inputId = useId();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dockOpen, setDockOpen] = useState(true);
+  const [dockOpen, setDockOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
@@ -114,7 +120,9 @@ export function AskBox({ searchId }: { searchId: string }) {
 
   const showExamples = !result && !error && !busy;
 
-  return (
+  // Sabit kutu, üstündeki atalardan (taşma, dönüşüm) etkilenmesin diye doğrudan body'ye çizilir.
+  if (!mounted) return null;
+  return createPortal(
     <>
       <div className={styles.dock}>
         <div className={styles.stack} data-open={dockOpen} inert={!dockOpen}>
@@ -238,6 +246,7 @@ export function AskBox({ searchId }: { searchId: string }) {
           <Sparkle size={24} />
         </button>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }

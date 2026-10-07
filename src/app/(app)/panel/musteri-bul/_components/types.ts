@@ -1,5 +1,6 @@
-import type { LeadSort, Presence } from "@/modules/leads/sorts";
+import { facetKeys, type FacetFilters } from "@/modules/leads/facets";
 import type { SearchStatus } from "@/modules/leads/repository";
+import type { LeadSort } from "@/modules/leads/sorts";
 
 /** Sunucudan istemciye geçen (serileştirilebilir) arama özeti. */
 export type SearchView = {
@@ -14,17 +15,10 @@ export type SearchView = {
   createdAt: string;
 };
 
-/** Sonuç süzgeçleri; adres çubuğundaki parametrelerden okunur. */
-export type ResultFilters = {
-  min?: 50 | 70 | 85;
-  dn?: 60 | 80;
-  web?: Presence;
-  tel?: Presence;
-  star?: 4 | 4.5;
-  sort: LeadSort;
-};
+/** Sonuç süzgeçleri ve sıralama; adres çubuğundaki parametrelerden okunur. */
+export type ResultFilters = FacetFilters & { sort: LeadSort };
 
-export const filterKeys = ["min", "dn", "web", "tel", "star"] as const;
+export const filterKeys = facetKeys;
 
 export const isActiveStatus = (s: SearchStatus) => s === "pending" || s === "scraping" || s === "scoring";
 

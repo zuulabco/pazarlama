@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapse } from "@/components/ui/collapse";
 import { ComboField } from "@/components/ui/combo-field";
 import { Segmented } from "@/components/ui/segmented";
+import { Select } from "@/components/ui/select";
+import type { Facets } from "@/modules/leads/facets";
 import { provinces } from "@/modules/profile/cities";
 import { businessTypes } from "@/modules/leads/business-types";
 import { searchLimits } from "@/modules/leads/config";
 import { districtsOf } from "@/modules/leads/location";
-import { filterKeys, type Navigate, type ResultFilters, type SearchView } from "./types";
+import { filterKeys, isActiveStatus, type Navigate, type ResultFilters, type SearchView } from "./types";
 
 const typeOptions = businessTypes.map((t) => ({ value: t, label: t }));
 const provinceOptions = provinces.map((p) => ({ value: p, label: p }));
@@ -72,24 +75,53 @@ function FilterGroup({
   );
 }
 
-/** Süzgeç için "Hepsi + seçenekler" düğmeleri; "Hepsi" süzgeci kaldırır. */
+type Counts = { all: number; options: Record<string, number> };
+
+const Count = ({ n }: { n: number }) => <span className="ml-1 text-xs tabular-nums opacity-60">{n}</span>;
+
+/** Süzgeç için "Hepsi + seçenekler" düğmeleri; "Hepsi" süzgeci kaldırır. Sayılar, seçeneğe tıklanırsa kaç firma kalacağını gösterir. */
 function FilterSegmented<T extends string | number>({
   label,
   options,
   value,
   onChange,
+  counts,
 }: {
   label: string;
   options: readonly { value: T; label: string }[];
   value: T | undefined;
   onChange: (next: T | undefined) => void;
+  counts?: Counts;
 }) {
   return (
     <Segmented
       label={label}
       items={[
-        { key: "all", label: "Hepsi", pressed: value === undefined, onClick: () => onChange(undefined) },
-        ...options.map((o) => ({ key: String(o.value), label: o.label, pressed: value === o.value, onClick: () => onChange(o.value) })),
+        {
+          key: "all",
+          label: (
+            <>
+              Hepsi{counts && <Count n={counts.all} />}
+            </>
+          ),
+          pressed: value === undefined,
+          onClick: () => onChange(undefined),
+        },
+        ...options.map((o) => {
+          const n = counts?.options[String(o.value)];
+          return {
+            key: String(o.value),
+            label: (
+              <>
+                {o.label}
+                {n !== undefined && <Count n={n} />}
+              </>
+            ),
+            pressed: value === o.value,
+            onClick: () => onChange(o.value),
+            disabled: n === 0 && value !== o.value,
+          };
+        }),
       ]}
     />
   );
@@ -114,6 +146,8 @@ export function FiltersPanel({
   searches,
   selectedId,
   navigate,
+  facets,
+  onOpenSearch,
   busy,
   onSubmitStart,
   onCreated,
@@ -124,6 +158,10 @@ export function FiltersPanel({
   searches: SearchView[];
   selectedId: string | null;
   navigate: Navigate;
+  /** Süzgeç sayıları; seçili arama yokken (ya da sonuç yokken) null. */
+  facets: Facets | null;
+  /** Geçmiş bir aramayı açar (yükleme animasyonuyla). */
+  onOpenSearch: (id: string) => void;
   busy: boolean;
   onSubmitStart: () => void;
   onCreated: (id: string) => void;
@@ -149,6 +187,22 @@ export function FiltersPanel({
     { mode: "all", label: "Tümü" },
     { mode: "custom", label: "Özel" },
   ];
+
+  const router = useRouter();
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  async function removeSearch(id: string) {
+    setRemoving(id);
+    try {
+      const res = await fetch(`/api/leads/searches/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        if (id === selectedId) router.push("/panel/musteri-bul");
+        router.refresh();
+      }
+    } finally {
+      setRemoving(null);
+    }
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -247,7 +301,7 @@ export function FiltersPanel({
             <legend className="mb-0.5 text-base font-medium">
               Listelenecek firma sayısı
               <span className="mt-0.5 block text-sm font-normal text-muted">
-                Az firma daha hızlı sonuç verir. Tümü en fazla {searchLimits.maxResults} firmadır.
+                Az firma daha hızlı sonuç verir.
               </span>
             </legend>
             <Segmented
@@ -302,20 +356,40 @@ export function FiltersPanel({
 
       <FilterGroup title="Filtreler" badge={active}>
         <FilterRow title="Web sitesi" hint="Yeni aramalar da bu seçime göre yapılır.">
-          <FilterSegmented label="Web sitesi" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.web} onChange={setFilter("web")} />
+          <FilterSegmented label="Web sitesi" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.web} onChange={setFilter("web")} counts={facets?.counts.web} />
         </FilterRow>
         <FilterRow title="Telefon numarası">
-          <FilterSegmented label="Telefon numarası" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.tel} onChange={setFilter("tel")} />
+          <FilterSegmented label="Telefon numarası" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.tel} onChange={setFilter("tel")} counts={facets?.counts.tel} />
         </FilterRow>
         <FilterRow title="Genel skor">
-          <FilterSegmented label="Genel skor" options={[{ value: 50, label: "50+" }, { value: 70, label: "70+" }, { value: 85, label: "85+" }]} value={filters.min} onChange={setFilter("min")} />
+          <FilterSegmented label="Genel skor" options={[{ value: 50, label: "50+" }, { value: 70, label: "70+" }, { value: 85, label: "85+" }]} value={filters.min} onChange={setFilter("min")} counts={facets?.counts.min} />
         </FilterRow>
         <FilterRow title="Dijital ihtiyaç">
-          <FilterSegmented label="Dijital ihtiyaç" options={[{ value: 60, label: "60+" }, { value: 80, label: "80+" }]} value={filters.dn} onChange={setFilter("dn")} />
+          <FilterSegmented label="Dijital ihtiyaç" options={[{ value: 60, label: "60+" }, { value: 80, label: "80+" }]} value={filters.dn} onChange={setFilter("dn")} counts={facets?.counts.dn} />
+        </FilterRow>
+        <FilterRow title="Ulaşılabilirlik">
+          <FilterSegmented label="Ulaşılabilirlik" options={[{ value: 60, label: "60+" }, { value: 80, label: "80+" }]} value={filters.rc} onChange={setFilter("rc")} counts={facets?.counts.rc} />
         </FilterRow>
         <FilterRow title="Google puanı">
-          <FilterSegmented label="Google puanı" options={[{ value: 4, label: "4,0+" }, { value: 4.5, label: "4,5+" }]} value={filters.star} onChange={setFilter("star")} />
+          <FilterSegmented label="Google puanı" options={[{ value: 4, label: "4,0+" }, { value: 4.5, label: "4,5+" }]} value={filters.star} onChange={setFilter("star")} counts={facets?.counts.star} />
         </FilterRow>
+        <FilterRow title="Yorum sayısı">
+          <FilterSegmented label="Yorum sayısı" options={[{ value: 50, label: "50+" }, { value: 200, label: "200+" }, { value: 500, label: "500+" }]} value={filters.rev} onChange={setFilter("rev")} counts={facets?.counts.rev} />
+        </FilterRow>
+        {facets && (facets.districts.length > 1 || filters.d) && (
+          <FilterRow title="Semt">
+            <Select<string>
+              label="Semt"
+              value={filters.d ?? ""}
+              options={[
+                { value: "", label: `Tüm semtler (${facets.districtAll})` },
+                ...facets.districts.map((d) => ({ value: d.name, label: `${d.name} (${d.count})` })),
+                ...(filters.d && !facets.districts.some((d) => d.name === filters.d) ? [{ value: filters.d, label: filters.d }] : []),
+              ]}
+              onChange={(v) => setFilter("d")(v || undefined)}
+            />
+          </FilterRow>
+        )}
         {active > 0 && (
           <button
             type="button"
@@ -328,14 +402,20 @@ export function FiltersPanel({
       </FilterGroup>
 
       {searches.length > 0 && (
-        <FilterGroup title="Son aramalar" defaultOpen={false}>
+        <FilterGroup title="Son aramalar" defaultOpen={!selectedId}>
           <ul className="-mx-2 grid gap-0.5">
             {searches.map((s) => (
-              <li key={s.id}>
+              <li key={s.id} className="group relative" data-removing={removing === s.id}>
                 <Link
                   href={`/panel/musteri-bul?s=${s.id}`}
                   aria-current={s.id === selectedId ? "true" : undefined}
-                  className="grid gap-0.5 rounded-control px-3 py-2.5 hover:bg-sunken/60 aria-[current=true]:bg-forest-soft"
+                  onClick={(e) => {
+                    // Ctrl/Cmd/orta tıklama yeni sekmede açar; düz tıklama animasyonla açılır.
+                    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                    e.preventDefault();
+                    if (s.id !== selectedId) onOpenSearch(s.id);
+                  }}
+                  className="grid gap-0.5 rounded-control py-2.5 pr-11 pl-3 hover:bg-sunken/60 aria-[current=true]:bg-forest-soft"
                 >
                   <span className="truncate text-sm font-medium">{s.query} · {s.location}</span>
                   <span className="text-xs text-muted">
@@ -343,6 +423,20 @@ export function FiltersPanel({
                     {s.status === "done" ? ` · ${s.scored} firma` : ""}
                   </span>
                 </Link>
+                {!isActiveStatus(s.status) && (
+                  <button
+                    type="button"
+                    onClick={() => removeSearch(s.id)}
+                    disabled={removing === s.id}
+                    aria-label={`${s.query} · ${s.location} aramasını sil`}
+                    title="Aramayı sil"
+                    className="absolute top-1/2 right-1.5 grid size-8 -translate-y-1/2 place-items-center rounded-full text-muted transition-colors hover:bg-line hover:text-danger disabled:opacity-40"
+                  >
+                    <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                      <path d="m2.5 2.5 7 7m0-7-7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                )}
               </li>
             ))}
           </ul>

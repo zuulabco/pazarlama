@@ -93,6 +93,12 @@ export async function listSearches(uid: string, limit = 8) {
   return data;
 }
 
+/** Aramayı ve firmalarını siler (firmalar zincirleme silinir). Takibe alınmış firmalar etkilenmez: kendi kopyalarını tutar. */
+export async function deleteSearch(uid: string, id: string) {
+  const { error } = await db().from("lead_searches").delete().eq("user_uid", uid).eq("id", id);
+  if (error) fail("Arama silinemedi", error);
+}
+
 export async function countSearchesSince(uid: string, since: Date) {
   const { count, error } = await db()
     .from("lead_searches")

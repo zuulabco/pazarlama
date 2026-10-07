@@ -4,12 +4,12 @@ import { Suspense } from "react";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/session";
 import { canonicalProvince } from "@/modules/leads/location";
+import { computeFacets, filterAndSort } from "@/modules/leads/facets";
 import {
-  countLeads,
   getSearch,
   leadSorts,
+  listScoredLeads,
   listSearches,
-  queryLeads,
   type LeadSort,
   type Presence,
   type Search,
@@ -36,6 +36,9 @@ function parseFilters(sp: Params): ResultFilters {
     web: presence(one(sp.web)),
     tel: presence(one(sp.tel)),
     star: pick(one(sp.star), [4, 4.5] as const),
+    rev: pick(one(sp.rev), [50, 200, 500] as const),
+    rc: pick(one(sp.rc), [60, 80] as const),
+    d: one(sp.d)?.slice(0, 60) || undefined,
     sort: sort && sort in leadSorts ? (sort as LeadSort) : "score",
   };
 }
@@ -61,30 +64,22 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
   const filters = parseFilters(sp);
 
   const searches = await listSearches(user.uid);
+  // Sayfa açıldığında hiçbir arama seçili gelmez; geçmiş aramaya "Son aramalar" üzerinden ya da ?s= ile ulaşılır.
   const requested = one(sp.s);
   const selected =
     requested && z.uuid().safeParse(requested).success
       ? (searches.find((x) => x.id === requested) ?? (await getSearch(user.uid, requested)))
-      : searches[0];
+      : null;
 
   // Arama sürerken de o ana kadar puanlanan firmalar listelenir (sonuçlar geldikçe belirir).
-  const [results, total] = selected
-    ? await Promise.all([
-        queryLeads(user.uid, selected.id, {
-          minScore: filters.min,
-          minDigital: filters.dn,
-          web: filters.web,
-          tel: filters.tel,
-          minRating: filters.star,
-          sort: filters.sort,
-          limit: 100,
-        }),
-        countLeads(user.uid, selected.id),
-      ])
-    : [null, 0];
+  // Bir arama en çok 100 firma içerdiği için süzme, sıralama ve süzgeç sayıları tek sorguyla bellekte yapılır.
+  const allLeads = selected ? await listScoredLeads(user.uid, selected.id) : [];
+  const rows = filterAndSort(allLeads, filters, filters.sort);
+  const facets = computeFacets(allLeads, filters);
+  const total = allLeads.length;
 
-  const favorites = await favoritePlaceIds(user.uid, results?.rows.map((r) => r.place_id) ?? []);
-  const filtered = Boolean(filters.min || filters.dn || filters.web || filters.tel || filters.star);
+  const favorites = await favoritePlaceIds(user.uid, rows.map((r) => r.place_id));
+  const filtered = Object.entries(filters).some(([k, v]) => k !== "sort" && v !== undefined);
   const firstCity = profile.cityScope === "cities" ? profile.targetCities.map(canonicalProvince).find(Boolean) : null;
 
   return (
@@ -93,14 +88,15 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
       searches={searches.map(toView)}
       filters={filters}
       total={total}
-      shown={results?.rows.length ?? 0}
+      shown={rows.length}
+      facets={facets}
       defaults={{ province: firstCity ?? "", district: "" }}
     >
-      {results && results.rows.length > 0 ? (
-        <LeadList rows={results.rows} favorites={favorites} />
+      {rows.length > 0 ? (
+        <LeadList rows={rows} favorites={favorites} />
       ) : (
-        results && (
-          <p className="rounded-panel bg-surface px-5 py-10 text-center text-muted ring-1 ring-line">
+        selected && (
+          <p className="px-5 py-10 text-center text-muted">
             {filtered
               ? "Bu süzgeçlere uyan firma yok. Bir süzgeci kaldırın ya da gevşetin."
               : selected?.status === "done"

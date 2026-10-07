@@ -12,6 +12,9 @@ export function Disclosure({
   children,
   defaultOpen = false,
   leading,
+  trailing,
+  headerClassName = "",
+  indicatorClassName = "",
   className = "",
   buttonClassName = "",
   panelClassName = "",
@@ -22,6 +25,12 @@ export function Disclosure({
   defaultOpen?: boolean;
   /** Başlığın solunda, düğmenin dışında duran etkileşimli öğe (örn. yıldız düğmesi). */
   leading?: ReactNode;
+  /** Başlığın sağında, düğmenin dışında duran etkileşimli öğe (örn. takip düğmesi). */
+  trailing?: ReactNode;
+  /** Başlık satırına eklenen sınıflar (örn. köşeye konumlanan öğeler için `relative`). */
+  headerClassName?: string;
+  /** Ok simgesine eklenen sınıflar (örn. köşeye taşımak için). */
+  indicatorClassName?: string;
   className?: string;
   buttonClassName?: string;
   panelClassName?: string;
@@ -30,7 +39,7 @@ export function Disclosure({
   const id = useId();
   return (
     <div className={className}>
-      <div className="flex items-center">
+      <div className={`flex items-center ${headerClassName}`}>
         {leading}
         <button
           type="button"
@@ -45,11 +54,12 @@ export function Disclosure({
             width="16"
             height="16"
             aria-hidden="true"
-            className="shrink-0 text-muted transition-transform duration-300 group-aria-expanded:rotate-180"
+            className={`shrink-0 text-muted transition-transform duration-300 group-aria-expanded:rotate-180 ${indicatorClassName}`}
           >
             <path d="m3.5 6 4.5 4.5L12.5 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
+        {trailing}
       </div>
       <Collapse open={open}>
         <div id={id} role="region" className={panelClassName}>
