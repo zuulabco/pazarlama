@@ -1,17 +1,122 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Sinyal tasarım token'ları
+ * ─────────────────────────
+ * Ham değerler yalnızca burada tanımlanır; bileşenler sadece semantik
+ * token'ları (bg-paper, text-ink, rounded-panel …) kullanır.
+ * Tailwind'in varsayılan renk paleti kapatıldı ki token dışı renk sızmasın.
+ * "static": CSS Modules'tan var(--…) ile okunan token'lar da her zaman üretilsin.
+ */
+@theme static {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+
+  /* Zemin & metin */
+  --color-paper: #f4f6f3;
+  --color-surface: #ffffff;
+  --color-sunken: #eaeeea;
+  --color-ink: #15201c;
+  --color-muted: #5b6862;
+  --color-line: #d9dfda;
+  --color-line-strong: #b9c3bc;
+
+  /* Marka */
+  --color-forest: #1d4a3c;
+  --color-forest-hover: #163a2f;
+  --color-forest-soft: #dfe9e3;
+  --color-pollen: #e3f27a;
+
+  /* Puan skalası (düşük → yüksek) */
+  --color-score-low: #c9d2cc;
+  --color-score-mid: #8fb3a3;
+  --color-score-high: #1d4a3c;
+
+  /* Tipografi — 1.25 oranlı ölçek, gövde 17px */
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.328rem;
+  --text-lg--line-height: 1.45;
+  --text-xl: 1.66rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 2.075rem;
+  --text-2xl--line-height: 1.15;
+  --text-3xl: 2.594rem;
+  --text-3xl--line-height: 1.08;
+  --text-display: clamp(2.6rem, 1.6rem + 4.2vw, 4.75rem);
+  --text-display--line-height: 1.02;
+
+  --tracking-tight: -0.022em;
+  --tracking-display: -0.038em;
+
+  /* Yarıçaplar hiyerarşiye göre: kontrol < satır < panel */
+  --radius-control: 0.625rem;
+  --radius-row: 0.75rem;
+  --radius-panel: 1.25rem;
+
+  /* Gölge tek ve katmanlı: yalnızca "yüzen" yüzeylerde */
+  --shadow-float: 0 1px 1px rgb(21 32 28 / 0.04), 0 8px 24px -6px rgb(21 32 28 / 0.1),
+    0 32px 64px -24px rgb(21 32 28 / 0.14);
+
+  /* Hareket */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Yerleşim */
+  --container-page: 72rem;
+  --container-prose: 38rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--color-pollen);
+    color: var(--color-ink);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, sans-serif;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
