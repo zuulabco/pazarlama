@@ -42,7 +42,7 @@ function ContextCard({ firm }: { firm: WorkFirm }) {
           <p className="mb-2 text-sm font-medium">İletişim</p>
           <ul className="grid gap-1 text-sm text-muted">
             {firm.phone && <li>{firm.phone}</li>}
-            {firm.email ? <li className="break-all">{firm.email}</li> : <li>E-posta eklenmemiş (Takip&apos;ten ekleyebilirsiniz)</li>}
+            {firm.email && <li className="break-all">{firm.email}</li>}
           </ul>
         </div>
       )}

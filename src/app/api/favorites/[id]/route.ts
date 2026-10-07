@@ -9,12 +9,10 @@ const error = (message: string, status: number) => NextResponse.json({ error: me
 
 const patchSchema = z
   .object({
-    status: z.enum(followStatusValues).optional(),
-    email: z.union([z.literal(""), z.email("Geçerli bir e-posta adresi girin.").max(254)]).optional(),
-  })
-  .refine((v) => v.status !== undefined || v.email !== undefined, "Güncellenecek bir alan yok.");
+    status: z.enum(followStatusValues),
+  });
 
-/** Takipteki firmanın aşamasını ve/veya e-posta adresini günceller. */
+/** Takipteki firmanın aşamasını günceller. */
 export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/favorites/[id]">) {
   if (!isSameOrigin(req)) return error("Geçersiz istek kaynağı.", 403);
   const user = await getSessionUser();
@@ -27,12 +25,10 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/favorites/
   if (!body.success) return error(body.error.issues[0]?.message ?? "Geçersiz istek.", 400);
 
   try {
-    const { email, ...rest } = body.data;
-    const updated = await updateFavorite(user.uid, id, { ...rest, ...(email !== undefined ? { email: email || null } : {}) });
+    const updated = await updateFavorite(user.uid, id, body.data);
     return updated ? NextResponse.json({ ok: true }) : error("Firma bulunamadı.", 404);
   } catch (e) {
     if (e instanceof FavoritesUnavailableError) return error("Takip listesi henüz etkinleştirilmedi.", 503);
-    if (e instanceof Error && /email/.test(e.message)) return error("E-posta alanı için veritabanı güncellemesi gerekiyor. Kısa süre sonra tekrar deneyin.", 503);
     console.error("Favori güncellenemedi:", e);
     return error("Kaydedilemedi. Tekrar deneyin.", 500);
   }

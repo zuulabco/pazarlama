@@ -139,7 +139,7 @@ export async function removeFavorite(uid: string, placeId: string) {
   check("Favori kaldırılamadı", error);
 }
 
-export async function updateFavorite(uid: string, id: string, patch: { status?: FollowStatus; email?: string | null }) {
+export async function updateFavorite(uid: string, id: string, patch: { status?: FollowStatus }) {
   const { data, error } = await db().from("favorites").update(patch).eq("id", id).eq("user_uid", uid).select("id");
   check("Favori güncellenemedi", error);
   return (data?.length ?? 0) > 0;

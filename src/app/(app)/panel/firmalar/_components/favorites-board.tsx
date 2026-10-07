@@ -21,7 +21,7 @@ const stageDot: Record<FollowStage, string> = {
 
 const dateFormat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 
-async function patch(id: string, body: { status?: FollowStatus; email?: string }) {
+async function patch(id: string, body: { status: FollowStatus }) {
   const res = await fetch(`/api/favorites/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -57,8 +57,7 @@ function FavoriteCard({
   const [adding, setAdding] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [removed, setRemoved] = useState(false);
-  const [email, setEmail] = useState(fav.email ?? "");
-  const [savedEmail, setSavedEmail] = useState(fav.email ?? "");
+  const savedEmail = fav.email ?? "";
 
   const website = safeUrl(fav.website);
   const maps = safeUrl(fav.maps_url);
@@ -101,19 +100,6 @@ function FavoriteCard({
   }
 
   const move = (target: FollowStage) => onMove(fav, target);
-
-  async function saveEmail() {
-    const value = email.trim();
-    if (value === savedEmail) return;
-    try {
-      await patch(fav.id, { email: value });
-      setSavedEmail(value);
-      toast(value ? "E-posta kaydedildi" : "E-posta silindi");
-    } catch (e) {
-      setEmail(savedEmail);
-      toast(failMessage(e), { kind: "error" });
-    }
-  }
 
   async function remove() {
     try {
@@ -166,43 +152,22 @@ function FavoriteCard({
               </span>
             }
           >
+          {(tel || savedEmail || website || maps) && (
+            <div className="flex items-center gap-2">
+              {tel && <ActionLink iconOnly href={tel} icon={<PhoneIcon />} label={`Ara: ${fav.phone}`} />}
+              {savedEmail && <ActionLink iconOnly href={`mailto:${savedEmail}`} icon={<MailIcon />} label={`E-posta: ${savedEmail}`} />}
+              {website && <ActionLink iconOnly external href={website} icon={<GlobeIcon />} label="Web sitesi" />}
+              {maps && <ActionLink iconOnly external href={maps} icon={<MapPinIcon />} label="Haritada aç" />}
+            </div>
+          )}
+
           <Link
             href={`/panel/calis?firma=${fav.id}`}
-            className="inline-flex h-9 w-fit items-center gap-2 rounded-full bg-forest px-3.5 text-sm font-medium text-white transition-colors hover:bg-forest-hover"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-forest text-sm font-medium text-white transition-colors hover:bg-forest-hover"
           >
             <PenIcon size={16} />
             Bu müşteriye ulaş
           </Link>
-
-          <div className="flex items-center gap-2">
-            {tel && <ActionLink iconOnly href={tel} icon={<PhoneIcon />} label={`Ara: ${fav.phone}`} />}
-            {savedEmail && <ActionLink iconOnly href={`mailto:${savedEmail}`} icon={<MailIcon />} label={`E-posta: ${savedEmail}`} />}
-            {website && <ActionLink iconOnly external href={website} icon={<GlobeIcon />} label="Web sitesi" />}
-            {maps && <ActionLink iconOnly external href={maps} icon={<MapPinIcon />} label="Haritada aç" />}
-            <button
-              type="button"
-              onClick={remove}
-              aria-label={`${fav.name} firmasını takipten çıkar`}
-              title="Takipten çıkar"
-              className="ml-auto grid size-9 place-items-center rounded-full text-forest transition-colors hover:bg-sunken"
-            >
-              <BookmarkIcon filled />
-            </button>
-          </div>
-
-          <label className="grid gap-1.5 text-sm font-medium">
-            E-posta
-            <input
-              type="email"
-              value={email}
-              maxLength={254}
-              placeholder="ornek@firma.com"
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={saveEmail}
-              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-              className="h-10 rounded-control bg-surface px-3 text-sm font-normal ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest"
-            />
-          </label>
 
           <div className="grid gap-2">
             <button
@@ -265,21 +230,32 @@ function FavoriteCard({
             </Collapse>
           </div>
 
-          <div className="flex items-center justify-between gap-2 border-t border-line pt-3 text-sm">
-            {prev ? (
-              <button type="button" onClick={() => move(prev.value)} className="inline-flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-2 text-muted transition-colors hover:bg-sunken hover:text-ink">
-                <ArrowLeftIcon size={15} />
-                {prev.label}
-              </button>
-            ) : (
-              <span />
-            )}
-            {next && (
-              <button type="button" onClick={() => move(next.value)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft py-1 pr-2 pl-3 font-medium text-forest transition-colors hover:bg-line">
-                {next.label}
-                <ArrowRightIcon size={15} />
-              </button>
-            )}
+          <div className="grid gap-2.5 border-t border-line pt-3 text-sm">
+            <div className="flex items-center justify-between gap-2">
+              {prev ? (
+                <button type="button" onClick={() => move(prev.value)} className="inline-flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-2 text-muted transition-colors hover:bg-sunken hover:text-ink">
+                  <ArrowLeftIcon size={15} />
+                  {prev.label}
+                </button>
+              ) : (
+                <span />
+              )}
+              {next && (
+                <button type="button" onClick={() => move(next.value)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft py-1 pr-2 pl-3 font-medium text-forest transition-colors hover:bg-line">
+                  {next.label}
+                  <ArrowRightIcon size={15} />
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={remove}
+              aria-label={`${fav.name} firmasını takipten çıkar`}
+              className="mx-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-muted transition-colors hover:bg-sunken hover:text-danger"
+            >
+              <BookmarkIcon size={15} filled />
+              Takipten çıkar
+            </button>
           </div>
           </Disclosure>
         </article>
