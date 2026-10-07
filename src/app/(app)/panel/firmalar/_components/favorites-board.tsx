@@ -6,7 +6,7 @@ import { useState } from "react";
 import { ActionLink } from "@/components/ui/action-link";
 import { Collapse } from "@/components/ui/collapse";
 import { Disclosure } from "@/components/ui/disclosure";
-import { ArrowLeftIcon, ArrowRightIcon, BookmarkIcon, GlobeIcon, MapPinIcon, NoteIcon, PhoneIcon, SearchIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, BookmarkIcon, GlobeIcon, MailIcon, MapPinIcon, NoteIcon, PenIcon, PhoneIcon, SearchIcon } from "@/components/ui/icons";
 import { toast, Toaster } from "@/components/ui/toast";
 import { fold } from "@/lib/text";
 import { safeUrl, telHref } from "@/lib/url";
@@ -21,7 +21,7 @@ const stageDot: Record<FollowStage, string> = {
 
 const dateFormat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 
-async function patch(id: string, body: { status: FollowStatus }) {
+async function patch(id: string, body: { status?: FollowStatus; email?: string }) {
   const res = await fetch(`/api/favorites/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -36,13 +36,29 @@ async function patch(id: string, body: { status: FollowStatus }) {
 const failMessage = (e: unknown) => (e instanceof Error ? e.message : "Kaydedilemedi. Tekrar deneyin.");
 const labelOf = (stage: FollowStage) => followStages.find((s) => s.value === stage)!.label;
 
-function FavoriteCard({ fav, stage, onMove }: { fav: Favorite; stage: FollowStage; onMove: (id: string, stage: FollowStage) => void }) {
+function FavoriteCard({
+  fav,
+  stage,
+  dragging,
+  onMove,
+  onDragStart,
+  onDragEnd,
+}: {
+  fav: Favorite;
+  stage: FollowStage;
+  dragging: boolean;
+  onMove: (fav: Favorite, stage: FollowStage) => void;
+  onDragStart: (id: string) => void;
+  onDragEnd: () => void;
+}) {
   const router = useRouter();
   const [notes, setNotes] = useState<FavoriteNote[]>(fav.notes);
   const [draft, setDraft] = useState("");
   const [adding, setAdding] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [removed, setRemoved] = useState(false);
+  const [email, setEmail] = useState(fav.email ?? "");
+  const [savedEmail, setSavedEmail] = useState(fav.email ?? "");
 
   const website = safeUrl(fav.website);
   const maps = safeUrl(fav.maps_url);
@@ -84,12 +100,17 @@ function FavoriteCard({ fav, stage, onMove }: { fav: Favorite; stage: FollowStag
     }
   }
 
-  async function move(target: FollowStage) {
+  const move = (target: FollowStage) => onMove(fav, target);
+
+  async function saveEmail() {
+    const value = email.trim();
+    if (value === savedEmail) return;
     try {
-      await patch(fav.id, { status: target });
-      onMove(fav.id, target);
-      toast(`${fav.name} → ${labelOf(target)}`);
+      await patch(fav.id, { email: value });
+      setSavedEmail(value);
+      toast(value ? "E-posta kaydedildi" : "E-posta silindi");
     } catch (e) {
+      setEmail(savedEmail);
       toast(failMessage(e), { kind: "error" });
     }
   }
@@ -109,7 +130,17 @@ function FavoriteCard({ fav, stage, onMove }: { fav: Favorite; stage: FollowStag
   return (
     <li>
       <Collapse open={!removed}>
-        <article aria-label={fav.name} className="mb-3 rounded-row bg-surface shadow-sm ring-1 ring-line">
+        <article
+          aria-label={fav.name}
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData("text/plain", fav.id);
+            e.dataTransfer.effectAllowed = "move";
+            onDragStart(fav.id);
+          }}
+          onDragEnd={onDragEnd}
+          className={`mb-3 cursor-grab rounded-row bg-surface shadow-sm ring-1 ring-line transition-opacity active:cursor-grabbing ${dragging ? "opacity-40" : ""}`}
+        >
           <Disclosure
             buttonClassName="items-start p-4"
             panelClassName="grid gap-3.5 border-t border-line px-4 py-4"
@@ -135,8 +166,17 @@ function FavoriteCard({ fav, stage, onMove }: { fav: Favorite; stage: FollowStag
               </span>
             }
           >
+          <Link
+            href={`/panel/calis?firma=${fav.id}`}
+            className="inline-flex h-9 w-fit items-center gap-2 rounded-full bg-forest px-3.5 text-sm font-medium text-white transition-colors hover:bg-forest-hover"
+          >
+            <PenIcon size={16} />
+            Bu müşteriye ulaş
+          </Link>
+
           <div className="flex items-center gap-2">
             {tel && <ActionLink iconOnly href={tel} icon={<PhoneIcon />} label={`Ara: ${fav.phone}`} />}
+            {savedEmail && <ActionLink iconOnly href={`mailto:${savedEmail}`} icon={<MailIcon />} label={`E-posta: ${savedEmail}`} />}
             {website && <ActionLink iconOnly external href={website} icon={<GlobeIcon />} label="Web sitesi" />}
             {maps && <ActionLink iconOnly external href={maps} icon={<MapPinIcon />} label="Haritada aç" />}
             <button
@@ -149,6 +189,20 @@ function FavoriteCard({ fav, stage, onMove }: { fav: Favorite; stage: FollowStag
               <BookmarkIcon filled />
             </button>
           </div>
+
+          <label className="grid gap-1.5 text-sm font-medium">
+            E-posta
+            <input
+              type="email"
+              value={email}
+              maxLength={254}
+              placeholder="ornek@firma.com"
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={saveEmail}
+              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+              className="h-10 rounded-control bg-surface px-3 text-sm font-normal ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest"
+            />
+          </label>
 
           <div className="grid gap-2">
             <button
@@ -239,6 +293,22 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
   // Taşınan firma sütununa hemen geçsin diye yerel aşama tablosu tutulur.
   const [stages, setStages] = useState<Record<string, FollowStage>>({});
   const stageFor = (f: Favorite) => stages[f.id] ?? stageOf(f.status);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [over, setOver] = useState<FollowStage | null>(null);
+
+  /** Firmayı başka aşamaya taşır (düğmeyle ya da sürükle-bırakla); anında yansır, başarısız olursa geri alınır. */
+  async function moveTo(fav: Favorite, target: FollowStage) {
+    const previous = stageFor(fav);
+    if (previous === target) return;
+    setStages((m) => ({ ...m, [fav.id]: target }));
+    try {
+      await patch(fav.id, { status: target });
+      toast(`${fav.name} → ${labelOf(target)}`);
+    } catch (e) {
+      setStages((m) => ({ ...m, [fav.id]: previous }));
+      toast(failMessage(e), { kind: "error" });
+    }
+  }
 
   if (favorites.length === 0) {
     return (
@@ -280,6 +350,7 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
         </label>
         <p className="text-sm text-muted">
           <strong className="font-semibold text-ink tabular-nums">{favorites.length}</strong> firma takipte
+          <span className="hidden lg:inline"> · Kartları sürükleyip aşamalar arasında taşıyabilirsiniz</span>
         </p>
       </div>
 
@@ -287,7 +358,30 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
         {followStages.map((s) => {
           const items = visible.filter((f) => stageFor(f) === s.value);
           return (
-            <section key={s.value} aria-label={s.label} className="rounded-panel bg-sunken/50 p-3 ring-1 ring-line">
+            <section
+              key={s.value}
+              aria-label={s.label}
+              onDragOver={(e) => {
+                if (!dragging) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setOver(s.value);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver((o) => (o === s.value ? null : o));
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData("text/plain") || dragging;
+                const fav = favorites.find((f) => f.id === id);
+                setDragging(null);
+                setOver(null);
+                if (fav) void moveTo(fav, s.value);
+              }}
+              className={`rounded-panel p-3 ring-1 transition-[background-color,box-shadow] duration-200 ${
+                dragging && over === s.value ? "bg-forest-soft/70 ring-2 ring-forest" : "bg-sunken/50 ring-line"
+              }`}
+            >
               <h2 className="flex items-center gap-2.5 px-2 pt-1 pb-3 font-semibold tracking-tight">
                 <span className={`size-2.5 rounded-full ${stageDot[s.value]}`} aria-hidden="true" />
                 {s.label}
@@ -295,12 +389,23 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
               </h2>
               {items.length === 0 ? (
                 <p className="rounded-row border border-dashed border-line-strong px-4 py-8 text-center text-sm text-muted">
-                  {q ? "Eşleşen firma yok." : "Bu aşamada firma yok."}
+                  {dragging ? "Buraya bırakın" : q ? "Eşleşen firma yok." : "Bu aşamada firma yok."}
                 </p>
               ) : (
                 <ul>
                   {items.map((f) => (
-                    <FavoriteCard key={f.id} fav={f} stage={s.value} onMove={(id, stage) => setStages((m) => ({ ...m, [id]: stage }))} />
+                    <FavoriteCard
+                      key={f.id}
+                      fav={f}
+                      stage={s.value}
+                      dragging={dragging === f.id}
+                      onMove={moveTo}
+                      onDragStart={setDragging}
+                      onDragEnd={() => {
+                        setDragging(null);
+                        setOver(null);
+                      }}
+                    />
                   ))}
                 </ul>
               )}

@@ -9,7 +9,7 @@ export function SectionTabs({ title, tabs }: { title: string; tabs: readonly { h
   return (
     <div className="mb-8 grid gap-4">
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
-      <nav aria-label={`${title} bölümleri`} className="flex gap-1 border-b border-line">
+      <nav aria-label={`${title} bölümleri`} className="flex gap-1 overflow-x-auto border-b border-line [scrollbar-width:none]">
         {tabs.map((t) => {
           const active = path === t.href;
           return (
@@ -31,5 +31,6 @@ export function SectionTabs({ title, tabs }: { title: string; tabs: readonly { h
 /** Müşteri bölümünün sekmeleri. */
 export const customerTabs = [
   { href: "/panel/musteri-bul", label: "Müşteri bul" },
-  { href: "/panel/firmalar", label: "Takip" },
+  { href: "/panel/firmalar", label: "Takip et" },
+  { href: "/panel/calis", label: "İletişim kur" },
 ] as const;

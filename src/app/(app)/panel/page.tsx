@@ -18,15 +18,15 @@ const features = [
     href: "/panel/musteri",
     preview: "musteri-bul",
     description: "Bölgenizdeki firmaları bulun, hedef profilinize göre puanlayın ve ilgilendiklerinizi takip edin.",
-    parts: ["Müşteri bul", "Takip"],
+    parts: ["Müşteri bul", "Takip et", "İletişim kur"],
   },
   {
-    id: "otomasyon",
-    name: "Otomasyon",
-    href: "/panel/destek-otomasyonu",
-    preview: "destek-otomasyonu",
-    description: "Gelen mesajları çevirin, öncelik verin ve müşteriye kendi dilinde yanıt verin.",
-    parts: ["Çok dilli müşteri desteği"],
+    id: "calis",
+    name: "İletişim kur",
+    href: "/panel/calis",
+    preview: "calis",
+    description: "Seçtiğiniz müşteri için, bildiklerimizden yola çıkarak kişiselleştirilmiş mesaj ve e-posta taslakları hazırlayın.",
+    parts: ["Mesaj", "E-posta"],
   },
 ] as const;
 

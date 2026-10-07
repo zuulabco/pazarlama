@@ -62,3 +62,43 @@ export const SearchIcon = ({ size }: P) => (
     <path d="m13 13 3.5 3.5" />
   </Svg>
 );
+
+export const SparkleIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M10 3c.4 3.7 1.9 5.6 5.6 6-3.7.4-5.2 2.3-5.6 6-.4-3.7-1.9-5.6-5.6-6C8.1 8.6 9.6 6.7 10 3Z" />
+    <path d="M16 13.5c.2 1.4.8 2 2 2.2-1.2.2-1.8.8-2 2.2-.2-1.4-.8-2-2-2.2 1.2-.2 1.8-.8 2-2.2Z" />
+  </Svg>
+);
+
+export const CopyIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <rect x="7" y="7" width="9" height="9" rx="1.8" />
+    <path d="M13 7V5.8A1.8 1.8 0 0 0 11.2 4H5.8A1.8 1.8 0 0 0 4 5.8v5.4A1.8 1.8 0 0 0 5.8 13H7" />
+  </Svg>
+);
+
+export const ChatIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M4 10a6 6 0 0 1 11.2-3A6 6 0 0 1 9.4 16H4.5l1-2.6A5.9 5.9 0 0 1 4 10Z" />
+  </Svg>
+);
+
+export const MailIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <rect x="3.5" y="5" width="13" height="10" rx="2" />
+    <path d="m4.5 6.5 5.5 4 5.5-4" />
+  </Svg>
+);
+
+export const CheckIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="m4.5 10.5 3.5 3.5 7.5-8" />
+  </Svg>
+);
+
+export const PenIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="m4 16 .8-3.4L13.2 4.2a1.6 1.6 0 0 1 2.3 0l.3.3a1.6 1.6 0 0 1 0 2.3L7.4 15.2 4 16Z" />
+    <path d="m11.8 5.6 2.6 2.6" />
+  </Svg>
+);

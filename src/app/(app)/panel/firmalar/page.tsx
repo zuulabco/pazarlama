@@ -8,7 +8,7 @@ import { getProfile } from "@/modules/profile/repository";
 import { customerTabs, SectionTabs } from "../../_components/section-tabs";
 import { FavoritesBoard } from "./_components/favorites-board";
 
-export const metadata: Metadata = { title: "Takip" };
+export const metadata: Metadata = { title: "Takip et" };
 
 async function Content() {
   const user = await requireUser();

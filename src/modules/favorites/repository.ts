@@ -13,6 +13,8 @@ export type Favorite = {
   phone: string | null;
   website: string | null;
   maps_url: string | null;
+  /** Kullanıcının eklediği e-posta (0005 migration'ından sonra). */
+  email: string | null;
   rating: number | null;
   review_count: number | null;
   lead_score: number | null;
@@ -36,8 +38,7 @@ export class NotesUnavailableError extends Error {
 
 export const maxNotesPerFavorite = 100;
 
-const columns =
-  "id, place_id, name, category, address, city, phone, website, maps_url, rating, review_count, lead_score, digital_need, reachability, priority, source, status, created_at";
+const columns = "*"; // e-posta sütunu 0005 ile gelir; "*" sütun yokken de çalışır
 
 /** Favoriler tablosu henüz oluşturulmadıysa (0003 migration'ı çalıştırılmadıysa) fırlatılır. */
 export class FavoritesUnavailableError extends Error {
@@ -63,7 +64,7 @@ export async function listFavorites(uid: string): Promise<FavoriteWithNotes[]> {
     .order("created_at", { ascending: false })
     .returns<Favorite[]>();
   check("Favoriler okunamadı", error);
-  const favorites = data ?? [];
+  const favorites = (data ?? []).map((f) => ({ ...f, email: f.email ?? null }));
   if (favorites.length === 0) return [];
 
   // Notlar ayrı tabloda; tablo henüz yoksa firmalar notsuz listelenir.
@@ -138,7 +139,7 @@ export async function removeFavorite(uid: string, placeId: string) {
   check("Favori kaldırılamadı", error);
 }
 
-export async function updateFavorite(uid: string, id: string, patch: { status?: FollowStatus }) {
+export async function updateFavorite(uid: string, id: string, patch: { status?: FollowStatus; email?: string | null }) {
   const { data, error } = await db().from("favorites").update(patch).eq("id", id).eq("user_uid", uid).select("id");
   check("Favori güncellenemedi", error);
   return (data?.length ?? 0) > 0;
@@ -177,4 +178,29 @@ export async function deleteNote(uid: string, favoriteId: string, noteId: string
     if (isMissing(error)) throw new NotesUnavailableError();
     throw new Error(`Not silinemedi: ${error.message}`);
   }
+}
+
+/** Tek bir takipteki firma (notlarıyla). Kullanıcıya ait değilse null. */
+export async function getFavorite(uid: string, id: string): Promise<FavoriteWithNotes | null> {
+  const { data, error } = await db().from("favorites").select(columns).eq("id", id).eq("user_uid", uid).maybeSingle<Favorite>();
+  check("Favori okunamadı", error);
+  if (!data) return null;
+  data.email = data.email ?? null;
+
+  const notes = await db()
+    .from("favorite_notes")
+    .select("id, body, created_at")
+    .eq("favorite_id", id)
+    .eq("user_uid", uid)
+    .order("created_at", { ascending: false })
+    .returns<FavoriteNote[]>();
+  if (notes.error && !isMissing(notes.error)) throw new Error(`Notlar okunamadı: ${notes.error.message}`);
+  return { ...data, notes: notes.error ? [] : (notes.data ?? []) };
+}
+
+/** Google yer kimliğine göre takipteki firmanın kimliği. */
+export async function favoriteIdByPlace(uid: string, placeId: string) {
+  const { data, error } = await db().from("favorites").select("id").eq("user_uid", uid).eq("place_id", placeId).maybeSingle<{ id: string }>();
+  check("Favori okunamadı", error);
+  return data?.id ?? null;
 }

@@ -28,7 +28,10 @@ async function Welcome() {
             Müşteri bul
           </ButtonLink>
           <ButtonLink href="/panel/firmalar" size="lg" variant="secondary">
-            Takip
+            Takip et
+          </ButtonLink>
+          <ButtonLink href="/panel/calis" size="lg" variant="quiet">
+            İletişim kur
           </ButtonLink>
         </div>
       </div>

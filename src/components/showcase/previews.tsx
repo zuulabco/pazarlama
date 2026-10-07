@@ -52,23 +52,25 @@ function Leads() {
   );
 }
 
-function Support() {
+function Work() {
   return (
     <div className="grid gap-3">
-      <Card className="max-w-[88%]">
-        <p className="text-xs font-medium text-muted">Müşteri yazar · Almanca</p>
-        <p className="mt-1">Guten Tag, meine Bestellung ist noch nicht angekommen.</p>
+      <Card className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+        <p className="font-medium">Işık Diş Kliniği</p>
+        <p className="flex flex-wrap gap-1.5 text-xs">
+          <span className="rounded-full bg-pollen px-2 py-0.5 font-medium">Web sitesi yok</span>
+          <span className="rounded-full bg-sunken px-2 py-0.5 text-muted">516 yorum</span>
+        </p>
       </Card>
-      <Card i={1} className="justify-self-end">
-        <div className="flex items-center justify-between gap-6">
-          <p className="text-xs font-medium text-muted">Ekibinize ulaşan</p>
-          <span className="rounded-full bg-danger-soft px-2.5 py-0.5 text-xs font-semibold text-danger">Öncelik: Yüksek</span>
-        </div>
-        <p className="mt-1.5 font-medium">Merhaba, siparişim henüz elime ulaşmadı.</p>
+      <Card i={1}>
+        <p className="text-xs font-medium text-muted">WhatsApp taslağı · samimi ton</p>
+        <p className="mt-1.5 leading-relaxed">
+          Merhaba, Google&apos;da kliniğinizi inceledim; 516 yorumla çok güçlü bir güveniniz var ama web sitesi bağlantısı göremedim. Kısa bir görüşmeyle fikrimi paylaşabilir miyim?
+        </p>
       </Card>
-      <Card i={2} className="max-w-[88%] bg-forest-soft!">
-        <p className="text-xs font-medium text-muted">Müşteriye giden yanıt · Almanca</p>
-        <p className="mt-1">Guten Tag! Wir kümmern uns sofort darum und melden uns in Kürze.</p>
+      <Card i={2} className="flex items-center justify-between gap-3 bg-forest-soft!">
+        <p className="text-sm text-muted">Düzenle, kopyala ya da WhatsApp&apos;ta aç</p>
+        <span className="rounded-full bg-forest px-3 py-1 text-xs font-medium text-white">Gönderdim</span>
       </Card>
     </div>
   );
@@ -150,7 +152,7 @@ function Competitors() {
 
 const previews: Record<string, () => ReactNode> = {
   "musteri-bul": () => <Leads />,
-  "destek-otomasyonu": () => <Support />,
+  calis: () => <Work />,
   "meta-reklam": () => <Ads />,
   "reklam-icerik": () => <Variants />,
   "rakip-analizi": () => <Competitors />,

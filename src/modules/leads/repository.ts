@@ -309,3 +309,16 @@ export async function listScoredLeads(uid: string, searchId: string) {
   if (error) return fail("Firmalar okunamadı", error);
   return data;
 }
+
+/** Kullanıcının bir firmayla ilgili en son kaydettiği ham arama verisi (Google yer kimliğine göre). */
+export async function getLeadRaw(uid: string, placeId: string) {
+  const { data, error } = await db()
+    .from("leads")
+    .select("raw")
+    .eq("user_uid", uid)
+    .eq("place_id", placeId)
+    .limit(1)
+    .maybeSingle<{ raw: Record<string, unknown> | null }>();
+  if (error) return fail("Firma verisi okunamadı", error);
+  return data?.raw ?? null;
+}

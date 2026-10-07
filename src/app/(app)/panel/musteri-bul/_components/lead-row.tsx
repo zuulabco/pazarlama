@@ -1,9 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ActionLink } from "@/components/ui/action-link";
 import { Disclosure } from "@/components/ui/disclosure";
-import { BookmarkIcon, GlobeIcon, MapPinIcon, PhoneIcon } from "@/components/ui/icons";
+import { BookmarkIcon, GlobeIcon, MapPinIcon, PenIcon, PhoneIcon } from "@/components/ui/icons";
 import { toast } from "@/components/ui/toast";
 import { scoreTone } from "@/lib/score";
 import { safeUrl, telHref } from "@/lib/url";
@@ -23,7 +24,9 @@ const rankAccent = [1, 0.65, 0.4];
 
 /** Bir firma satırı: takibe alma (yer imi) + yumuşakça açılan detay paneli. `rank`, listenin ilk üç sırasını (0-2) vurgular. */
 export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: boolean; rank?: number }) {
+  const router = useRouter();
   const [fav, setFav] = useState(favorited);
+  const [reaching, setReaching] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +53,7 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
         throw new Error(body?.error ?? "İşlem tamamlanamadı. Tekrar deneyin.");
       }
       toast(next ? `${lead.name} takibe alındı` : `${lead.name} takipten çıkarıldı`, {
-        action: next ? { label: "Takip", href: "/panel/firmalar" } : { label: "Geri al", onClick: () => void setFavorite(true) },
+        action: next ? { label: "Takip listesi", href: "/panel/firmalar" } : { label: "Geri al", onClick: () => void setFavorite(true) },
       });
     } catch (e) {
       setFav(!next);
@@ -65,6 +68,26 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
   const top = rank !== undefined && rank < 3;
 
   const toggle = () => void setFavorite(!fav);
+
+  /** Firmayı (gerekirse) takibe alır ve Müşteriyle çalış sayfasını bu firmayla açar. */
+  async function reach() {
+    if (reaching) return;
+    setReaching(true);
+    try {
+      const res = await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id }),
+      });
+      const body = (await res.json().catch(() => null)) as { id?: string; error?: string } | null;
+      if (!res.ok || !body?.id) throw new Error(body?.error ?? "İşlem tamamlanamadı. Tekrar deneyin.");
+      setFav(true);
+      router.push(`/panel/calis?firma=${body.id}`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "İşlem tamamlanamadı. Tekrar deneyin.", { kind: "error" });
+      setReaching(false);
+    }
+  }
 
   return (
     <li className={`relative transition-colors ${top ? "bg-forest-soft/30 hover:bg-forest-soft/55" : "hover:bg-sunken/40"}`}>
@@ -144,6 +167,15 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
             >
               <BookmarkIcon size={16} filled={fav} />
               {fav ? "Takipte" : "Takibe al"}
+            </button>
+            <button
+              type="button"
+              onClick={reach}
+              disabled={reaching}
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-forest px-3.5 text-sm font-medium text-white transition-colors hover:bg-forest-hover disabled:opacity-60"
+            >
+              <PenIcon size={16} />
+              {reaching ? "Açılıyor…" : "Bu müşteriye ulaş"}
             </button>
             {tel && <ActionLink href={tel} icon={<PhoneIcon />} label={lead.phone ?? "Ara"} />}
             {website && <ActionLink href={website} icon={<GlobeIcon />} label="Web sitesi" external />}
