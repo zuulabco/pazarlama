@@ -177,11 +177,6 @@ export function AskBox({ searchId }: { searchId: string }) {
                       ))}
                     </ul>
                   )}
-                  <p className="text-xs text-muted">
-                    {result.usedAi
-                      ? "Bu yanıt yapay zekâ ile yorumlandı; skorlar ve veriler arama sonuçlarından alındı."
-                      : "Bu yanıt doğrudan arama verilerinden hesaplandı."}
-                  </p>
                 </div>
               )}
             </div>

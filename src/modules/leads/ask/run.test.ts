@@ -84,3 +84,18 @@ describe("answerQuestion (LLM'siz yollar)", () => {
     expect(r.answer).toContain("firma yok");
   });
 });
+
+describe("sohbet cümleleri", () => {
+  it("selamlaşma modele gitmeden Sinyal asistanı olarak yanıtlanır", async () => {
+    for (const q of ["Merhaba", "selam!", "Günaydın", "merhaba nasılsın"]) {
+      const r = await answerQuestion(q, leads, profile);
+      expect(r.usedAi).toBe(false);
+      expect(r.answer).toContain("Sinyal asistanıyım");
+    }
+  });
+
+  it("teşekkürü karşılar", async () => {
+    const r = await answerQuestion("teşekkürler", leads, profile);
+    expect(r.answer).toContain("Rica ederim");
+  });
+});
