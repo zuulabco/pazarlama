@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import { Select } from "@/components/ui/select";
-import type { FacetKey } from "@/modules/leads/facets";
+import type { FacetKey, Facets } from "@/modules/leads/facets";
 import { leadSorts, type LeadSort } from "@/modules/leads/sorts";
 import { AskBox } from "./ask-box";
 import { RotatingTips } from "./rotating-tips";
@@ -48,6 +48,7 @@ export function ResultsArea({
   bodyRef,
   opening,
   hasHistory,
+  summary,
   children,
 }: {
   search: SearchView | null;
@@ -65,6 +66,8 @@ export function ResultsArea({
   opening: boolean;
   /** Kullanıcının daha önce yaptığı aramalar var. */
   hasHistory: boolean;
+  /** Aramanın süzgeçsiz özeti. */
+  summary: Facets["summary"];
   /** Gövde alanı; yeni arama gönderilince görünür alana kaydırmak için. */
   bodyRef: RefObject<HTMLDivElement | null>;
   children: ReactNode;
@@ -155,17 +158,35 @@ export function ResultsArea({
     <div ref={bodyRef} className={`${bodyPlace} grid scroll-mt-6 gap-4`}>
       {/* Sonuç kartı: başlık, listenin ilk satırı gibi kartın içinde yer alır. */}
       <section className="rounded-panel bg-surface ring-1 ring-line">
-        <header className="grid gap-3.5 border-b border-line px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-6">
-          <div className="grid min-w-0 gap-3">
-            <div className="min-w-0">
-              <h2 className="truncate text-xl font-semibold tracking-tight">
-                {view.query} · {view.location}
-              </h2>
-              <p className="text-sm text-muted" aria-live="polite">
-                {dateFormat.format(new Date(view.createdAt))}
-                {" · "}
-                {total === shown ? `${total} firma` : `${total} firmadan ${shown}'i gösteriliyor`}
-              </p>
+        <header className="grid gap-4 border-b border-line px-5 py-5 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-6">
+          <div className="grid min-w-0 gap-3.5">
+            <div className="grid min-w-0 gap-2.5">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+                <h2 className="min-w-0 truncate text-2xl font-semibold tracking-tight">{view.query}</h2>
+                <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-sunken px-3 py-1 text-sm text-muted">
+                  <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                    <path d="M8 14s4.5-3.9 4.5-7.3a4.5 4.5 0 1 0-9 0C3.5 10.1 8 14 8 14Z" />
+                    <circle cx="8" cy="6.7" r="1.5" />
+                  </svg>
+                  <span className="truncate">{view.location}</span>
+                </span>
+              </div>
+              <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted" aria-live="polite" aria-label="Arama özeti">
+                <li>
+                  <strong className="font-semibold text-ink tabular-nums">{total === shown ? total : `${shown} / ${total}`}</strong> firma
+                </li>
+                {summary.total > 0 && (
+                  <li>
+                    Ortalama skor <strong className="font-semibold text-ink tabular-nums">{summary.avgScore}</strong>
+                  </li>
+                )}
+                {summary.noWebsite > 0 && (
+                  <li>
+                    <strong className="font-semibold text-ink tabular-nums">{summary.noWebsite}</strong> web sitesi yok
+                  </li>
+                )}
+                <li>{dateFormat.format(new Date(view.createdAt))}</li>
+              </ul>
             </div>
             {chips.length > 0 && (
               <ul className="flex flex-wrap gap-2" aria-label="Uygulanan süzgeçler">
@@ -187,7 +208,7 @@ export function ResultsArea({
               </ul>
             )}
           </div>
-          <div className="flex items-center gap-2.5 text-sm text-muted">
+          <div className="flex items-center gap-2.5 text-sm text-muted sm:pt-1">
             <span aria-hidden="true">Sırala</span>
             <Select<LeadSort>
               label="Sırala"

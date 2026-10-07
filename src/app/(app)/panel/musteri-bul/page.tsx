@@ -16,6 +16,7 @@ import {
 } from "@/modules/leads/repository";
 import { favoritePlaceIds } from "@/modules/favorites/repository";
 import { getProfile } from "@/modules/profile/repository";
+import { customerTabs, SectionTabs } from "../../_components/section-tabs";
 import { LeadList } from "./_components/lead-list";
 import { LeadsWorkspace } from "./_components/leads-workspace";
 import type { ResultFilters, SearchView } from "./_components/types";
@@ -112,10 +113,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
 export default function LeadsPage(props: PageProps<"/panel/musteri-bul">) {
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Müşteri bul</h1>
-      <p className="mt-2 mb-8 max-w-prose text-muted">
-        Firma türünü ve bölgeyi seçin; firmaları bulup hedef profilinize göre puanlayalım.
-      </p>
+      <SectionTabs title="Müşteri" tabs={customerTabs} />
       <Suspense fallback={<div className="h-96 rounded-panel bg-sunken" aria-hidden="true" />}>
         <Content searchParams={props.searchParams} />
       </Suspense>

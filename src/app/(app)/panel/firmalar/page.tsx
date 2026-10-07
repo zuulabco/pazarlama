@@ -4,9 +4,10 @@ import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
 import { FavoritesUnavailableError, listFavorites, type Favorite } from "@/modules/favorites/repository";
 import { getProfile } from "@/modules/profile/repository";
+import { customerTabs, SectionTabs } from "../../_components/section-tabs";
 import { FavoritesBoard } from "./_components/favorites-board";
 
-export const metadata: Metadata = { title: "Firmalar" };
+export const metadata: Metadata = { title: "Takip" };
 
 async function Content() {
   const user = await requireUser();
@@ -29,10 +30,7 @@ async function Content() {
 export default function FavoritesPage() {
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Firmalar</h1>
-      <p className="mt-2 mb-8 max-w-prose text-muted">
-        Takibe aldığınız firmalar. Her birinin aşamasını ve notunu tutun.
-      </p>
+      <SectionTabs title="Müşteri" tabs={customerTabs} />
       <Suspense fallback={<div className="h-72 rounded-panel bg-sunken" aria-hidden="true" />}>
         <Content />
       </Suspense>

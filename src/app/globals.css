@@ -79,6 +79,36 @@
   --container-prose: 38rem;
 }
 
+/*
+ * Koyu tema: yalnızca panelde (ThemeScope) <html data-theme="dark"> ile açılır.
+ * Aynı token adları yeniden tanımlanır; bileşenlerde hiçbir değişiklik gerekmez.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-paper: #0f1512;
+  --color-surface: #171f1b;
+  --color-sunken: #202a25;
+  --color-ink: #e9efeb;
+  --color-muted: #9aa8a1;
+  --color-line: #2a3631;
+  --color-line-strong: #3c4a43;
+
+  --color-forest: #35906f;
+  --color-forest-hover: #2b7a5d;
+  --color-forest-soft: #1c2d26;
+  --color-pollen: #4a5a1c;
+
+  --color-danger: #ec8a77;
+  --color-danger-soft: #3a1f1a;
+
+  --color-score-low: #33413a;
+  --color-score-mid: #4f7f6b;
+  --color-score-high: #5bbd95;
+
+  --shadow-float: 0 1px 1px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.5), 0 32px 64px -24px rgb(0 0 0 / 0.6);
+}
+
 @layer base {
   :root {
     color-scheme: light;

@@ -1,3 +1,4 @@
+import { themeInitScript } from "@/lib/theme-script";
 import type { Metadata, Viewport } from "next";
 import { Onest } from "next/font/google";
 import { site } from "@/lib/site";
@@ -38,7 +39,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="tr" className={`${onest.variable} h-full antialiased`}>
+    <html lang="tr" className={`${onest.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

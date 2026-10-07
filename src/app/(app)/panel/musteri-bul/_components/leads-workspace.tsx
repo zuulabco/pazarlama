@@ -78,6 +78,7 @@ export function LeadsWorkspace({
         navigate={navigate}
         bodyRef={resultsRef}
         opening={opening}
+        summary={facets.summary}
         hasHistory={searches.length > 0}
       >
         {children}

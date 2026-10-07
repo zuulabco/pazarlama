@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/ui/wordmark";
 const nav = [
   { href: "/#nasil-calisir", label: "Nasıl çalışır" },
   { href: "/#puanlama", label: "Puanlama" },
+  { href: "/#ozellikler", label: "Özellikler" },
   { href: "/#sss", label: "Sorular" },
 ];
 

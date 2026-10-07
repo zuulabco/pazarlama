@@ -61,6 +61,8 @@ export type Facets = {
   districts: { name: string; count: number }[];
   /** Semt süzgeci hariç, diğer süzgeçlerle eşleşen firma sayısı ("Tüm semtler"). */
   districtAll: number;
+  /** Aramanın süzgeçsiz özeti (sonuç başlığında gösterilir). */
+  summary: { total: number; avgScore: number; noWebsite: number };
 };
 
 const options: Record<Exclude<FacetKey, "d">, readonly (string | number)[]> = {
@@ -104,5 +106,12 @@ export function computeFacets(leads: readonly FacetLead[], f: FacetFilters): Fac
   }
   const districts = [...byDistrict.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "tr")).slice(0, 15);
 
-  return { matching: count(f), counts, districts, districtAll: count(without("d")) };
+  const scored = leads.filter((l) => l.lead_score !== null);
+  const summary = {
+    total: leads.length,
+    avgScore: scored.length ? Math.round(scored.reduce((s, l) => s + (l.lead_score ?? 0), 0) / scored.length) : 0,
+    noWebsite: leads.filter((l) => !l.website).length,
+  };
+
+  return { matching: count(f), counts, districts, districtAll: count(without("d")), summary };
 }

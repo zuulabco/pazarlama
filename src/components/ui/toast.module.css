@@ -19,7 +19,7 @@
   padding: 0.5rem 0.5rem 0.5rem 1rem;
   border-radius: 9999px;
   background: var(--color-ink);
-  color: var(--color-white);
+  color: var(--color-paper);
   font-size: 0.9375rem;
   box-shadow: var(--shadow-float);
   animation: in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -46,13 +46,13 @@
   flex-shrink: 0;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  background: rgb(255 255 255 / 0.14);
+  background: color-mix(in srgb, var(--color-paper) 16%, transparent);
   font-weight: 500;
   white-space: nowrap;
   transition: background-color 0.2s ease;
 }
 .action:hover {
-  background: rgb(255 255 255 / 0.24);
+  background: color-mix(in srgb, var(--color-paper) 28%, transparent);
 }
 
 .close {
@@ -62,10 +62,10 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 9999px;
-  color: rgb(255 255 255 / 0.65);
+  color: color-mix(in srgb, var(--color-paper) 65%, transparent);
 }
 .close:hover {
-  color: var(--color-white);
+  color: var(--color-paper);
 }
 
 @keyframes in {

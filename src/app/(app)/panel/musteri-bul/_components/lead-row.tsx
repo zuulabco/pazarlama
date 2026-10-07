@@ -64,7 +64,7 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
         throw new Error(body?.error ?? "İşlem tamamlanamadı. Tekrar deneyin.");
       }
       toast(next ? `${lead.name} takibe alındı` : `${lead.name} takipten çıkarıldı`, {
-        action: next ? { label: "Firmalar", href: "/panel/firmalar" } : { label: "Geri al", onClick: () => void setFavorite(true) },
+        action: next ? { label: "Takip", href: "/panel/firmalar" } : { label: "Geri al", onClick: () => void setFavorite(true) },
       });
     } catch (e) {
       setFav(!next);

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Wordmark } from "@/components/ui/wordmark";
+import { AppNav } from "./_components/app-nav";
+import { ThemeScope } from "./_components/theme-scope";
 import { UserMenu } from "./_components/user-menu";
 
 export const metadata: Metadata = {
@@ -11,38 +13,16 @@ export const metadata: Metadata = {
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <>
+      <ThemeScope />
       <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex h-16 w-full max-w-page items-center justify-between gap-2 px-4 sm:gap-6 sm:px-6">
-          <div className="flex min-w-0 items-center gap-1 sm:gap-6">
+        <div className="mx-auto flex h-16 w-full max-w-page items-center justify-between gap-3 px-4 sm:gap-6 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-6">
             <Link href="/panel" aria-label="Panel" className="rounded-control">
               <Wordmark textClassName="hidden sm:inline" />
             </Link>
-            <nav aria-label="Ana menü" className="min-w-0 overflow-x-auto [scrollbar-width:none]">
-              <ul className="flex gap-1 text-sm text-muted">
-                <li>
-                  <Link href="/panel/musteri-bul" className="rounded-control px-2 py-2 whitespace-nowrap transition-colors hover:text-ink sm:px-3">
-                    Müşteri bul
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/panel/destek-otomasyonu" className="rounded-control px-2 py-2 whitespace-nowrap transition-colors hover:text-ink sm:px-3">
-                    Destek
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/panel/firmalar" className="rounded-control px-2 py-2 whitespace-nowrap transition-colors hover:text-ink sm:px-3">
-                    Firmalar
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/panel/profil" className="rounded-control px-2 py-2 whitespace-nowrap transition-colors hover:text-ink sm:px-3">
-                    Profilim
-                  </Link>
-                </li>
-              </ul>
-            </nav>
+            <AppNav />
           </div>
-          <Suspense fallback={<span className="h-10 w-28 rounded-control bg-sunken" />}>
+          <Suspense fallback={<span className="size-10 rounded-full bg-sunken" />}>
             <UserMenu />
           </Suspense>
         </div>

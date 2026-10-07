@@ -4,6 +4,7 @@ import { Disclosure } from "@/components/ui/disclosure";
 import { scoreTone } from "@/lib/score";
 import { appModules } from "@/modules/registry";
 import { demoBreakdown } from "./demo-data";
+import { ModuleShowcase } from "./module-showcase";
 import { RankingDemo } from "./ranking-demo";
 
 type SectionProps = { id?: string; children: ReactNode; className?: string; padding?: string };
@@ -172,25 +173,11 @@ export function Ask() {
 
 export function Modules() {
   return (
-    <Section>
-      <SectionIntro title="Müşteri bulmak ilk adım">
-        Sinyal, ajansların ve serbest çalışanların pazarlama işlerini tek yerde toplamak için adım adım büyüyor.
+    <Section id="ozellikler">
+      <SectionIntro title="Tek panelde pazarlamanın tamamı">
+        Müşteri bulmakla başlıyoruz. Her yeni özellik aynı hedef profilinizi ve verilerinizi kullanır; bir kez anlatırsınız, hepsi sizi tanır.
       </SectionIntro>
-      <ul className="mt-12 divide-y divide-line border-y border-line">
-        {appModules.map((m) => (
-          <li key={m.id} className="grid gap-1 py-5 sm:grid-cols-[16rem_1fr_auto] sm:items-center sm:gap-8">
-            <h3 className="font-semibold">{m.name}</h3>
-            <p className="text-muted">{m.description}</p>
-            <span
-              className={`justify-self-start rounded-full px-2.5 py-0.5 text-xs font-medium sm:justify-self-end ${
-                m.status === "ready" ? "bg-forest text-white" : "bg-sunken text-muted"
-              }`}
-            >
-              {m.status === "ready" ? "Kullanılabilir" : "Yakında"}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <ModuleShowcase modules={appModules} />
     </Section>
   );
 }
