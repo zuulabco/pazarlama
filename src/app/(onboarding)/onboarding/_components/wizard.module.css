@@ -23,6 +23,10 @@
   margin: -4px;
   padding: 4px;
 }
+/* Animasyon bitince taşma serbest: açılır liste kesilmez */
+.reveal[data-open="true"][data-settled="true"] > div {
+  overflow: visible;
+}
 
 /* Progress çubuğu */
 .progress {

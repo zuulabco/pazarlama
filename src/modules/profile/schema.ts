@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { cityScopes, companySizes, dealValues, signals, values } from "./options";
+import { cityScopes, companySizes, dealValues, values } from "./options";
 
 /**
- * Hizmet, sektör, şehir, kanal ve çalışma biçimi serbest metne açıktır: listedeki seçenekler
+ * Hizmet, sektör, şehir, kanal, işaret ve çalışma biçimi serbest metne açıktır: listedeki seçenekler
  * "slug" olarak, kullanıcının kendi yazdıkları olduğu gibi saklanır (labelOf, bilinmeyen değeri aynen gösterir).
  */
 const tag = z.string().trim().min(2, "En az 2 karakter yazın.").max(40, "En fazla 40 karakter.");
@@ -18,7 +18,7 @@ const field = {
   targetCities: z.array(tag).max(12, "En fazla 12 şehir ekleyebilirsiniz."),
   channels: z.array(tag).min(1, "En az bir kanal seçin ya da yazın.").max(8, "En fazla 8 kanal ekleyebilirsiniz."),
   dealValue: z.enum(values(dealValues), "Bir seçenek belirleyin."),
-  signals: z.array(z.enum(values(signals))).max(6),
+  signals: z.array(tag).max(8, "En fazla 8 işaret ekleyebilirsiniz."),
   signalNotes: z.string().trim().max(500, "En fazla 500 karakter.").default(""),
 };
 

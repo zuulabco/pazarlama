@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Wordmark } from "@/components/ui/wordmark";
 import { channels, cityScopes, companySizes, dealValues, popularCities, sectors, services, signals, workTypes } from "@/modules/profile/options";
 import { profileSchema, stepSchemas } from "@/modules/profile/schema";
 import { completeOnboarding } from "../actions";
-import { CardGroup, ChipPicker } from "./choice-controls";
+import { ComboField } from "./combo-field";
 import { draftFrom, type Draft } from "./draft";
 import { SummaryCard, type EditableStage } from "./summary-card";
 import styles from "./wizard.module.css";
@@ -16,13 +17,14 @@ type Errors = Partial<Record<keyof Draft, string>>;
 
 const stages = ["intro", "about", "target", "reach", "fit", "review"] as const;
 type Stage = (typeof stages)[number];
+const steps = ["about", "target", "reach", "fit", "review"] as const;
 
 const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text: string }> = {
   about: { short: "Sizi tanıyalım", title: "Sizi tanıyalım", text: "Kısa sorular. Hepsini sonradan değiştirebilirsiniz." },
   target: {
     short: "Hizmet ve hedef",
     title: "Ne satıyorsunuz, kime?",
-    text: "Listede yoksa kendi ifadenizi yazıp ekleyebilirsiniz.",
+    text: "Önerilerden seçin ya da kendi ifadenizi yazıp ekleyin.",
   },
   reach: {
     short: "Bölge ve iletişim",
@@ -111,19 +113,41 @@ function TextArea({
   );
 }
 
-/** Soru açıkken yumuşakça açılan, kapalıyken etkisizleşen alan. */
+/**
+ * Soru açıkken yumuşakça açılan, kapalıyken etkisizleşen alan. Açılma animasyonu bitince taşan
+ * içeriğin (açılır liste) kesilmemesi için taşma serbest bırakılır.
+ */
 function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
+  // Sayfa zaten açık gelirse (örn. kayıtlı bilgiler) geçiş olmaz; baştan serbest bırakılır.
+  const [settled, setSettled] = useState(open);
   return (
-    <div className={styles.reveal} data-open={open}>
+    <div
+      className={styles.reveal}
+      data-open={open}
+      data-settled={open && settled}
+      onTransitionEnd={(e) => {
+        if (e.target === e.currentTarget && e.propertyName === "grid-template-rows") setSettled(open);
+      }}
+    >
       <div inert={!open}>{children}</div>
     </div>
   );
 }
 
-export function Wizard({ defaultName, initial }: { defaultName: string; initial: Partial<Draft> }) {
+export function Wizard({
+  defaultName,
+  initial,
+  mode = "create",
+}: {
+  defaultName: string;
+  initial: Partial<Draft>;
+  /** "edit": tamamlanmış bilgi kartını düzenleme; doğrudan karttan başlar. */
+  mode?: "create" | "edit";
+}) {
   const router = useRouter();
-  const [stage, setStage] = useState<Stage>("intro");
-  const [furthest, setFurthest] = useState(0);
+  const editMode = mode === "edit";
+  const [stage, setStage] = useState<Stage>(editMode ? "review" : "intro");
+  const [furthest, setFurthest] = useState(editMode ? stages.length - 1 : 0);
   /** Bilgi kartından düzenlemeye gelindiyse, kaydedince doğrudan karta dönülür. */
   const [editing, setEditing] = useState(false);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
@@ -185,6 +209,12 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
     return profileSchema.safeParse(draft).success ? null : "about";
   }
 
+  /** Otomatik geçiş takılırsa ekrandaki "Panele geç" düğmesi aynı işi yapar. */
+  function leave() {
+    router.replace("/panel");
+    router.refresh();
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (stage === "intro") return goTo("about");
@@ -193,10 +223,14 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
       const invalid = firstInvalidStage();
       if (invalid) return goTo(invalid, true);
       startTransition(async () => {
-        const result = await completeOnboarding(draft);
-        if (!result.ok) return setSaveError(result.error);
+        try {
+          const result = await completeOnboarding(draft);
+          if (!result.ok) return setSaveError(result.error);
+        } catch {
+          return setSaveError("Bağlantı kurulamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.");
+        }
         setDone(true);
-        setTimeout(() => router.replace("/panel"), 1800);
+        setTimeout(leave, 1500);
       });
       return;
     }
@@ -205,19 +239,25 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
     goTo(editing ? "review" : stages[index + 1]);
   }
 
-  const steps = ["about", "target", "reach", "fit", "review"] as const;
   const animation = direction === "forward" ? styles.forward : styles.back;
   const lastQuestion = stage === "fit";
 
   return (
     <div className="flex min-h-dvh flex-1 flex-col px-4 py-6 sm:px-8">
       <div className="mx-auto flex w-full max-w-[44rem] flex-1 flex-col">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between gap-4">
           <Wordmark />
-          {stage !== "intro" && !done && (
-            <p className="text-sm text-muted" aria-live="polite">
-              Adım {index} / {steps.length}
-            </p>
+          {editMode && !done ? (
+            <Link href="/panel" className="rounded-control px-3 py-2 text-sm text-muted hover:text-ink">
+              Panele dön
+            </Link>
+          ) : (
+            stage !== "intro" &&
+            !done && (
+              <p className="text-sm text-muted" aria-live="polite">
+                Adım {index} / {steps.length}
+              </p>
+            )
           )}
         </header>
 
@@ -255,9 +295,15 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                   <path className={styles.check} d="m5.5 12.5 4.2 4.2 8.8-9.4" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
-              <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">Hesabınız hazır</h1>
-              <p className="max-w-[28rem] text-lg text-muted">Panele yönlendiriyoruz. İlk müşteri listenizi oluşturmaya hazırsınız.</p>
-              <Button size="lg" onClick={() => router.replace("/panel")}>
+              <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">
+                {editMode ? "Bilgileriniz güncellendi" : "Hesabınız hazır"}
+              </h1>
+              <p className="max-w-[28rem] text-lg text-muted">
+                {editMode
+                  ? "Yeni aramalar bu bilgilere göre puanlanacak."
+                  : "Panele yönlendiriyoruz. İlk müşteri listenizi oluşturmaya hazırsınız."}
+              </p>
+              <Button size="lg" onClick={leave}>
                 Panele geç
               </Button>
             </div>
@@ -284,10 +330,7 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
               <p className="mt-3 mb-8 max-w-[34rem] text-lg text-muted">{copy[stage].text}</p>
 
               {stage === "review" ? (
-                <SummaryCard
-                  draft={draft}
-                  onEdit={(s: EditableStage) => goTo(s, true)}
-                />
+                <SummaryCard draft={draft} onEdit={(s: EditableStage) => goTo(s, true)} />
               ) : (
                 <div className="grid gap-9 rounded-panel bg-surface p-6 shadow-float ring-1 ring-line sm:p-9">
                   {stage === "about" && (
@@ -300,15 +343,14 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                         autoComplete="organization"
                         maxLength={80}
                       />
-                      <ChipPicker
+                      <ComboField
                         legend="Nasıl çalışıyorsunuz?"
-                        name="workType"
                         options={workTypes}
                         value={draft.workType ? [draft.workType] : []}
                         onChange={([v]) => update("workType", v ?? "")}
                         single
                         allowCustom
-                        customLabel="Size uyan yoksa kendi ifadenizi yazın"
+                        placeholder="Seçin ya da kendi ifadenizi yazın"
                         error={errors.workType}
                       />
                       <TextArea
@@ -324,33 +366,31 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
 
                   {stage === "target" && (
                     <>
-                      <ChipPicker
+                      <ComboField
                         legend="Sattığınız hizmetler"
-                        name="services"
                         options={services}
                         value={draft.services}
                         onChange={(v) => update("services", v)}
                         allowCustom
-                        customLabel="Listede olmayan hizmeti yazıp ekleyin"
+                        placeholder="Hizmet seçin ya da yazın"
                         error={errors.services}
                       />
-                      <ChipPicker
+                      <ComboField
                         legend="Hizmet verdiğiniz sektörler"
-                        name="sectors"
                         options={sectors}
                         value={draft.targetSectors}
                         onChange={(v) => update("targetSectors", v)}
                         allowCustom
-                        customLabel="Listede olmayan sektörü yazıp ekleyin"
+                        placeholder="Sektör seçin ya da yazın"
                         error={errors.targetSectors}
                       />
-                      <ChipPicker
+                      <ComboField
                         legend="Hedef firma büyüklüğü"
-                        name="targetSize"
                         options={sizeOptions}
                         value={draft.targetSize ? [draft.targetSize] : []}
                         onChange={([v]) => update("targetSize", v ?? "")}
                         single
+                        placeholder="Seçin"
                         error={errors.targetSize}
                       />
                     </>
@@ -358,46 +398,44 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
 
                   {stage === "reach" && (
                     <>
-                      <ChipPicker
+                      <ComboField
                         legend="Hangi bölgede müşteri arıyorsunuz?"
-                        name="cityScope"
                         options={cityScopes}
                         value={draft.cityScope ? [draft.cityScope] : []}
                         onChange={([v]) => update("cityScope", v ?? "")}
                         single
+                        placeholder="Seçin"
                         error={errors.cityScope}
                       />
                       <Reveal open={draft.cityScope === "cities"}>
-                        <ChipPicker
+                        <ComboField
                           legend="Şehirler"
-                          name="cities"
                           options={cityOptions}
                           value={draft.targetCities}
                           onChange={(v) => update("targetCities", v)}
                           allowCustom
-                          customLabel="Listede olmayan şehri ya da ilçeyi yazıp ekleyin"
                           normalize={titleCase}
+                          placeholder="Şehir ya da ilçe seçin, yazın"
                           error={errors.targetCities}
                         />
                       </Reveal>
-                      <ChipPicker
+                      <ComboField
                         legend="Müşterilere hangi kanallardan ulaşıyorsunuz?"
-                        name="channels"
                         options={channels}
                         value={draft.channels}
                         onChange={(v) => update("channels", v)}
                         allowCustom
                         max={8}
-                        customLabel="Başka bir kanal yazıp ekleyin"
+                        placeholder="Kanal seçin ya da yazın"
                         error={errors.channels}
                       />
-                      <ChipPicker
+                      <ComboField
                         legend="Bir projeden ortalama ne kazanırsınız?"
-                        name="dealValue"
                         options={dealValues}
                         value={draft.dealValue ? [draft.dealValue] : []}
                         onChange={([v]) => update("dealValue", v ?? "")}
                         single
+                        placeholder="Seçin"
                         error={errors.dealValue}
                       />
                     </>
@@ -405,12 +443,14 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
 
                   {stage === "fit" && (
                     <>
-                      <CardGroup
+                      <ComboField
                         legend="Hangi işaretler, bir firmanın sizin için iyi aday olduğunu gösterir?"
-                        name="signals"
                         options={signals}
                         value={draft.signals}
                         onChange={(v) => update("signals", v)}
+                        allowCustom
+                        max={8}
+                        placeholder="İşaret seçin ya da kendiniz yazın"
                         error={errors.signals}
                       />
                       <TextArea
@@ -437,6 +477,8 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                   <Button variant="quiet" size="lg" onClick={() => goTo("review")} disabled={pending}>
                     Karta dön
                   </Button>
+                ) : stage === "review" && editMode ? (
+                  <span />
                 ) : (
                   <Button variant="quiet" size="lg" onClick={() => goTo(stages[index - 1])} disabled={pending}>
                     Geri
@@ -445,8 +487,10 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                 <Button type="submit" size="lg" disabled={pending}>
                   {stage === "review"
                     ? pending
-                      ? "Hesabınız hazırlanıyor…"
-                      : "Hesabımı hazırla"
+                      ? "Kaydediliyor…"
+                      : editMode
+                        ? "Değişiklikleri kaydet"
+                        : "Hesabımı hazırla"
                     : editing
                       ? "Kaydet"
                       : lastQuestion
