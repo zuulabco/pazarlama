@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Disclosure } from "@/components/ui/disclosure";
+import { toast } from "@/components/ui/toast";
 import { scoreTone } from "@/lib/score";
 import { safeUrl, telHref } from "@/lib/url";
 import type { LeadRow as Lead } from "@/modules/leads/repository";
@@ -45,9 +46,8 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
   const tel = telHref(lead.phone);
   const score = lead.lead_score ?? 0;
 
-  async function toggle() {
+  async function setFavorite(next: boolean) {
     if (busy) return;
-    const next = !fav;
     setFav(next); // anında yansır; başarısız olursa geri alınır
     setBusy(true);
     setError(null);
@@ -63,15 +63,22 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(body?.error ?? "İşlem tamamlanamadı. Tekrar deneyin.");
       }
+      toast(next ? `${lead.name} takibe alındı` : `${lead.name} takipten çıkarıldı`, {
+        action: next ? { label: "Firmalar", href: "/panel/firmalar" } : { label: "Geri al", onClick: () => void setFavorite(true) },
+      });
     } catch (e) {
       setFav(!next);
-      setError(e instanceof Error ? e.message : "İşlem tamamlanamadı. Tekrar deneyin.");
+      const message = e instanceof Error ? e.message : "İşlem tamamlanamadı. Tekrar deneyin.";
+      setError(message);
+      toast(message, { kind: "error" });
     } finally {
       setBusy(false);
     }
   }
 
   const top = rank !== undefined && rank < 3;
+
+  const toggle = () => void setFavorite(!fav);
 
   return (
     <li className={`relative transition-colors ${top ? "bg-forest-soft/30 hover:bg-forest-soft/55" : "hover:bg-sunken/40"}`}>

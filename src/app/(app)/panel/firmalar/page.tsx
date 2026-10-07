@@ -31,7 +31,7 @@ export default function FavoritesPage() {
     <>
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Firmalar</h1>
       <p className="mt-2 mb-8 max-w-prose text-muted">
-        Takibe aldığınız firmalar. Her biri için aşamayı ve notlarınızı tutun, iletişim bilgilerine buradan ulaşın.
+        Takibe aldığınız firmalar. Her birinin aşamasını ve notunu tutun.
       </p>
       <Suspense fallback={<div className="h-72 rounded-panel bg-sunken" aria-hidden="true" />}>
         <Content />

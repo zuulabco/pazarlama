@@ -39,3 +39,9 @@ Bu kurallar sitenin tamamı için geçerlidir. Yeni bir ekran eklerken önce bur
 
 - Renk, yarıçap, gölge ve hareket değerleri `src/app/globals.css`'teki token'lardan gelir; bileşenlerde ham değer yazılmaz.
 - Yeni bileşen, mevcut `rounded-control / row / panel` hiyerarşisini izler.
+
+## 7. Geri bildirim
+
+- Kullanıcının başlattığı her kayıt/silme/güncelleme işlemi bir **toast** ile onaylanır (`toast()` ve `<Toaster />`, `src/components/ui/toast.tsx`). Sonuç belli olmadan işlem sessiz bırakılmaz.
+- Geri alınabilen işlemde toast'ta "Geri al", gidilecek yer varsa "Firmalar" gibi bir eylem bulunur. Hatalar `kind: "error"` ile gösterilir.
+- Toast'lar üst ortada, başlığın altında çıkar; alttaki yapay zekâ kutusuyla çakışmaz.

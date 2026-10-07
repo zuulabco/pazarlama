@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import type { Facets } from "@/modules/leads/facets";
+import { Toaster } from "@/components/ui/toast";
 import { FiltersPanel } from "./filters-panel";
 import { ResultsArea } from "./results-area";
 import type { Navigate, ResultFilters, SearchView } from "./types";
@@ -64,7 +65,9 @@ export function LeadsWorkspace({
   const waiting = submitting;
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-0 xl:gap-x-8">
+    <>
+      <Toaster />
+      <div className="grid items-start gap-5 lg:grid-cols-[22rem_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-0 xl:gap-x-8">
       <ResultsArea
         search={search}
         filters={filters}
@@ -121,5 +124,6 @@ export function LeadsWorkspace({
         </div>
       </div>
     </div>
+    </>
   );
 }

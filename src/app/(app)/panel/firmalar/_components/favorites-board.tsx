@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Collapse } from "@/components/ui/collapse";
 import { Segmented } from "@/components/ui/segmented";
-import { Select } from "@/components/ui/select";
-import { scoreTone } from "@/lib/score";
+import { toast, Toaster } from "@/components/ui/toast";
 import { safeUrl, telHref } from "@/lib/url";
-import { followStatuses, type FollowStatus } from "@/modules/favorites/status";
+import { followStages, stageOf, type FollowStage, type FollowStatus } from "@/modules/favorites/status";
 import type { Favorite } from "@/modules/favorites/repository";
 
 const linkClass = "rounded-control px-3 py-1.5 text-sm font-medium ring-1 ring-line-strong ring-inset hover:bg-sunken";
-const statusOptions = followStatuses.map((s) => ({ value: s.value, label: s.label }));
 
 async function patch(id: string, body: { status?: FollowStatus; note?: string }) {
   const res = await fetch(`/api/favorites/${id}`, {
@@ -26,152 +24,137 @@ async function patch(id: string, body: { status?: FollowStatus; note?: string })
   }
 }
 
-function FavoriteCard({ fav }: { fav: Favorite }) {
+const failMessage = (e: unknown) => (e instanceof Error ? e.message : "Kaydedilemedi. Tekrar deneyin.");
+
+function FavoriteCard({ fav, onStage }: { fav: Favorite; onStage: (id: string, stage: FollowStage) => void }) {
   const router = useRouter();
-  const [status, setStatus] = useState<FollowStatus>(fav.status);
+  const [stage, setStage] = useState<FollowStage>(stageOf(fav.status));
   const [note, setNote] = useState(fav.note);
   const [savedNote, setSavedNote] = useState(fav.note);
-  const [noteState, setNoteState] = useState<"idle" | "saving" | "saved">("idle");
+  const [noteOpen, setNoteOpen] = useState(Boolean(fav.note));
   const [removed, setRemoved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const website = safeUrl(fav.website);
   const maps = safeUrl(fav.maps_url);
   const tel = telHref(fav.phone);
-  const score = fav.lead_score ?? 0;
 
-  async function changeStatus(next: FollowStatus) {
-    const previous = status;
-    setStatus(next);
-    setError(null);
+  async function changeStage(next: FollowStage) {
+    if (next === stage) return;
+    const previous = stage;
+    setStage(next);
     try {
       await patch(fav.id, { status: next });
+      onStage(fav.id, next);
+      toast(`Aşama güncellendi: ${followStages.find((s) => s.value === next)?.label}`);
     } catch (e) {
-      setStatus(previous);
-      setError(e instanceof Error ? e.message : "Kaydedilemedi. Tekrar deneyin.");
+      setStage(previous);
+      toast(failMessage(e), { kind: "error" });
     }
   }
 
   async function saveNote() {
     if (note.trim() === savedNote) return;
-    setNoteState("saving");
-    setError(null);
     try {
       await patch(fav.id, { note });
       setSavedNote(note.trim());
-      setNoteState("saved");
+      toast("Not kaydedildi");
     } catch (e) {
-      setNoteState("idle");
-      setError(e instanceof Error ? e.message : "Kaydedilemedi. Tekrar deneyin.");
+      toast(failMessage(e), { kind: "error" });
     }
   }
 
   async function remove() {
-    setError(null);
     try {
       const res = await fetch(`/api/favorites?placeId=${encodeURIComponent(fav.place_id)}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Takipten çıkarılamadı. Tekrar deneyin.");
       setRemoved(true); // kart yumuşakça kapanır
+      toast(`${fav.name} takipten çıkarıldı`);
       setTimeout(() => router.refresh(), 450);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Takipten çıkarılamadı. Tekrar deneyin.");
+      toast(failMessage(e), { kind: "error" });
     }
   }
 
   return (
     <li>
       <Collapse open={!removed}>
-        <article
-          aria-label={fav.name}
-          className="mb-4 grid gap-5 rounded-panel bg-surface p-5 ring-1 ring-line sm:p-6"
-        >
-          <header className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
+        <article aria-label={fav.name} className="mb-4 grid gap-4 rounded-panel bg-surface p-5 ring-1 ring-line">
+          <header className="flex items-start gap-4">
+            <div className="min-w-0 flex-1">
               <h2 className="truncate text-lg font-semibold tracking-tight">{fav.name}</h2>
               <p className="truncate text-sm text-muted">
                 {[fav.category, fav.city].filter(Boolean).join(" · ")}
                 {fav.rating ? ` · ${String(fav.rating).replace(".", ",")} puan` : ""}
                 {fav.review_count ? ` (${fav.review_count} yorum)` : ""}
               </p>
-              {fav.source && <p className="mt-0.5 truncate text-xs text-muted">Bulunduğu arama: {fav.source}</p>}
-              {(!fav.website || !fav.phone) && (
-                <p className="mt-2 flex flex-wrap gap-1.5 text-xs">
-                  {!fav.website && <span className="rounded-full bg-pollen px-2 py-0.5 font-medium">Web sitesi yok</span>}
-                  {!fav.phone && <span className="rounded-full bg-sunken px-2 py-0.5">Telefon yok</span>}
-                </p>
-              )}
             </div>
-            <div className="shrink-0 text-right">
-              <p className="text-3xl font-semibold tracking-tight tabular-nums">
-                {score}
-                <span className="sr-only"> genel skor</span>
-              </p>
-              <div className="mt-1 h-1.5 w-16 overflow-hidden rounded-full bg-sunken" aria-hidden="true">
-                <div className={`h-full rounded-full ${scoreTone(score)}`} style={{ width: `${score}%` }} />
-              </div>
-            </div>
-          </header>
-
-          <div className="flex flex-wrap gap-2">
-            {tel && (
-              <a href={tel} className={linkClass}>
-                {fav.phone}
-              </a>
-            )}
-            {website && (
-              <a href={website} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                Web sitesi
-              </a>
-            )}
-            {maps && (
-              <a href={maps} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                Haritada aç
-              </a>
-            )}
-          </div>
-
-          <div className="grid gap-4 border-t border-line pt-5 sm:grid-cols-[14rem_1fr]">
-            <div className="grid content-start gap-2">
-              <p className="text-sm font-medium">Aşama</p>
-              <Select<FollowStatus> label={`${fav.name} aşaması`} value={status} options={statusOptions} onChange={changeStatus} />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor={`note-${fav.id}`} className="flex items-baseline justify-between gap-3 text-sm font-medium">
-                Not
-                <span className="text-xs font-normal text-muted" role="status">
-                  {noteState === "saving" ? "Kaydediliyor…" : noteState === "saved" ? "Kaydedildi" : `${note.length} / 500`}
-                </span>
-              </label>
-              <textarea
-                id={`note-${fav.id}`}
-                rows={2}
-                maxLength={500}
-                value={note}
-                placeholder="Görüşme notları, bir sonraki adım…"
-                onChange={(e) => {
-                  setNote(e.target.value);
-                  setNoteState("idle");
-                }}
-                onBlur={saveNote}
-                className="resize-y rounded-row bg-surface px-3.5 py-2.5 leading-relaxed ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p role="alert" className="rounded-control bg-danger-soft px-4 py-2.5 text-sm text-danger">
-              {error}
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
+              {fav.lead_score ?? 0}
+              <span className="sr-only"> genel skor</span>
             </p>
-          )}
-
-          <div className="flex justify-end">
             <button
               type="button"
               onClick={remove}
-              className="rounded-control px-3 py-1.5 text-sm text-muted transition-colors hover:bg-sunken hover:text-danger"
+              aria-label={`${fav.name} firmasını takipten çıkar`}
+              title="Takipten çıkar"
+              className="-mt-1 -mr-1 grid size-9 shrink-0 place-items-center rounded-full text-forest transition-colors hover:bg-sunken"
             >
-              Takipten çıkar
+              <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+                <path d="M7.5 4h9a1 1 0 0 1 1 1v14.5l-5.5-3.7-5.5 3.7V5a1 1 0 0 1 1-1Z" fill="currentColor" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+              </svg>
             </button>
+          </header>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            <div className="w-full sm:w-auto sm:min-w-[19rem]">
+              <Segmented
+                label={`${fav.name} aşaması`}
+                items={followStages.map((s) => ({ key: s.value, label: s.label, pressed: stage === s.value, onClick: () => changeStage(s.value) }))}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {tel && (
+                <a href={tel} className={linkClass}>
+                  {fav.phone}
+                </a>
+              )}
+              {website && (
+                <a href={website} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  Web sitesi
+                </a>
+              )}
+              {maps && (
+                <a href={maps} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  Haritada aç
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <button
+              type="button"
+              aria-expanded={noteOpen}
+              onClick={() => setNoteOpen((o) => !o)}
+              className="group flex w-fit items-center gap-1.5 rounded-control text-sm font-medium text-forest hover:underline"
+            >
+              {note ? "Notu göster" : "Not ekle"}
+              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" className="transition-transform duration-300 group-aria-expanded:rotate-180">
+                <path d="m3.5 6 4.5 4.5L12.5 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <Collapse open={noteOpen}>
+              <textarea
+                aria-label={`${fav.name} notu`}
+                rows={3}
+                maxLength={500}
+                value={note}
+                placeholder="Görüşme notları, bir sonraki adım…"
+                onChange={(e) => setNote(e.target.value)}
+                onBlur={saveNote}
+                className="mt-1 w-full resize-y rounded-row bg-surface px-3.5 py-2.5 leading-relaxed ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest"
+              />
+            </Collapse>
           </div>
         </article>
       </Collapse>
@@ -180,15 +163,18 @@ function FavoriteCard({ fav }: { fav: Favorite }) {
 }
 
 export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
-  const [filter, setFilter] = useState<FollowStatus | "all">("all");
+  const [filter, setFilter] = useState<FollowStage | "all">("all");
+  // Aşaması değişen firma filtre sayılarına hemen yansısın diye yerel aşama tablosu tutulur.
+  const [stages, setStages] = useState<Record<string, FollowStage>>({});
+  const stageFor = (f: Favorite) => stages[f.id] ?? stageOf(f.status);
 
   if (favorites.length === 0) {
     return (
       <div className="grid justify-items-center gap-4 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
+        <Toaster />
         <p className="text-lg font-semibold tracking-tight">Henüz takibe aldığınız firma yok</p>
         <p className="max-w-[28rem] text-muted">
-          Müşteri bul sayfasında, ilginizi çeken firmanın yanındaki yıldıza basın. Takibe aldığınız firmalar burada toplanır;
-          her biri için aşamayı ve notlarınızı tutabilirsiniz.
+          Müşteri bul sayfasında, ilginizi çeken firmanın sağ üstündeki yer imi simgesine basın. Takibe aldığınız firmalar burada toplanır.
         </p>
         <Link
           href="/panel/musteri-bul"
@@ -200,18 +186,19 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
     );
   }
 
-  const count = (s: FollowStatus) => favorites.filter((f) => f.status === s).length;
-  const shown = filter === "all" ? favorites : favorites.filter((f) => f.status === filter);
+  const count = (s: FollowStage) => favorites.filter((f) => stageFor(f) === s).length;
+  const shown = filter === "all" ? favorites : favorites.filter((f) => stageFor(f) === filter);
 
   return (
     <div className="grid gap-5">
+      <Toaster />
       <div className="overflow-x-auto pb-1">
         <div className="min-w-max">
           <Segmented
             label="Aşamaya göre filtrele"
             items={[
               { key: "all", label: `Tümü ${favorites.length}`, pressed: filter === "all", onClick: () => setFilter("all") },
-              ...followStatuses.map((s) => ({
+              ...followStages.map((s) => ({
                 key: s.value,
                 label: `${s.label} ${count(s.value)}`,
                 pressed: filter === s.value,
@@ -227,7 +214,7 @@ export function FavoritesBoard({ favorites }: { favorites: Favorite[] }) {
       ) : (
         <ul>
           {shown.map((f) => (
-            <FavoriteCard key={f.id} fav={f} />
+            <FavoriteCard key={f.id} fav={f} onStage={(id, stage) => setStages((s) => ({ ...s, [id]: stage }))} />
           ))}
         </ul>
       )}
