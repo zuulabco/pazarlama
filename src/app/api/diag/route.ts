@@ -1,8 +1,6 @@
 // GEÇİCİ teşhis endpoint'i: canlıdaki 500'ün sebebini bulmak için. Bulunca silinecek.
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-
 async function step(name: string, fn: () => Promise<unknown>) {
   try {
     return { name, ok: true, info: await fn() };
