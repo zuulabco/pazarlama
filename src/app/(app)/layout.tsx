@@ -13,15 +13,20 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
     <>
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-16 w-full max-w-page items-center justify-between gap-2 px-4 sm:gap-6 sm:px-6">
-          <div className="flex items-center gap-1 sm:gap-6">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-6">
             <Link href="/panel" aria-label="Panel" className="rounded-control">
               <Wordmark />
             </Link>
-            <nav aria-label="Ana menü">
+            <nav aria-label="Ana menü" className="min-w-0 overflow-x-auto [scrollbar-width:none]">
               <ul className="flex gap-1 text-sm text-muted">
                 <li>
                   <Link href="/panel/musteri-bul" className="rounded-control px-2 py-2 whitespace-nowrap transition-colors hover:text-ink sm:px-3">
                     Müşteri bul
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/panel/firmalar" className="rounded-control px-2 py-2 whitespace-nowrap transition-colors hover:text-ink sm:px-3">
+                    Firmalar
                   </Link>
                 </li>
                 <li>

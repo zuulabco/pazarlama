@@ -33,8 +33,8 @@ export async function startPlacesRun(opts: {
   query: string;
   location: string;
   maxResults: number;
-  /** Yalnızca web sitesi olmayan firmaları getirir (Apify tarafında süzülür; yer başına küçük ek ücret). */
-  withoutWebsite?: boolean;
+  /** Web sitesine göre süzme (Apify tarafında yapılır; yer başına küçük ek ücret): yalnızca olanlar / olmayanlar. */
+  website?: "any" | "with" | "without";
   /** Tanımlıysa koşu bitince bu adrese çağrı yapılır. */
   webhook?: { url: string; secret: string };
 }): Promise<RunInfo> {
@@ -60,7 +60,7 @@ export async function startPlacesRun(opts: {
     maxCrawledPlacesPerSearch: opts.maxResults,
     language: "tr",
     skipClosedPlaces: true,
-    website: opts.withoutWebsite ? "withoutWebsite" : "allPlaces",
+    website: opts.website === "without" ? "withoutWebsite" : opts.website === "with" ? "withWebsite" : "allPlaces",
     scrapePlaceDetailPage: false,
     scrapeContacts: false,
     maxReviews: 0,

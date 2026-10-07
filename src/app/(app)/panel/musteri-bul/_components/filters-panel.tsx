@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { Collapse } from "@/components/ui/collapse";
 import { ComboField } from "@/components/ui/combo-field";
+import { Segmented } from "@/components/ui/segmented";
 import { provinces } from "@/modules/profile/cities";
 import { businessTypes } from "@/modules/leads/business-types";
 import { searchLimits } from "@/modules/leads/config";
@@ -21,13 +23,14 @@ const statusLabel: Record<SearchView["status"], string> = {
   failed: "Başarısız",
 };
 
-const chevron = (
-  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" className="shrink-0 text-muted transition-transform duration-200 group-aria-expanded:rotate-180">
-    <path d="m3.5 6 4.5 4.5L12.5 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+/** Yazılan firma türü gerçek bir işletme türü mü? Kullanıcı yazarken sunucuya sorulur. */
+async function validateBusinessType(text: string): Promise<boolean> {
+  const res = await fetch(`/api/leads/validate?q=${encodeURIComponent(text)}`);
+  if (!res.ok) return true; // doğrulama ulaşılamazsa engelleme; sunucu aramada yine denetler
+  return ((await res.json()) as { valid: boolean }).valid;
+}
 
-/** Apollo tarzı daraltılabilir süzgeç grubu. */
+/** Apollo tarzı daraltılabilir süzgeç grubu; yumuşakça açılıp kapanır. */
 function FilterGroup({
   title,
   badge,
@@ -55,18 +58,22 @@ function FilterGroup({
             {title}
             {badge ? <span className="rounded-full bg-forest px-2 py-0.5 text-xs font-medium text-white">{badge}</span> : null}
           </span>
-          {chevron}
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" className="shrink-0 text-muted transition-transform duration-300 group-aria-expanded:rotate-180">
+            <path d="m3.5 6 4.5 4.5L12.5 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       </h3>
-      <div id={id} hidden={!open} className="grid gap-4 px-5 pb-5">
-        {children}
-      </div>
+      <Collapse open={open}>
+        <div id={id} className="grid gap-5 px-5 pt-1 pb-5">
+          {children}
+        </div>
+      </Collapse>
     </section>
   );
 }
 
-/** Tek seçimli düğme grubu: seçili olana tekrar basmak süzgeci kaldırır. */
-function Segmented<T extends string | number>({
+/** Süzgeç için "Hepsi + seçenekler" düğmeleri; "Hepsi" süzgeci kaldırır. */
+function FilterSegmented<T extends string | number>({
   label,
   options,
   value,
@@ -78,25 +85,27 @@ function Segmented<T extends string | number>({
   onChange: (next: T | undefined) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
-      {options.map((o) => {
-        const pressed = value === o.value;
-        return (
-          <button
-            key={String(o.value)}
-            type="button"
-            aria-pressed={pressed}
-            onClick={() => onChange(pressed ? undefined : o.value)}
-            className="inline-flex h-9 min-w-14 items-center justify-center rounded-full px-4 text-sm ring-1 transition-[background-color,color,transform] duration-150 ring-inset active:scale-95 aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest aria-[pressed=false]:bg-surface aria-[pressed=false]:ring-line-strong aria-[pressed=false]:hover:bg-sunken"
-          >
-            {o.label}
-          </button>
-        );
-      })}
+    <Segmented
+      label={label}
+      items={[
+        { key: "all", label: "Hepsi", pressed: value === undefined, onClick: () => onChange(undefined) },
+        ...options.map((o) => ({ key: String(o.value), label: o.label, pressed: value === o.value, onClick: () => onChange(o.value) })),
+      ]}
+    />
+  );
+}
+
+function FilterRow({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-2">
+      <p className="text-sm font-medium">{title}</p>
+      {children}
+      {hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
 }
 
+type CountMode = "10" | "25" | "50" | "all" | "custom";
 type Errors = Partial<Record<"query" | "province" | "district" | "maxResults", string>>;
 
 export function FiltersPanel({
@@ -105,7 +114,6 @@ export function FiltersPanel({
   searches,
   selectedId,
   navigate,
-  hasResults,
   busy,
   onSubmitStart,
   onCreated,
@@ -116,18 +124,17 @@ export function FiltersPanel({
   searches: SearchView[];
   selectedId: string | null;
   navigate: Navigate;
-  hasResults: boolean;
   busy: boolean;
   onSubmitStart: () => void;
   onCreated: (id: string) => void;
   onFailed: () => void;
 }) {
-  // ── Arama formu ──
+  // ── Arama ──
   const [query, setQuery] = useState<string[]>([]);
   const [province, setProvince] = useState<string[]>(defaults.province ? [defaults.province] : []);
   const [district, setDistrict] = useState<string[]>(defaults.district ? [defaults.district] : []);
-  const [countText, setCountText] = useState(String(searchLimits.defaultResults));
-  const [withoutWebsite, setWithoutWebsite] = useState(false);
+  const [countMode, setCountMode] = useState<CountMode>(String(searchLimits.defaultResults) as CountMode);
+  const [customCount, setCustomCount] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -135,10 +142,12 @@ export function FiltersPanel({
     () => (province[0] ? districtsOf(province[0]).map((d) => ({ value: d, label: d })) : []),
     [province],
   );
-  const count = Number(countText);
-  const countOptions = [
-    ...searchLimits.presets.map((n) => ({ value: n, label: String(n) })),
-    { value: searchLimits.maxResults, label: "Tümü" },
+
+  const count = countMode === "all" ? searchLimits.maxResults : countMode === "custom" ? Number(customCount) : Number(countMode);
+  const countItems: { mode: CountMode; label: string }[] = [
+    ...searchLimits.presets.map((n) => ({ mode: String(n) as CountMode, label: String(n) })),
+    { mode: "all", label: "Tümü" },
+    { mode: "custom", label: "Özel" },
   ];
 
   async function submit(e: FormEvent) {
@@ -164,7 +173,8 @@ export function FiltersPanel({
           province: province[0],
           district: district[0] || undefined,
           maxResults: count,
-          withoutWebsite,
+          // Web sitesi süzgeci, aramayı Apify tarafında da daraltır: yalnızca olmayanlar ya da olanlar.
+          website: filters.web === "yok" ? "without" : filters.web === "var" ? "with" : "any",
         }),
       });
       const body = (await res.json().catch(() => null)) as { id?: string; error?: string; field?: keyof Errors } | null;
@@ -180,14 +190,14 @@ export function FiltersPanel({
     }
   }
 
-  // ── Sonuç süzgeçleri ──
+  // ── Süzgeçler (liste anında daralır; web sitesi seçimi yeni aramalarda da kullanılır) ──
   const active = filterKeys.filter((k) => filters[k] !== undefined).length;
   const setFilter = (key: (typeof filterKeys)[number]) => (value: string | number | undefined) =>
     navigate((p) => (value === undefined ? p.delete(key) : p.set(key, String(value))));
 
   return (
     <div className="overflow-visible rounded-panel bg-surface ring-1 ring-line">
-      <FilterGroup title="Yeni arama">
+      <FilterGroup title="Arama">
         <form onSubmit={submit} noValidate className="grid gap-5">
           <ComboField
             legend="Hangi tür firmalar?"
@@ -199,91 +209,84 @@ export function FiltersPanel({
             }}
             single
             allowCustom
+            validateCustom={validateBusinessType}
+            invalidMessage="Lütfen geçerli bir firma türü girin."
             placeholder="Örn. diş kliniği, kafe"
             error={errors.query}
           />
 
-          <div className="grid gap-4">
-            <ComboField
-              legend="İl"
-              options={provinceOptions}
-              value={province}
-              onChange={(v) => {
-                setProvince(v);
-                setDistrict([]); // ilçe, seçilen ile aittir
-                setErrors((x) => ({ ...x, province: undefined, district: undefined }));
-              }}
-              single
-              placeholder="İl seçin"
-              error={errors.province}
-            />
-            <ComboField
-              legend="İlçe"
-              hint="İsteğe bağlı. Boş bırakırsanız tüm il taranır."
-              options={districtOptions}
-              value={district}
-              onChange={(v) => {
-                setDistrict(v);
-                setErrors((x) => ({ ...x, district: undefined }));
-              }}
-              single
-              disabled={!province[0]}
-              placeholder={province[0] ? "Tüm ilçeler" : "Önce il seçin"}
-              error={errors.district}
-            />
-          </div>
+          <ComboField
+            legend="İl"
+            options={provinceOptions}
+            value={province}
+            onChange={(v) => {
+              setProvince(v);
+              setDistrict([]); // ilçe, seçilen ile aittir
+              setErrors((x) => ({ ...x, province: undefined, district: undefined }));
+            }}
+            single
+            placeholder="İl seçin"
+            error={errors.province}
+          />
+          <ComboField
+            legend="İlçe"
+            hint="İsteğe bağlı. Boş bırakırsanız tüm il taranır."
+            options={districtOptions}
+            value={district}
+            onChange={(v) => {
+              setDistrict(v);
+              setErrors((x) => ({ ...x, district: undefined }));
+            }}
+            single
+            disabled={!province[0]}
+            placeholder={province[0] ? "Tüm ilçeler" : "Önce il seçin"}
+            error={errors.district}
+          />
 
-          <fieldset className="grid gap-3">
+          <fieldset className="grid gap-2.5">
             <legend className="mb-0.5 text-base font-medium">
               Listelenecek firma sayısı
-              <span className="mt-0.5 block text-sm font-normal text-muted">Az firma daha hızlı sonuç verir. Tümü en fazla {searchLimits.maxResults} firmadır.</span>
+              <span className="mt-0.5 block text-sm font-normal text-muted">
+                Az firma daha hızlı sonuç verir. Tümü en fazla {searchLimits.maxResults} firmadır.
+              </span>
             </legend>
             <Segmented
-              label="Hazır firma sayıları"
-              options={countOptions}
-              value={countOptions.find((o) => o.value === count)?.value}
-              onChange={(v) => v !== undefined && setCountText(String(v))}
-            />
-            <label className="flex items-center gap-3 text-sm text-muted">
-              <span className="shrink-0">ya da bir sayı yazın</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={searchLimits.maxResults}
-                value={countText}
-                onChange={(e) => {
-                  setCountText(e.target.value);
+              label="Firma sayısı"
+              items={countItems.map((c) => ({
+                key: c.mode,
+                label: c.label,
+                pressed: countMode === c.mode,
+                onClick: () => {
+                  setCountMode(c.mode);
                   setErrors((x) => ({ ...x, maxResults: undefined }));
-                }}
-                aria-invalid={errors.maxResults ? true : undefined}
-                className="h-10 w-24 rounded-control bg-surface px-3 text-base text-ink tabular-nums ring-1 ring-line-strong ring-inset outline-none focus:ring-2 focus:ring-forest aria-invalid:ring-danger"
-              />
-            </label>
+                },
+              }))}
+            />
+            <Collapse open={countMode === "custom"}>
+              <label className="flex items-center gap-3 pt-1 text-sm text-muted">
+                <span className="shrink-0">Kaç firma?</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={searchLimits.maxResults}
+                  value={customCount}
+                  placeholder="Örn. 40"
+                  onChange={(e) => {
+                    setCustomCount(e.target.value);
+                    setErrors((x) => ({ ...x, maxResults: undefined }));
+                  }}
+                  aria-invalid={errors.maxResults ? true : undefined}
+                  className="h-10 w-28 rounded-control bg-surface px-3 text-base text-ink tabular-nums ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger"
+                />
+              </label>
+            </Collapse>
             {errors.maxResults && (
               <p role="alert" className="text-sm text-danger">
                 {errors.maxResults}
               </p>
             )}
           </fieldset>
-
-          <label className="flex cursor-pointer items-start gap-3">
-            <span className="relative mt-0.5 inline-flex h-6 w-10 shrink-0">
-              <input
-                type="checkbox"
-                role="switch"
-                checked={withoutWebsite}
-                onChange={(e) => setWithoutWebsite(e.target.checked)}
-                className="peer absolute inset-0 z-10 m-0 h-full w-full cursor-pointer opacity-0"
-              />
-              <span className="absolute inset-0 rounded-full bg-line-strong transition-colors peer-checked:bg-forest peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-forest" />
-              <span className="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-4" />
-            </span>
-            <span className="grid gap-0.5">
-              <span className="font-medium">Yalnızca web sitesi olmayanlar</span>
-              <span className="text-sm text-muted">Sadece web sitesi olmayan firmaları arar; web sitesi satanlar için daha isabetlidir.</span>
-            </span>
-          </label>
 
           {formError && (
             <p role="alert" className="rounded-control bg-danger-soft px-4 py-3 text-sm text-danger">
@@ -297,39 +300,31 @@ export function FiltersPanel({
         </form>
       </FilterGroup>
 
-      <FilterGroup title="Sonuçları daralt" badge={active}>
-        {!hasResults && <p className="text-sm text-muted">Sonuçlar geldiğinde buradan daraltabilirsiniz.</p>}
-        <div className="grid gap-5" aria-disabled={!hasResults}>
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Genel skor</p>
-            <Segmented label="Genel skor" options={[{ value: 50, label: "50+" }, { value: 70, label: "70+" }, { value: 85, label: "85+" }]} value={filters.min} onChange={setFilter("min")} />
-          </div>
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Dijital ihtiyaç</p>
-            <Segmented label="Dijital ihtiyaç" options={[{ value: 60, label: "60+" }, { value: 80, label: "80+" }]} value={filters.dn} onChange={setFilter("dn")} />
-          </div>
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Web sitesi</p>
-            <Segmented label="Web sitesi" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.web} onChange={setFilter("web")} />
-          </div>
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Telefon numarası</p>
-            <Segmented label="Telefon numarası" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.tel} onChange={setFilter("tel")} />
-          </div>
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Google puanı</p>
-            <Segmented label="Google puanı" options={[{ value: 4, label: "4,0+" }, { value: 4.5, label: "4,5+" }]} value={filters.star} onChange={setFilter("star")} />
-          </div>
-          {active > 0 && (
-            <button
-              type="button"
-              onClick={() => navigate((p) => filterKeys.forEach((k) => p.delete(k)))}
-              className="justify-self-start rounded-control px-1 text-sm font-medium text-forest underline underline-offset-4 hover:no-underline"
-            >
-              Süzgeçleri temizle
-            </button>
-          )}
-        </div>
+      <FilterGroup title="Filtreler" badge={active}>
+        <FilterRow title="Web sitesi" hint="Yeni aramalar da bu seçime göre yapılır.">
+          <FilterSegmented label="Web sitesi" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.web} onChange={setFilter("web")} />
+        </FilterRow>
+        <FilterRow title="Telefon numarası">
+          <FilterSegmented label="Telefon numarası" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.tel} onChange={setFilter("tel")} />
+        </FilterRow>
+        <FilterRow title="Genel skor">
+          <FilterSegmented label="Genel skor" options={[{ value: 50, label: "50+" }, { value: 70, label: "70+" }, { value: 85, label: "85+" }]} value={filters.min} onChange={setFilter("min")} />
+        </FilterRow>
+        <FilterRow title="Dijital ihtiyaç">
+          <FilterSegmented label="Dijital ihtiyaç" options={[{ value: 60, label: "60+" }, { value: 80, label: "80+" }]} value={filters.dn} onChange={setFilter("dn")} />
+        </FilterRow>
+        <FilterRow title="Google puanı">
+          <FilterSegmented label="Google puanı" options={[{ value: 4, label: "4,0+" }, { value: 4.5, label: "4,5+" }]} value={filters.star} onChange={setFilter("star")} />
+        </FilterRow>
+        {active > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate((p) => filterKeys.forEach((k) => p.delete(k)))}
+            className="justify-self-start rounded-control px-1 text-sm font-medium text-forest underline underline-offset-4 hover:no-underline"
+          >
+            Filtreleri temizle
+          </button>
+        )}
       </FilterGroup>
 
       {searches.length > 0 && (

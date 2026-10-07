@@ -71,7 +71,6 @@ export function LeadsWorkspace({
             searches={searches}
             selectedId={search?.id ?? null}
             navigate={navigate}
-            hasResults={total > 0}
             busy={waiting}
             onSubmitStart={() => {
               setSubmitting(true);

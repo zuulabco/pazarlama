@@ -1,0 +1,26 @@
+/* Her ipucu belirir, okunacak kadar kalır, kaybolur; süre, döngü aralığıyla aynıdır. */
+.tip {
+  animation: tip 3.8s ease-in-out both;
+}
+
+@keyframes tip {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  12%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    animation: none;
+  }
+}

@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { Select } from "@/components/ui/select";
 import { leadSorts, type LeadSort } from "@/modules/leads/sorts";
+import { RotatingTips } from "./rotating-tips";
 import { ShapeLoader } from "./shape-loader";
 import { filterKeys, isActiveStatus, type Navigate, type ResultFilters, type SearchView } from "./types";
 
@@ -98,7 +100,7 @@ export function ResultsArea({
     const collecting = !view || view.found === 0;
     return (
       <div role="status" className="grid min-h-[28rem] place-items-center rounded-panel bg-surface px-6 py-16 ring-1 ring-line">
-        <div className="grid justify-items-center gap-10">
+        <div className="grid justify-items-center gap-9">
           <ShapeLoader />
           <Message
             title={collecting ? "Firmalar aranıyor" : "Firmalar puanlanıyor"}
@@ -108,6 +110,7 @@ export function ResultsArea({
                 : `${view!.found} firma bulundu, hedef profilinize göre puanlanıyor.`
             }
           />
+          <RotatingTips />
         </div>
       </div>
     );
@@ -143,20 +146,16 @@ export function ResultsArea({
             {total === shown ? `${total} firma` : `${total} firmadan ${shown}'i gösteriliyor`}
           </p>
         </div>
-        <label className="flex items-center gap-2.5 text-sm text-muted">
-          Sırala
-          <select
+        <div className="flex items-center gap-2.5 text-sm text-muted">
+          <span aria-hidden="true">Sırala</span>
+          <Select<LeadSort>
+            label="Sırala"
+            align="right"
             value={filters.sort}
-            onChange={(e) => navigate((p) => (e.target.value === "score" ? p.delete("sort") : p.set("sort", e.target.value)))}
-            className="h-10 cursor-pointer rounded-control bg-surface px-3 text-base text-ink ring-1 ring-line-strong ring-inset outline-none focus:ring-2 focus:ring-forest"
-          >
-            {(Object.keys(leadSorts) as LeadSort[]).map((k) => (
-              <option key={k} value={k}>
-                {leadSorts[k].label}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={(Object.keys(leadSorts) as LeadSort[]).map((k) => ({ value: k, label: leadSorts[k].label }))}
+            onChange={(next) => navigate((p) => (next === "score" ? p.delete("sort") : p.set("sort", next)))}
+          />
+        </div>
       </div>
 
       {active && (

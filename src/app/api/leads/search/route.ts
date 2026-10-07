@@ -19,7 +19,7 @@ const bodySchema = z.object({
     .int("Firma sayısı tam sayı olmalı.")
     .min(1, "En az 1 firma isteyin.")
     .max(searchLimits.maxResults, `En fazla ${searchLimits.maxResults} firma istenebilir.`),
-  withoutWebsite: z.boolean().default(false),
+  website: z.enum(["any", "with", "without"]).default("any"),
 });
 
 type Field = "query" | "province" | "district" | "maxResults";
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const issue = parsed.error.issues[0];
     return error(issue?.message ?? "Eksik bilgi.", 400, issue?.path[0] as Field | undefined);
   }
-  const { query, maxResults, withoutWebsite } = parsed.data;
+  const { query, maxResults, website } = parsed.data;
 
   // İl ve ilçe, Türkiye'nin resmî listesinden doğrulanır.
   const province = canonicalProvince(parsed.data.province);
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     // Webhook yalnızca herkese açık bir adres varsa kurulur; yerelde durum sorgusu işi ilerletir.
     const secret = process.env.APIFY_WEBHOOK_SECRET;
     const webhook = site.url.startsWith("https://") && secret ? { url: `${site.url}/api/webhooks/apify`, secret } : undefined;
-    const run = await startPlacesRun({ query, location, maxResults, withoutWebsite, webhook });
+    const run = await startPlacesRun({ query, location, maxResults, website, webhook });
     await updateSearch(search.id, { status: "scraping", apify_run_id: run.id, apify_dataset_id: run.datasetId });
   } catch (e) {
     console.error("Apify koşusu başlatılamadı:", e);

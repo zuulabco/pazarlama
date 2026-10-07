@@ -14,6 +14,7 @@ import {
   type Presence,
   type Search,
 } from "@/modules/leads/repository";
+import { favoritePlaceIds } from "@/modules/favorites/repository";
 import { getProfile } from "@/modules/profile/repository";
 import { LeadList } from "./_components/lead-list";
 import { LeadsWorkspace } from "./_components/leads-workspace";
@@ -82,6 +83,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
       ])
     : [null, 0];
 
+  const favorites = await favoritePlaceIds(user.uid, results?.rows.map((r) => r.place_id) ?? []);
   const filtered = Boolean(filters.min || filters.dn || filters.web || filters.tel || filters.star);
   const firstCity = profile.cityScope === "cities" ? profile.targetCities.map(canonicalProvince).find(Boolean) : null;
 
@@ -95,7 +97,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
       defaults={{ province: firstCity ?? "", district: "" }}
     >
       {results && results.rows.length > 0 ? (
-        <LeadList rows={results.rows} />
+        <LeadList rows={results.rows} favorites={favorites} />
       ) : (
         results && (
           <p className="rounded-panel bg-surface px-5 py-10 text-center text-muted ring-1 ring-line">

@@ -277,3 +277,15 @@ export async function countLeads(uid: string, searchId: string) {
   if (error) return fail("Firma sayısı okunamadı", error);
   return count ?? 0;
 }
+
+/** Kullanıcıya ait tek bir firma satırı (favoriye eklerken kullanılır). */
+export async function getLeadForUser(uid: string, leadId: string) {
+  const { data, error } = await db()
+    .from("leads")
+    .select(leadColumns)
+    .eq("id", leadId)
+    .eq("user_uid", uid)
+    .maybeSingle<LeadRow>();
+  if (error) return fail("Firma okunamadı", error);
+  return data;
+}

@@ -1,0 +1,33 @@
+/*
+ * Açılır liste katmanı (Select, ComboField): yumuşakça belirir ve kaybolur.
+ * Eleman her zaman DOM'da kalır; "display" ayrık geçişi (allow-discrete) sayesinde kapanış da animasyonludur.
+ */
+.popover {
+  display: none;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top;
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    transform 0.22s var(--ease-out),
+    display 0.22s allow-discrete;
+}
+.popover[data-open="true"] {
+  display: block;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+@starting-style {
+  .popover[data-open="true"] {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover {
+    transition: none;
+  }
+}

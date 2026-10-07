@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
+import { Disclosure } from "@/components/ui/disclosure";
 import { scoreTone } from "@/lib/score";
 import { appModules } from "@/modules/registry";
 import { demoBreakdown } from "./demo-data";
@@ -219,21 +220,14 @@ export function Faq() {
       <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Sık sorulan sorular</h2>
       <div className="divide-y divide-line border-y border-line">
         {faqs.map((f) => (
-          <details key={f.q} className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 font-medium [&::-webkit-details-marker]:hidden">
-              {f.q}
-              <svg
-                viewBox="0 0 16 16"
-                width="16"
-                height="16"
-                aria-hidden="true"
-                className="shrink-0 text-muted transition-transform duration-200 group-open:rotate-45"
-              >
-                <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </summary>
-            <p className="max-w-prose pb-6 text-muted">{f.a}</p>
-          </details>
+          <Disclosure
+            key={f.q}
+            summary={<span className="font-medium">{f.q}</span>}
+            buttonClassName="py-5"
+            panelClassName="max-w-prose pb-6 text-muted"
+          >
+            {f.a}
+          </Disclosure>
         ))}
       </div>
     </Section>
