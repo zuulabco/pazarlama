@@ -29,6 +29,10 @@
   --color-forest-soft: #dfe9e3;
   --color-pollen: #e3f27a;
 
+  /* Geri bildirim */
+  --color-danger: #a8321f;
+  --color-danger-soft: #fbeae6;
+
   /* Puan skalası (düşük → yüksek) */
   --color-score-low: #c9d2cc;
   --color-score-mid: #8fb3a3;

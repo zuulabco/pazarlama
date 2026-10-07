@@ -12,6 +12,9 @@ export function SiteFooter() {
         <Link href="/kayit" className="hover:text-ink">
           Hesap oluştur
         </Link>
+        <Link href="/gizlilik" className="hover:text-ink">
+          Gizlilik ve KVKK
+        </Link>
       </div>
       <p>© 2026 Sinyal</p>
     </footer>

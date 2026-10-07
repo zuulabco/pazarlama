@@ -3,9 +3,9 @@ import { ButtonLink } from "@/components/ui/button";
 import { Wordmark } from "@/components/ui/wordmark";
 
 const nav = [
-  { href: "#nasil-calisir", label: "Nasıl çalışır" },
-  { href: "#puanlama", label: "Puanlama" },
-  { href: "#sss", label: "Sorular" },
+  { href: "/#nasil-calisir", label: "Nasıl çalışır" },
+  { href: "/#puanlama", label: "Puanlama" },
+  { href: "/#sss", label: "Sorular" },
 ];
 
 export function SiteHeader() {
@@ -18,9 +18,9 @@ export function SiteHeader() {
         <ul className="flex gap-1 text-sm text-muted">
           {nav.map((item) => (
             <li key={item.href}>
-              <a href={item.href} className="rounded-control px-3 py-2 transition-colors hover:text-ink">
+              <Link href={item.href} className="rounded-control px-3 py-2 transition-colors hover:text-ink">
                 {item.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
