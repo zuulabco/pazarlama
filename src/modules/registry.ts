@@ -18,6 +18,13 @@ export const appModules: readonly AppModule[] = [
     status: "ready",
   },
   {
+    id: "destek-otomasyonu",
+    name: "Çok dilli müşteri desteği",
+    description: "WhatsApp ve e-postadan gelen mesajları çevirin, öncelik verin ve müşteriye kendi dilinde yanıt verin.",
+    href: "/panel/destek-otomasyonu",
+    status: "ready",
+  },
+  {
     id: "meta-reklam",
     name: "Meta reklam analizi",
     description: "Kampanyalarınızın neden iyi ya da kötü gittiğini sade bir dille görün.",
