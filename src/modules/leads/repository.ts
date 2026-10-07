@@ -1,7 +1,10 @@
 import "server-only";
 import { db } from "@/lib/supabase/server";
 import type { Place } from "./apify";
-import { staleScoringSeconds } from "./config";
+import { leaseSeconds } from "./config";
+import { leadSorts, type LeadSort, type Presence } from "./sorts";
+
+export { leadSorts, type LeadSort, type Presence };
 import type { FinalScores } from "./scoring";
 import type { JevScores } from "./jev";
 
@@ -112,11 +115,12 @@ export async function hasActiveSearch(uid: string, since: Date) {
 }
 
 /**
- * Aramayı işlemek üzere tek bir isteğe atomik olarak devreder: "scraping" ya da
- * uzun süredir güncellenmeyen "scoring" durumundaki arama "scoring"e geçer. Kazanan true döner.
+ * Aramayı işlemek üzere tek bir isteğe kısa süreli devreder (kira). "scraping" durumundaki arama ya da
+ * kirası dolmuş (`leaseSeconds` boyunca güncellenmemiş) "scoring" araması "scoring"e geçer; kazanan true döner.
+ * Böylece aynı anda birden fazla istek (arayüz sorgusu, webhook) aynı firmaları ikinci kez puanlamaz.
  */
-export async function claimForScoring(id: string) {
-  const staleBefore = new Date(Date.now() - staleScoringSeconds * 1000).toISOString();
+export async function claimBatch(id: string) {
+  const staleBefore = new Date(Date.now() - leaseSeconds * 1000).toISOString();
   const { data, error } = await db()
     .from("lead_searches")
     .update({ status: "scoring" })
@@ -125,6 +129,12 @@ export async function claimForScoring(id: string) {
     .select("id");
   if (error) return fail("Arama devralınamadı", error);
   return (data?.length ?? 0) > 0;
+}
+
+/** Koşu sürerken bir parti bittiğinde kirayı bırakır; sonraki parti yeniden devralabilir. */
+export async function releaseBatch(id: string) {
+  const { error } = await db().from("lead_searches").update({ status: "scraping" }).eq("id", id).eq("status", "scoring");
+  if (error) fail("Arama bırakılamadı", error);
 }
 
 // ─── Firmalar ────────────────────────────────────────────────────────────────
@@ -178,6 +188,17 @@ export async function upsertLeads(searchId: string, uid: string, places: Place[]
   if (error) fail("Firmalar kaydedilemedi", error);
 }
 
+/** Bu aramaya daha önce kaydedilmiş firmaların Google yer kimlikleri. */
+export async function listPlaceIds(searchId: string) {
+  const { data, error } = await db()
+    .from("leads")
+    .select("place_id")
+    .eq("search_id", searchId)
+    .returns<{ place_id: string }[]>();
+  if (error) return fail("Firmalar okunamadı", error);
+  return new Set(data.map((r) => r.place_id));
+}
+
 /** Henüz skorlanmamış firmaları döndürür (işlem yarıda kalırsa yalnızca kalanlar yeniden skorlanır). */
 export async function listUnscored(searchId: string) {
   const { data, error } = await db()
@@ -208,15 +229,18 @@ export async function saveScores(leadId: string, jev: JevScores, final: FinalSco
   if (error) fail("Skorlar kaydedilemedi", error);
 }
 
-export const leadSorts = {
-  score: { column: "lead_score", label: "Genel skor" },
-  digital: { column: "digital_need", label: "Dijital ihtiyaç" },
-  reach: { column: "reachability", label: "Ulaşılabilirlik" },
-  priority: { column: "priority", label: "Öncelik" },
-} as const;
-export type LeadSort = keyof typeof leadSorts;
-
-export type LeadQuery = { minScore?: number; minDigital?: number; sort: LeadSort; limit: number };
+export type LeadQuery = {
+  minScore?: number;
+  minDigital?: number;
+  /** Web sitesi olan ("var") ya da olmayan ("yok") firmalar. */
+  web?: Presence;
+  /** Telefonu olan ("var") ya da olmayan ("yok") firmalar. */
+  tel?: Presence;
+  /** En düşük Google puanı. */
+  minRating?: number;
+  sort: LeadSort;
+  limit: number;
+};
 
 /** Kullanıcının aramadaki firmalarını, filtre ve sıralamayla döndürür. */
 export async function queryLeads(uid: string, searchId: string, q: LeadQuery) {
@@ -228,6 +252,10 @@ export async function queryLeads(uid: string, searchId: string, q: LeadQuery) {
     .not("lead_score", "is", null);
   if (q.minScore !== undefined) query = query.gte("lead_score", q.minScore);
   if (q.minDigital !== undefined) query = query.gte("digital_need", q.minDigital);
+  // filter() her koşulda aynı tipi döndürür; koşullu zincirler tip çıkarımını aşırı derinleştirir.
+  if (q.web) query = query.filter("website", q.web === "var" ? "not.is" : "is", null);
+  if (q.tel) query = query.filter("phone", q.tel === "var" ? "not.is" : "is", null);
+  if (q.minRating !== undefined) query = query.filter("rating", "gte", q.minRating);
 
   const { data, count, error } = await query
     .order(leadSorts[q.sort].column, { ascending: false })
@@ -236,4 +264,16 @@ export async function queryLeads(uid: string, searchId: string, q: LeadQuery) {
     .returns<LeadRow[]>();
   if (error) return fail("Firmalar okunamadı", error);
   return { rows: data, total: count ?? 0 };
+}
+
+/** Aramadaki, süzgeçsiz toplam skorlanmış firma sayısı. */
+export async function countLeads(uid: string, searchId: string) {
+  const { count, error } = await db()
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .eq("user_uid", uid)
+    .eq("search_id", searchId)
+    .not("lead_score", "is", null);
+  if (error) return fail("Firma sayısı okunamadı", error);
+  return count ?? 0;
 }

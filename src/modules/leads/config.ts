@@ -1,20 +1,25 @@
 /** Harcamayı ve kötüye kullanımı sınırlayan değerler (ücretsiz plan: aylık 10 $ Apify kredisi). */
 export const searchLimits = {
-  /** Bir aramada çekilebilecek firma sayısı seçenekleri. */
-  resultOptions: [10, 20, 30, 50],
-  defaultResults: 30,
+  /** Hızlı seçim düğmeleri. Ayrıca özel sayı yazılabilir; "Tümü" üst sınıra eşittir. */
+  presets: [10, 25, 50],
+  /** Bir aramada getirilebilecek en çok firma ("Tümü" ve özel sayının üst sınırı). */
+  maxResults: 100,
+  defaultResults: 25,
   /** Kullanıcı başına son 24 saatte açılabilecek arama sayısı. */
   perDay: 5,
   /** Aynı anda devam eden arama bulunan kullanıcıya yeni arama açılmaz (dakika). */
   activeWindowMinutes: 15,
-  /** Bir koşunun harcayabileceği en yüksek tutar (USD). Apify'ın izin verdiği alt sınır 0,5'tir. */
-  maxChargeUsd: 0.5,
+  /** Bir koşunun harcayabileceği en yüksek tutar (USD). 100 firma ≈ 0,40–0,50 $. */
+  maxChargeUsd: 0.6,
   /** Koşu zaman aşımı (saniye). */
   runTimeoutSecs: 300,
 } as const;
 
 /** Skorlama aynı anda en fazla bu kadar JEV isteği açar. */
-export const jevConcurrency = 6;
+export const jevConcurrency = 10;
 
-/** "scoring" durumunda bu kadar süre güncellenmeyen arama takılmış sayılır ve yeniden işlenir. */
-export const staleScoringSeconds = 120;
+/**
+ * Bir istek aramayı işlemeye başlarken kısa süreli "kira" alır. Bu süre boyunca güncellenmeyen
+ * arama (istek yarıda kesildi) başka bir istek tarafından devralınır.
+ */
+export const leaseSeconds = 45;

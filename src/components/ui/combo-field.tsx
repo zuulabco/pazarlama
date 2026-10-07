@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { capitalize, fold } from "@/lib/text";
-import styles from "./wizard.module.css";
+import styles from "./combo-field.module.css";
 
 export type Option = { readonly value: string; readonly label: string; readonly hint?: string };
 
@@ -17,6 +17,8 @@ type Props = {
   /** Listede olmayanı yazıp eklemeye izin verir. */
   allowCustom?: boolean;
   placeholder?: string;
+  /** Seçilemez: örn. il seçilmeden ilçe. */
+  disabled?: boolean;
   max?: number;
   /** Yazılan metni düzenler (örn. şehir adlarında baş harfi büyütmek). */
   normalize?: (text: string) => string;
@@ -38,6 +40,7 @@ export function ComboField({
   single = false,
   allowCustom = false,
   placeholder,
+  disabled = false,
   max = 12,
   // Kullanıcının yazdıkları büyük harfle başlar; böylece hazır seçeneklerin (küçük harfli) kodlarıyla karışmaz.
   normalize = capitalize,
@@ -137,7 +140,8 @@ export function ComboField({
           setOpen(true);
         }}
         data-invalid={error ? "" : undefined}
-        className="relative flex min-h-13 cursor-text flex-wrap items-center gap-2 rounded-row bg-surface py-2 pr-11 pl-3 ring-1 ring-line-strong transition-shadow ring-inset focus-within:ring-2 focus-within:ring-forest data-[invalid]:ring-danger"
+        aria-disabled={disabled || undefined}
+        className={`relative flex min-h-13 cursor-text flex-wrap items-center gap-2 rounded-row bg-surface py-2 pr-11 pl-3 ring-1 ring-line-strong transition-shadow ring-inset focus-within:ring-2 focus-within:ring-forest data-[invalid]:ring-danger ${disabled ? "pointer-events-none opacity-55" : ""}`}
       >
         {value.map((v) => (
           <span key={v} className={`${styles.pop} inline-flex items-center gap-0.5 rounded-full bg-forest py-1 pr-1 pl-3.5 text-sm text-white`}>
@@ -168,6 +172,7 @@ export function ComboField({
           aria-activedescendant={open && current >= 0 ? `${id}-opt-${current}` : undefined}
           aria-invalid={error ? true : undefined}
           value={text}
+          disabled={disabled}
           onChange={(e) => {
             setText(e.target.value);
             setOpen(true);
@@ -197,7 +202,7 @@ export function ComboField({
         </button>
       </div>
 
-      {open && (
+      {open && !disabled && (
         <div className="absolute inset-x-0 top-full z-20 mt-2 rounded-row bg-surface p-1.5 shadow-float ring-1 ring-line-strong">
           {empty}
           {items.length > 0 && (

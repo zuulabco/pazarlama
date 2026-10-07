@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { channels, companySizes, dealValues, labelOf, sectors, services, signals, workTypes } from "@/modules/profile/options";
 import { computeWeights, criteria } from "@/modules/profile/weights";
-import type { Draft } from "./draft";
+import type { Draft } from "@/modules/profile/draft";
 import styles from "./wizard.module.css";
 
 export type EditableStage = "about" | "target" | "reach" | "fit";

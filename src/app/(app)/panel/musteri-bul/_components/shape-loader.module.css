@@ -1,0 +1,88 @@
+/*
+ * Yükleme animasyonu: dört şekil bir karenin köşelerinde yer değiştirir. Her şekil sırayla bir sonraki
+ * köşeye kayarken çeyrek tur döner; duraksama + yumuşak hızlanma/yavaşlama ile ritmi vardır.
+ * Şekiller aynı anda hareket eder ve hep dört ayrı köşede durur, birbirine çarpmaz.
+ *
+ * --u: kutunun kenar uzunluğu. Şekil boyutu ve kayma mesafesi buna bağlıdır.
+ */
+.loader {
+  --u: 6rem;
+  --shape: calc(var(--u) * 0.42);
+  --step: calc(var(--u) - var(--shape));
+  position: relative;
+  width: var(--u);
+  height: var(--u);
+  flex-shrink: 0;
+}
+.loader[data-size="sm"] {
+  --u: 2.25rem;
+}
+
+.shape {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: var(--shape);
+  height: var(--shape);
+  will-change: transform;
+}
+
+/* Hareket kısıtlıysa şekiller durağan, dört köşede durur. */
+.a {
+  background: var(--color-forest);
+  border-radius: 50%;
+  transform: translate(0, 0);
+}
+.b {
+  background: var(--color-pollen);
+  border-radius: 22%;
+  transform: translate(var(--step), 0);
+}
+.c {
+  background: var(--color-score-mid);
+  clip-path: polygon(50% 6%, 96% 92%, 4% 92%);
+  transform: translate(var(--step), var(--step));
+}
+.d {
+  background: var(--color-ink);
+  border-radius: 14%;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  transform: translate(0, var(--step));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shape {
+    animation: orbit 3.6s infinite;
+    /* Her şekil çeyrek tur öndedir: hep dört farklı köşede dururlar. */
+    animation-delay: calc(var(--i) * -0.9s);
+  }
+  .a { --i: 0; }
+  .b { --i: 1; }
+  .c { --i: 2; }
+  .d { --i: 3; }
+}
+
+@keyframes orbit {
+  0%,
+  8% {
+    transform: translate(0, 0) rotate(0deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  25%,
+  33% {
+    transform: translate(var(--step), 0) rotate(90deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  50%,
+  58% {
+    transform: translate(var(--step), var(--step)) rotate(180deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  75%,
+  83% {
+    transform: translate(0, var(--step)) rotate(270deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}

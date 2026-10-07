@@ -3,38 +3,7 @@
  * ya da tek seferlik karşılama sahnesine karşılık gelir; süs amaçlı sürekli hareket yok.
  */
 
-/* Yumuşak açılan alan: yüksekliği 0'dan içeriğine büyür */
-.reveal {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transition:
-    grid-template-rows 0.5s var(--ease-out),
-    opacity 0.35s ease;
-}
-.reveal[data-open="true"] {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-.reveal > div {
-  min-height: 0;
-  overflow: hidden;
-  /* Kenar halkaları kesilmesin */
-  margin: -4px;
-  padding: 4px;
-}
-/* Animasyon bitince taşma serbest: açılır liste kesilmez */
-.reveal[data-open="true"][data-settled="true"] > div {
-  overflow: visible;
-}
-
-/* Progress çubuğu */
-.progress {
-  transform-origin: left center;
-  transition: transform 0.6s var(--ease-out);
-}
-
-/* Canlı profil: ağırlık çubukları */
+/* Ağırlık çubukları (bilgi kartı) */
 .weight {
   transition: width 0.7s var(--ease-out);
 }
@@ -57,10 +26,6 @@
   .stagger > * {
     animation: in-down 0.8s var(--ease-out) both;
     animation-delay: calc(var(--i, 0) * 110ms + 120ms);
-  }
-
-  .pop {
-    animation: pop 0.4s var(--ease-out) both;
   }
 
   .check {

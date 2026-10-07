@@ -1,0 +1,24 @@
+/* Yumuşak açılan alan: yüksekliği 0'dan içeriğine büyür. */
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.5s var(--ease-out),
+    opacity 0.35s ease;
+}
+.reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.reveal > div {
+  min-height: 0;
+  overflow: hidden;
+  /* Kenar halkaları kesilmesin */
+  margin: -4px;
+  padding: 4px;
+}
+/* Animasyon bitince taşma serbest: açılır liste kesilmez */
+.reveal[data-open="true"][data-settled="true"] > div {
+  overflow: visible;
+}

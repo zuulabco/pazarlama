@@ -16,7 +16,7 @@ export function SignOutButton() {
   }
 
   return (
-    <Button variant="quiet" onClick={signOut} disabled={pending}>
+    <Button variant="quiet" onClick={signOut} disabled={pending} className="px-2.5 sm:px-4">
       {pending ? "Çıkış yapılıyor…" : "Çıkış yap"}
     </Button>
   );

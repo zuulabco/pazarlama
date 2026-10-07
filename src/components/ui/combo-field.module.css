@@ -1,0 +1,13 @@
+/* Seçilen etiketin belirişi: kullanıcının eylemine (seçim) karşılık gelir. */
+@media (prefers-reduced-motion: no-preference) {
+  .pop {
+    animation: pop 0.35s var(--ease-out) both;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}

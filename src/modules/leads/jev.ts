@@ -1,5 +1,5 @@
 import "server-only";
-import { score, TypeSafeClient, type JsonValue } from "@typesafe-ai/sdk";
+import { noul, score, TypeSafeClient, type JsonValue } from "@typesafe-ai/sdk";
 import type { Profile } from "../profile/repository";
 import type { Place } from "./apify";
 import { jevConcurrency } from "./config";
@@ -187,4 +187,29 @@ export async function scoreMany<T extends { place: Place }>(
     }
   };
   await Promise.all(Array.from({ length: Math.min(jevConcurrency, items.length) }, worker));
+}
+
+const businessTypeQuestion = noul(
+  "Is the search text a kind of local business, shop, clinic, office or service provider that people look up on Google Maps (for example a dentist, a cafe, a law office, a car repair shop)? Answer no for gibberish, random words, people's names, questions, sentences, or things that are not businesses.",
+);
+
+/** Harf içermeyen, aşırı kısa/uzun ya da simgelerden oluşan metinler JEV'e sorulmadan elenir. */
+const plausible = /^(?=.*\p{L})[\p{L}\p{N} &'.\-/]{2,60}$/u;
+
+/**
+ * Aramadaki "firma türü" gerçekten bir işletme türü mü? JEV'in evet/hayır sorusuyla (yaklaşık 0,3 sn)
+ * saçma metinler Apify'a gitmeden elenir. JEV ulaşılamazsa kullanıcı engellenmez.
+ */
+export async function isLikelyBusinessType(text: string): Promise<boolean> {
+  if (!plausible.test(text.trim())) return false;
+  try {
+    const { answers } = await jev().systemOne({
+      state: { search_text: text.trim() },
+      questions: { is_business_type: businessTypeQuestion },
+    });
+    return answers.is_business_type.noul >= 0.5;
+  } catch (e) {
+    console.error("Firma türü doğrulanamadı (kabul edildi):", e);
+    return true;
+  }
 }

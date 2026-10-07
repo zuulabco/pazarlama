@@ -65,7 +65,11 @@ export async function getProfileDraft(uid: string): Promise<Partial<ProfileInput
   ) as Partial<ProfileInput>;
 }
 
-export async function saveProfile(user: SessionUser, input: ProfileInput) {
+/**
+ * Profili kaydeder. `completing: true` (onboarding) tamamlanma zamanını yazar; profil sayfasındaki
+ * güncellemelerde (`false`) ilk tamamlanma zamanı korunur.
+ */
+export async function saveProfile(user: SessionUser, input: ProfileInput, completing = true) {
   const { error } = await db()
     .from("profiles")
     .upsert(
@@ -87,7 +91,7 @@ export async function saveProfile(user: SessionUser, input: ProfileInput) {
           signals: input.signals,
           signalNotes: input.signalNotes,
         },
-        onboarding_completed_at: new Date().toISOString(),
+        ...(completing ? { onboarding_completed_at: new Date().toISOString() } : {}),
       },
       { onConflict: "firebase_uid" },
     );

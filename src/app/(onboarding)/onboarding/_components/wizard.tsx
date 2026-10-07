@@ -1,28 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/ui/wordmark";
-import { channels, cityScopes, companySizes, dealValues, sectors, services, signals, workTypes } from "@/modules/profile/options";
-import { titleCase } from "@/lib/text";
-import { provinces } from "@/modules/profile/cities";
+import { StepFields, type FieldErrors } from "@/components/profile/step-fields";
+import { draftFrom, type Draft } from "@/modules/profile/draft";
 import { profileSchema, stepSchemas } from "@/modules/profile/schema";
 import { completeOnboarding } from "../actions";
-import { ComboField } from "./combo-field";
-import { draftFrom, type Draft } from "./draft";
 import { SummaryCard, type EditableStage } from "./summary-card";
 import styles from "./wizard.module.css";
-
-type Errors = Partial<Record<keyof Draft, string>>;
 
 const stages = ["intro", "about", "target", "reach", "fit", "review"] as const;
 type Stage = (typeof stages)[number];
 const steps = ["about", "target", "reach", "fit", "review"] as const;
 
 const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text: string }> = {
-  about: { short: "Sizi tanıyalım", title: "Sizi tanıyalım", text: "Kısa sorular. Hepsini sonradan değiştirebilirsiniz." },
+  about: { short: "Sizi tanıyalım", title: "Sizi tanıyalım", text: "Kısa sorular. Hepsini sonradan profilinizden değiştirebilirsiniz." },
   target: {
     short: "Hizmet ve hedef",
     title: "Ne satıyorsunuz, kime?",
@@ -45,112 +39,15 @@ const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text
   },
 };
 
-const sizeOptions = companySizes.map((s) => ({ value: s.value, label: s.label }));
-const cityOptions = provinces.map((c) => ({ value: c, label: c }));
-
-function BigInput({
-  label,
-  error,
-  ...props
-}: { label: string; error?: string } & Omit<React.ComponentProps<"input">, "className">) {
-  const id = useId();
-  return (
-    <div className="grid gap-2">
-      <label htmlFor={id} className="text-base font-medium">
-        {label}
-      </label>
-      <input
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className="h-14 rounded-row bg-surface px-4 text-lg ring-1 ring-line-strong ring-inset transition-shadow outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger"
-        {...props}
-      />
-      {error && (
-        <p id={`${id}-error`} role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function TextArea({
-  label,
-  hint,
-  error,
-  ...props
-}: { label: string; hint?: string; error?: string } & Omit<React.ComponentProps<"textarea">, "className">) {
-  const id = useId();
-  return (
-    <div className="grid gap-2">
-      <label htmlFor={id} className="text-base font-medium">
-        {label}
-        {hint && <span className="mt-0.5 block text-sm font-normal text-muted">{hint}</span>}
-      </label>
-      <textarea
-        id={id}
-        rows={3}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className="resize-y rounded-row bg-surface px-4 py-3 leading-relaxed ring-1 ring-line-strong ring-inset transition-shadow outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger"
-        {...props}
-      />
-      <div className="flex justify-between gap-4 text-sm">
-        <p id={`${id}-error`} role={error ? "alert" : undefined} className="text-danger">
-          {error}
-        </p>
-        <p className="shrink-0 text-muted tabular-nums">
-          {String(props.value ?? "").length} / {props.maxLength}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Soru açıkken yumuşakça açılan, kapalıyken etkisizleşen alan. Açılma animasyonu bitince taşan
- * içeriğin (açılır liste) kesilmemesi için taşma serbest bırakılır.
- */
-function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
-  // Sayfa zaten açık gelirse (örn. kayıtlı bilgiler) geçiş olmaz; baştan serbest bırakılır.
-  const [settled, setSettled] = useState(open);
-  return (
-    <div
-      className={styles.reveal}
-      data-open={open}
-      data-settled={open && settled}
-      onTransitionEnd={(e) => {
-        if (e.target === e.currentTarget && e.propertyName === "grid-template-rows") setSettled(open);
-      }}
-    >
-      {/* Üst dolgu, formun alanlar arası boşluğudur (gap-9). Boşluk alanın içinde olduğundan kapalıyken yer kaplamaz. */}
-      <div inert={!open}>
-        <div className="pt-9">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-export function Wizard({
-  defaultName,
-  initial,
-  mode = "create",
-}: {
-  defaultName: string;
-  initial: Partial<Draft>;
-  /** "edit": tamamlanmış bilgi kartını düzenleme; doğrudan karttan başlar. */
-  mode?: "create" | "edit";
-}) {
+export function Wizard({ defaultName, initial }: { defaultName: string; initial: Partial<Draft> }) {
   const router = useRouter();
-  const editMode = mode === "edit";
-  const [stage, setStage] = useState<Stage>(editMode ? "review" : "intro");
-  const [furthest, setFurthest] = useState(editMode ? stages.length - 1 : 0);
+  const [stage, setStage] = useState<Stage>("intro");
+  const [furthest, setFurthest] = useState(0);
   /** Bilgi kartından düzenlemeye gelindiyse, kaydedince doğrudan karta dönülür. */
   const [editing, setEditing] = useState(false);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [draft, setDraft] = useState<Draft>(() => draftFrom(initial));
-  const [errors, setErrors] = useState<Errors>({});
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -179,7 +76,7 @@ export function Wizard({
   }, [stage]);
 
   function collect(issues: { path: PropertyKey[]; message: string }[]) {
-    const next: Errors = {};
+    const next: FieldErrors = {};
     for (const issue of issues) {
       const field = issue.path[0] as keyof Draft;
       next[field] ??= issue.message;
@@ -245,17 +142,10 @@ export function Wizard({
       <div className="mx-auto flex w-full max-w-[44rem] flex-1 flex-col">
         <header className="flex items-center justify-between gap-4">
           <Wordmark />
-          {editMode && !done ? (
-            <Link href="/panel" className="rounded-control px-3 py-2 text-sm text-muted hover:text-ink">
-              Panele dön
-            </Link>
-          ) : (
-            stage !== "intro" &&
-            !done && (
-              <p className="text-sm text-muted" aria-live="polite">
-                Adım {index} / {steps.length}
-              </p>
-            )
+          {stage !== "intro" && !done && (
+            <p className="text-sm text-muted" aria-live="polite">
+              Adım {index} / {steps.length}
+            </p>
           )}
         </header>
 
@@ -293,13 +183,9 @@ export function Wizard({
                   <path className={styles.check} d="m5.5 12.5 4.2 4.2 8.8-9.4" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
-              <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">
-                {editMode ? "Bilgileriniz güncellendi" : "Hesabınız hazır"}
-              </h1>
+              <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">Hesabınız hazır</h1>
               <p className="max-w-[28rem] text-lg text-muted">
-                {editMode
-                  ? "Yeni aramalar bu bilgilere göre puanlanacak."
-                  : "Panele yönlendiriyoruz. İlk müşteri listenizi oluşturmaya hazırsınız."}
+                Panele yönlendiriyoruz. İlk müşteri listenizi oluşturmaya hazırsınız.
               </p>
               <Button size="lg" onClick={leave}>
                 Panele geç
@@ -331,139 +217,7 @@ export function Wizard({
                 <SummaryCard draft={draft} onEdit={(s: EditableStage) => goTo(s, true)} />
               ) : (
                 <div className="grid gap-9 rounded-panel bg-surface p-6 shadow-float ring-1 ring-line sm:p-9">
-                  {stage === "about" && (
-                    <>
-                      <BigInput
-                        label="İşletme ya da marka adınız"
-                        value={draft.businessName}
-                        onChange={(e) => update("businessName", e.target.value)}
-                        error={errors.businessName}
-                        autoComplete="organization"
-                        maxLength={80}
-                      />
-                      <ComboField
-                        legend="Nasıl çalışıyorsunuz?"
-                        options={workTypes}
-                        value={draft.workType ? [draft.workType] : []}
-                        onChange={([v]) => update("workType", v ?? "")}
-                        single
-                        allowCustom
-                        placeholder="Seçin ya da kendi ifadenizi yazın"
-                        error={errors.workType}
-                      />
-                      <TextArea
-                        label="Ne yaptığınızı kısaca anlatın"
-                        hint="İsteğe bağlı. Satış mesajlarını sizin dilinizle yazabilmemiz için kullanılır."
-                        value={draft.businessDescription}
-                        onChange={(e) => update("businessDescription", e.target.value)}
-                        maxLength={500}
-                        error={errors.businessDescription}
-                      />
-                    </>
-                  )}
-
-                  {stage === "target" && (
-                    <>
-                      <ComboField
-                        legend="Sattığınız hizmetler"
-                        options={services}
-                        value={draft.services}
-                        onChange={(v) => update("services", v)}
-                        allowCustom
-                        placeholder="Hizmet seçin ya da yazın"
-                        error={errors.services}
-                      />
-                      <ComboField
-                        legend="Hizmet verdiğiniz sektörler"
-                        options={sectors}
-                        value={draft.targetSectors}
-                        onChange={(v) => update("targetSectors", v)}
-                        allowCustom
-                        placeholder="Sektör seçin ya da yazın"
-                        error={errors.targetSectors}
-                      />
-                      <ComboField
-                        legend="Hedef firma büyüklüğü"
-                        options={sizeOptions}
-                        value={draft.targetSize ? [draft.targetSize] : []}
-                        onChange={([v]) => update("targetSize", v ?? "")}
-                        single
-                        placeholder="Seçin"
-                        error={errors.targetSize}
-                      />
-                    </>
-                  )}
-
-                  {stage === "reach" && (
-                    <>
-                      {/* Şehir alanı bölge sorusunun altında açılır; kapalıyken araya boşluk girmez. */}
-                      <div>
-                        <ComboField
-                          legend="Hangi bölgede müşteri arıyorsunuz?"
-                          options={cityScopes}
-                          value={draft.cityScope ? [draft.cityScope] : []}
-                          onChange={([v]) => update("cityScope", v ?? "")}
-                          single
-                          placeholder="Seçin"
-                          error={errors.cityScope}
-                        />
-                        <Reveal open={draft.cityScope === "cities"}>
-                          <ComboField
-                            legend="Şehirler"
-                            options={cityOptions}
-                            value={draft.targetCities}
-                            onChange={(v) => update("targetCities", v)}
-                            allowCustom
-                            normalize={titleCase}
-                            placeholder="İl seçin ya da ilçe yazın"
-                            error={errors.targetCities}
-                          />
-                        </Reveal>
-                      </div>
-                      <ComboField
-                        legend="Müşterilere hangi kanallardan ulaşıyorsunuz?"
-                        options={channels}
-                        value={draft.channels}
-                        onChange={(v) => update("channels", v)}
-                        allowCustom
-                        max={8}
-                        placeholder="Kanal seçin ya da yazın"
-                        error={errors.channels}
-                      />
-                      <ComboField
-                        legend="Bir projeden ortalama ne kazanırsınız?"
-                        options={dealValues}
-                        value={draft.dealValue ? [draft.dealValue] : []}
-                        onChange={([v]) => update("dealValue", v ?? "")}
-                        single
-                        placeholder="Seçin"
-                        error={errors.dealValue}
-                      />
-                    </>
-                  )}
-
-                  {stage === "fit" && (
-                    <>
-                      <ComboField
-                        legend="Hangi işaretler, bir firmanın sizin için iyi aday olduğunu gösterir?"
-                        options={signals}
-                        value={draft.signals}
-                        onChange={(v) => update("signals", v)}
-                        allowCustom
-                        max={8}
-                        placeholder="İşaret seçin ya da kendiniz yazın"
-                        error={errors.signals}
-                      />
-                      <TextArea
-                        label="Eklemek istedikleriniz"
-                        hint="İsteğe bağlı. İdeal müşterinizi kendi cümlelerinizle anlatın."
-                        value={draft.signalNotes}
-                        onChange={(e) => update("signalNotes", e.target.value)}
-                        maxLength={500}
-                        error={errors.signalNotes}
-                      />
-                    </>
-                  )}
+                  <StepFields stage={stage} draft={draft} update={update} errors={errors} />
                 </div>
               )}
 
@@ -478,8 +232,6 @@ export function Wizard({
                   <Button variant="quiet" size="lg" onClick={() => goTo("review")} disabled={pending}>
                     Karta dön
                   </Button>
-                ) : stage === "review" && editMode ? (
-                  <span />
                 ) : (
                   <Button variant="quiet" size="lg" onClick={() => goTo(stages[index - 1])} disabled={pending}>
                     Geri
@@ -488,10 +240,8 @@ export function Wizard({
                 <Button type="submit" size="lg" disabled={pending}>
                   {stage === "review"
                     ? pending
-                      ? "Kaydediliyor…"
-                      : editMode
-                        ? "Değişiklikleri kaydet"
-                        : "Hesabımı hazırla"
+                      ? "Hesabınız hazırlanıyor…"
+                      : "Hesabımı hazırla"
                     : editing
                       ? "Kaydet"
                       : lastQuestion

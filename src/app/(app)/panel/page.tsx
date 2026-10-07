@@ -21,7 +21,7 @@ async function PanelHeading() {
       </h1>
       <p className="mt-2 max-w-prose text-muted">
         {profile.businessName} için neyle başlamak istersiniz?{" "}
-        <Link href="/onboarding?edit=1" className="whitespace-nowrap text-forest underline underline-offset-4 hover:no-underline">
+        <Link href="/panel/profil" className="whitespace-nowrap text-forest underline underline-offset-4 hover:no-underline">
           Profilimi düzenle
         </Link>
       </p>

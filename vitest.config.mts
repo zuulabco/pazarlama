@@ -1,5 +1,8 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  // tsconfig'deki "@/*" kısayolu testlerde de çalışsın.
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   test: { include: ["src/**/*.test.ts"] },
 });

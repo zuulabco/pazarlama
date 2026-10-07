@@ -26,6 +26,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/leads/searc
     status: state.status,
     found: state.total_found,
     scored: state.total_scored,
+    max: search.max_results,
     error: state.error,
   });
 }

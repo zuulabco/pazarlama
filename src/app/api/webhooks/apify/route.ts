@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { after, NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { advanceSearch } from "@/modules/leads/pipeline";
+import { advanceUntilSettled } from "@/modules/leads/pipeline";
 import { findSearchByRun } from "@/modules/leads/repository";
 
 export const maxDuration = 300;
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   after(async () => {
     try {
-      await advanceSearch(search.id);
+      await advanceUntilSettled(search.id);
     } catch (e) {
       console.error("Webhook işlemi başarısız:", e);
     }

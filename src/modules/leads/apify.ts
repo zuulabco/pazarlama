@@ -33,6 +33,8 @@ export async function startPlacesRun(opts: {
   query: string;
   location: string;
   maxResults: number;
+  /** Yalnızca web sitesi olmayan firmaları getirir (Apify tarafında süzülür; yer başına küçük ek ücret). */
+  withoutWebsite?: boolean;
   /** Tanımlıysa koşu bitince bu adrese çağrı yapılır. */
   webhook?: { url: string; secret: string };
 }): Promise<RunInfo> {
@@ -58,6 +60,7 @@ export async function startPlacesRun(opts: {
     maxCrawledPlacesPerSearch: opts.maxResults,
     language: "tr",
     skipClosedPlaces: true,
+    website: opts.withoutWebsite ? "withoutWebsite" : "allPlaces",
     scrapePlaceDetailPage: false,
     scrapeContacts: false,
     maxReviews: 0,
@@ -75,6 +78,12 @@ export async function startPlacesRun(opts: {
 export async function getRun(runId: string): Promise<RunInfo> {
   const { data } = await call<{ data: unknown }>(`/actor-runs/${encodeURIComponent(runId)}`);
   return toRun(data);
+}
+
+/** Veri kümesindeki kayıt sayısı. Tüm kayıtları indirmeden "yeni firma geldi mi?" sorusunu yanıtlar. */
+export async function getDatasetItemCount(datasetId: string): Promise<number> {
+  const { data } = await call<{ data: { itemCount?: number } }>(`/datasets/${encodeURIComponent(datasetId)}`);
+  return data.itemCount ?? 0;
 }
 
 const placeSchema = z.object({
