@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ActionLink } from "@/components/ui/action-link";
 import { Collapse } from "@/components/ui/collapse";
+import { Disclosure } from "@/components/ui/disclosure";
 import { ArrowLeftIcon, ArrowRightIcon, BookmarkIcon, GlobeIcon, MapPinIcon, NoteIcon, PhoneIcon, SearchIcon } from "@/components/ui/icons";
 import { toast, Toaster } from "@/components/ui/toast";
 import { fold } from "@/lib/text";
@@ -108,23 +109,32 @@ function FavoriteCard({ fav, stage, onMove }: { fav: Favorite; stage: FollowStag
   return (
     <li>
       <Collapse open={!removed}>
-        <article aria-label={fav.name} className="mb-3 grid gap-3.5 rounded-row bg-surface p-4 shadow-sm ring-1 ring-line">
-          <header className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <h3 className="line-clamp-2 font-semibold leading-snug tracking-tight">{fav.name}</h3>
-              <p className="mt-0.5 truncate text-sm text-muted">
-                {[fav.category, fav.city].filter(Boolean).join(" · ")}
-                {fav.rating ? ` · ${String(fav.rating).replace(".", ",")} puan` : ""}
-              </p>
-            </div>
-            <p className="rounded-full bg-sunken px-2.5 py-1 text-sm font-semibold tabular-nums">
-              {fav.lead_score ?? 0}
-              <span className="sr-only"> genel skor</span>
-            </p>
-          </header>
-
-          {!fav.website && <p className="-mt-1 w-fit rounded-full bg-pollen px-2 py-0.5 text-xs font-medium">Web sitesi yok</p>}
-
+        <article aria-label={fav.name} className="mb-3 rounded-row bg-surface shadow-sm ring-1 ring-line">
+          <Disclosure
+            buttonClassName="items-start p-4"
+            panelClassName="grid gap-3.5 border-t border-line px-4 py-4"
+            summary={
+              <span className="flex min-w-0 flex-1 items-start gap-3">
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 block font-semibold leading-snug tracking-tight">{fav.name}</span>
+                  <span className="mt-0.5 block truncate text-sm text-muted">
+                    {[fav.category, fav.city].filter(Boolean).join(" · ")}
+                    {fav.rating ? ` · ${String(fav.rating).replace(".", ",")} puan` : ""}
+                  </span>
+                  {(!fav.website || notes.length > 0) && (
+                    <span className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+                      {!fav.website && <span className="rounded-full bg-pollen px-2 py-0.5 font-medium">Web sitesi yok</span>}
+                      {notes.length > 0 && <span className="rounded-full bg-sunken px-2 py-0.5 text-muted">{notes.length} mesaj</span>}
+                    </span>
+                  )}
+                </span>
+                <span className="rounded-full bg-sunken px-2.5 py-1 text-sm font-semibold tabular-nums">
+                  {fav.lead_score ?? 0}
+                  <span className="sr-only"> genel skor</span>
+                </span>
+              </span>
+            }
+          >
           <div className="flex items-center gap-2">
             {tel && <ActionLink iconOnly href={tel} icon={<PhoneIcon />} label={`Ara: ${fav.phone}`} />}
             {website && <ActionLink iconOnly external href={website} icon={<GlobeIcon />} label="Web sitesi" />}
@@ -217,6 +227,7 @@ function FavoriteCard({ fav, stage, onMove }: { fav: Favorite; stage: FollowStag
               </button>
             )}
           </div>
+          </Disclosure>
         </article>
       </Collapse>
     </li>
