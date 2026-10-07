@@ -1,3 +1,4 @@
+import { LeadsSkeleton } from "../../_components/skeletons";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -114,7 +115,7 @@ export default function LeadsPage(props: PageProps<"/panel/musteri-bul">) {
   return (
     <>
       <SectionTabs title="Müşteri" tabs={customerTabs} />
-      <Suspense fallback={<div className="h-96 rounded-panel bg-sunken" aria-hidden="true" />}>
+      <Suspense fallback={<LeadsSkeleton />}>
         <Content searchParams={props.searchParams} />
       </Suspense>
     </>

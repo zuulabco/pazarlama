@@ -1,3 +1,4 @@
+import { PageSkeleton } from "../../_components/skeletons";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -90,7 +91,7 @@ async function ProfileContent() {
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<div className="h-96 rounded-panel bg-sunken" aria-hidden="true" />}>
+    <Suspense fallback={<PageSkeleton />}>
       <ProfileContent />
     </Suspense>
   );

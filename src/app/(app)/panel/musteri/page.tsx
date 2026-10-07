@@ -1,3 +1,4 @@
+import { PageSkeleton } from "../../_components/skeletons";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -41,7 +42,7 @@ async function Welcome() {
 
 export default function CustomerWelcomePage() {
   return (
-    <Suspense fallback={<div className="h-96 rounded-panel bg-sunken" aria-hidden="true" />}>
+    <Suspense fallback={<PageSkeleton />}>
       <Welcome />
     </Suspense>
   );

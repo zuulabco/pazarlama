@@ -1,3 +1,4 @@
+import { BoardSkeleton } from "../../_components/skeletons";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -31,7 +32,7 @@ export default function FavoritesPage() {
   return (
     <>
       <SectionTabs title="Müşteri" tabs={customerTabs} />
-      <Suspense fallback={<div className="h-72 rounded-panel bg-sunken" aria-hidden="true" />}>
+      <Suspense fallback={<BoardSkeleton />}>
         <Content />
       </Suspense>
     </>

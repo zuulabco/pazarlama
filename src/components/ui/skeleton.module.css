@@ -1,0 +1,26 @@
+/* Yükleme iskeleti: yumuşak, yavaş akan bir parıltı. Hareket azaltma ayarında durağandır. */
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--color-sunken) 20%,
+    color-mix(in srgb, var(--color-line) 70%, var(--color-sunken)) 50%,
+    var(--color-sunken) 80%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
