@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
-import { demoBreakdown, scoreTone } from "./demo-data";
+import { scoreTone } from "@/lib/score";
+import { appModules } from "@/modules/registry";
+import { demoBreakdown } from "./demo-data";
 import { RankingDemo } from "./ranking-demo";
 
 type SectionProps = { id?: string; children: ReactNode; className?: string; padding?: string };
@@ -167,13 +169,6 @@ export function Ask() {
   );
 }
 
-const modules = [
-  { name: "Müşteri bul", text: "Bölgenizdeki firmaları bulun, puanlayın ve önceliklendirin.", ready: true },
-  { name: "Meta reklam analizi", text: "Kampanyalarınızın neden iyi ya da kötü gittiğini sade bir dille görün.", ready: false },
-  { name: "Reklam içeriği üretimi", text: "A/B testleri için metin, görsel ve video varyasyonları hazırlayın.", ready: false },
-  { name: "Rakip analizi", text: "Rakiplerinizin reklamlarını ve konumlanmasını takip edin.", ready: false },
-];
-
 export function Modules() {
   return (
     <Section>
@@ -181,16 +176,16 @@ export function Modules() {
         Sinyal, ajansların ve serbest çalışanların pazarlama işlerini tek yerde toplamak için adım adım büyüyor.
       </SectionIntro>
       <ul className="mt-12 divide-y divide-line border-y border-line">
-        {modules.map((m) => (
-          <li key={m.name} className="grid gap-1 py-5 sm:grid-cols-[16rem_1fr_auto] sm:items-center sm:gap-8">
+        {appModules.map((m) => (
+          <li key={m.id} className="grid gap-1 py-5 sm:grid-cols-[16rem_1fr_auto] sm:items-center sm:gap-8">
             <h3 className="font-semibold">{m.name}</h3>
-            <p className="text-muted">{m.text}</p>
+            <p className="text-muted">{m.description}</p>
             <span
               className={`justify-self-start rounded-full px-2.5 py-0.5 text-xs font-medium sm:justify-self-end ${
-                m.ready ? "bg-forest text-white" : "bg-sunken text-muted"
+                m.status === "ready" ? "bg-forest text-white" : "bg-sunken text-muted"
               }`}
             >
-              {m.ready ? "Kullanılabilir" : "Yakında"}
+              {m.status === "ready" ? "Kullanılabilir" : "Yakında"}
             </span>
           </li>
         ))}

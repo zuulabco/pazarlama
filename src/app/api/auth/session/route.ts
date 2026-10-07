@@ -2,17 +2,13 @@ import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/auth/constants";
+import { isSameOrigin } from "@/lib/auth/origin";
 import { adminAuth } from "@/lib/firebase/admin";
 
 /** Session cookie yalnızca yeni yapılmış bir girişten üretilir. */
 const MAX_SIGN_IN_AGE_S = 5 * 60;
 
 const bodySchema = z.object({ idToken: z.string().min(1) });
-
-function isSameOrigin(req: NextRequest) {
-  const origin = req.headers.get("origin");
-  return origin !== null && origin === req.nextUrl.origin;
-}
 
 export async function POST(req: NextRequest) {
   if (!isSameOrigin(req)) {

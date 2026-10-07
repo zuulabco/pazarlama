@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import { demoLeads, scoreTone } from "./demo-data";
+import { scoreTone } from "@/lib/score";
+import { demoLeads } from "./demo-data";
 import styles from "./ranking-demo.module.css";
 
 export function RankingDemo() {
