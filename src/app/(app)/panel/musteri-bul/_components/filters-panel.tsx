@@ -354,7 +354,7 @@ export function FiltersPanel({
         </form>
       </FilterGroup>
 
-      <FilterGroup title="Filtreler" badge={active}>
+      <FilterGroup title="Filtreler" badge={active} defaultOpen={active > 0}>
         <FilterRow title="Web sitesi" hint="Yeni aramalar da bu seçime göre yapılır.">
           <FilterSegmented label="Web sitesi" options={[{ value: "var", label: "Var" }, { value: "yok", label: "Yok" }]} value={filters.web} onChange={setFilter("web")} counts={facets?.counts.web} />
         </FilterRow>
@@ -402,7 +402,7 @@ export function FiltersPanel({
       </FilterGroup>
 
       {searches.length > 0 && (
-        <FilterGroup title="Son aramalar" defaultOpen={!selectedId}>
+        <FilterGroup title="Son aramalar" defaultOpen={false}>
           <ul className="-mx-2 grid gap-0.5">
             {searches.map((s) => (
               <li key={s.id} className="group relative" data-removing={removing === s.id}>
