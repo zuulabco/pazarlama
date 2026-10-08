@@ -9,6 +9,22 @@ type Turn = { role: "user" | "assistant"; content: string; links?: { path: strin
 
 const suggestions = ["Kampanyalarım nasıl gidiyor?", "Geri dönen oranım neden önemli?", "Hangi gönderici adresim sorunlu?", "Yeni bir kampanya için nereden başlamalıyım?"];
 
+/** Yapay zekâ simgesi: büyük ve küçük parıltı, mavi-mor geçişli. */
+function AiIcon({ size = 20, id }: { size?: number; id: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+      <defs>
+        <linearGradient id={id} x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#7cc4ff" />
+          <stop offset="1" stopColor="#c9a7ff" />
+        </linearGradient>
+      </defs>
+      <path d="M10 2.5c.5 4.4 2.6 6.5 7 7-4.4.5-6.5 2.6-7 7-.5-4.4-2.6-6.5-7-7 4.4-.5 6.5-2.6 7-7Z" fill={`url(#${id})`} />
+      <path d="M18.5 14c.25 2.2 1.3 3.25 3.5 3.5-2.2.25-3.25 1.3-3.5 3.5-.25-2.2-1.3-3.25-3.5-3.5 2.2-.25 3.25-1.3 3.5-3.5Z" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
 /**
  * Sağdan açılan yapay zekâ yardımcısı. Kullanıcının kendi rakamlarına dayanarak sorulara yanıt verir ve ilgili sayfaya
  * yönlendirir. Sohbet yalnızca bu oturumda tarayıcıda tutulur.
@@ -56,20 +72,25 @@ export function AssistantPanel() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls="assistant-panel"
-        className="fixed right-4 bottom-20 z-40 flex h-11 items-center gap-2 rounded-full bg-forest px-4 text-sm font-medium text-white shadow-lg transition-transform hover:-translate-y-0.5 md:bottom-6"
+        className="fixed right-4 bottom-20 z-40 flex h-12 items-center gap-2 rounded-full bg-linear-to-br from-[#0b57d0] via-[#4a3fd6] to-[#8a4fe0] pr-5 pl-4 text-sm font-semibold text-white shadow-[0_8px_24px_-6px_rgb(74_63_214/0.6)] ring-1 ring-white/20 transition-transform hover:-translate-y-0.5 md:bottom-6"
       >
-        <span aria-hidden="true">✦</span> Yardımcı
+        <AiIcon id="ai-fab" size={22} /> Adspine AI
       </button>
 
       <section
         id="assistant-panel"
-        aria-label="Yapay zekâ yardımcısı"
+        aria-label="Adspine AI"
         aria-hidden={!open}
         inert={!open}
         className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-[26rem] flex-col border-l border-line bg-paper shadow-xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <header className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 className="font-semibold tracking-tight">Yapay zekâ yardımcısı</h2>
+          <h2 className="flex items-center gap-2 font-semibold tracking-tight">
+            <span className="grid size-7 place-items-center rounded-full bg-linear-to-br from-[#0b57d0] via-[#4a3fd6] to-[#8a4fe0]">
+              <AiIcon id="ai-head" size={16} />
+            </span>
+            Adspine AI
+          </h2>
           <button type="button" onClick={() => setOpen(false)} aria-label="Kapat" className="grid size-9 place-items-center rounded-full text-muted hover:bg-sunken hover:text-ink">
             <span aria-hidden="true" className="text-xl leading-none">
               ×
