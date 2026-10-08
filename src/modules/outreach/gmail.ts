@@ -175,3 +175,13 @@ export async function getRaw(refreshToken: string, id: string): Promise<GmailMes
     throw e;
   }
 }
+
+/** Erişim yenileme anahtarını Google'da iptal eder (gönderici adresi silinirken). Başarısızlık silmeyi engellemez. */
+export async function revokeToken(refreshToken: string): Promise<void> {
+  await fetch("https://oauth2.googleapis.com/revoke", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ token: refreshToken }),
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => undefined);
+}

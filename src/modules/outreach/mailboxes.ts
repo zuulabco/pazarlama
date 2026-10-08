@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/supabase/server";
 import { OutreachUnavailableError } from "./contacts";
 import { decryptSecret, encryptSecret } from "./crypto";
+import { revokeToken } from "./gmail";
 import type { DnsReport } from "./dns-health";
 import { getAccount } from "./account";
 import type { Mailbox, MailboxInput } from "./mailbox-schema";
@@ -170,6 +171,15 @@ export async function saveDnsCheck(uid: string, id: string, dns: DnsReport): Pro
 }
 
 export async function deleteMailbox(uid: string, id: string) {
+  // Google ile bağlıysa erişim anahtarı önce Google'da iptal edilir (kullanıcı verisine erişim gerçekten sona erer).
+  const row = await db().from("outreach_mailboxes").select("provider, secret_enc").eq("user_uid", uid).eq("id", id).maybeSingle<{ provider: string; secret_enc: string | null }>();
+  if (row.data?.provider === "google" && row.data.secret_enc) {
+    try {
+      await revokeToken(decryptSecret(row.data.secret_enc));
+    } catch {
+      /* çözülemeyen anahtar silmeyi engellemez */
+    }
+  }
   const { error } = await db().from("outreach_mailboxes").delete().eq("user_uid", uid).eq("id", id);
   check("Gönderici adresi silinemedi", error);
 }

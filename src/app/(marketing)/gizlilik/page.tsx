@@ -43,6 +43,16 @@ const sections = [
     ],
   },
   {
+    title: "Google (Gmail) hesabı bağlantısı",
+    body: [
+      "Gönderici adresi olarak Gmail ya da Google Workspace hesabınızı bağlarsanız Adspine, yalnızca sizin onayınızla ve iki izin için Google'dan erişim ister: e-posta göndermek (gmail.send) ve gelen kutunuza gelen yanıtları okumak (gmail.readonly).",
+      "Gönderme izni, kampanya e-postalarınızı sizin adınıza ve sizin adresinizden iletmek için kullanılır. Okuma izni yalnızca Adspine'dan gönderdiğiniz e-postalara verilen yanıtları, geri dönen (ulaşmayan) e-posta bildirimlerini ve ofis dışı otomatik yanıtları belirlemek için kullanılır. Gelen kutunuza yeni düşen iletiler bu amaçla başlıklarına bakılarak taranır; Adspine'dan gönderilmiş bir e-postaya ait olmayan hiçbir ileti saklanmaz, kullanılmaz ve kimseyle paylaşılmaz.",
+      "Saklanan veriler: gönderdiğimiz e-postaların kaydı, bunlara gelen yanıtların metni ve gönderen bilgisi, yanıt etiketi ve Gmail erişim yenileme anahtarı (şifrelenmiş olarak). Bu veriler yalnızca size, Gelen kutusu ve raporlar ekranlarında gösterilir; reklam amacıyla kullanılmaz, satılmaz ve insanlar tarafından okunmaz (güvenlik, hukuki yükümlülük ya da sizin açık talebiniz dışında). Yanıtın durumunu (ilgili, ilgisiz vb.) belirlemek için yanıt metni bir yapay zekâ hizmet sağlayıcısına gönderilebilir; bu veriyle yapay zekâ modeli eğitilmez.",
+      "Adspine'ın Google API'lerinden aldığı bilgileri kullanması ve başka bir uygulamaya aktarması, sınırlı kullanım gereklilikleri dahil Google API Hizmetleri Kullanıcı Verileri Politikası'na uygundur (https://developers.google.com/terms/api-services-user-data-policy).",
+      "Erişimi dilediğiniz zaman Google Hesabı > Güvenlik > Hesabınıza erişimi olan üçüncü taraf uygulamalar bölümünden kaldırabilir ya da Adspine'da gönderici adresini silerek bağlantıyı koparabilirsiniz; gönderici adresi silindiğinde erişim anahtarı da silinir.",
+    ],
+  },
+  {
     title: "Haklarınız",
     body: [
       "KVKK m. 11 uyarınca verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, düzeltilmesini veya silinmesini isteme, aktarıldığı üçüncü kişileri bilme ve kanuna aykırı işleme nedeniyle zararın giderilmesini talep etme haklarına sahipsiniz.",
