@@ -84,7 +84,7 @@ export function Select<T extends string>({
 
   return (
     <div
-      className={`relative ${className}`}
+      className={`relative min-w-40 ${className}`}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
           setOpen(false);

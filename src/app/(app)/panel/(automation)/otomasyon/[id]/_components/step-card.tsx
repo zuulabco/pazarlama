@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapse } from "@/components/ui/collapse";
 import { Disclosure } from "@/components/ui/disclosure";
-import { ArrowRightIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { SparkleIcon, TrashIcon } from "@/components/ui/icons";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
@@ -12,7 +12,7 @@ import { ShapeLoader } from "@/components/ui/shape-loader";
 import { toast } from "@/components/ui/toast";
 import { buildVars, renderTemplate, sampleVars, unfilledVariables, variableCatalog } from "@/modules/outreach/render";
 import { delayUnits, describeDelay, splitDelay } from "@/modules/outreach/schedule";
-import { emailTypes, maxVariants, stepLabel, type Step, type Variant } from "@/modules/outreach/sequence-schema";
+import { blankVariant, emailTypes, maxVariants, stepLabel, type Step, type Variant } from "@/modules/outreach/sequence-schema";
 import { checkEmail } from "@/modules/outreach/spam-check";
 import type { Contact } from "@/modules/outreach/schema";
 import { api } from "../../../kisiler/_components/contact-ui";
@@ -41,14 +41,14 @@ function DelayField({ minutes, onChange, first }: { minutes: number; onChange: (
           value={minutes === 0 ? "" : String(value)}
           placeholder="0"
           onChange={(e) => onChange(Math.min(Number(e.target.value.replace(/\D/g, "").slice(0, 3) || 0), 999) * factor)}
-          className={`${inputClass} w-20`}
+          className={`${inputClass} w-24!`}
         />
         <Select<string>
           label="Süre birimi"
           value={unit}
           options={delayUnits.map((u) => ({ value: u.value, label: u.label }))}
           onChange={(u) => onChange(Math.max(value, 1) * delayUnits.find((x) => x.value === u)!.factor)}
-          className="w-32"
+          className="w-40"
         />
         <button type="button" onClick={() => onChange(0)} className="text-sm font-normal text-muted underline underline-offset-4 hover:text-ink">
           Hemen
@@ -69,6 +69,8 @@ export function StepCard({
   onChange,
   onRemove,
   onMove,
+  onGripPointerDown,
+  dragging,
   onTest,
 }: {
   step: Step;
@@ -79,7 +81,11 @@ export function StepCard({
   sender: Sender;
   onChange: (s: Step) => void;
   onRemove: () => void;
+  /** Klavyeyle sıralama (tutamaçta ↑/↓). */
   onMove: (dir: -1 | 1) => void;
+  /** Tutamaçtan sürüklemeyi başlatır (fare ve dokunma). */
+  onGripPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  dragging: boolean;
   onTest: (subject: string, body: string) => Promise<void>;
 }) {
   const [vi, setVi] = useState(0);
@@ -95,7 +101,7 @@ export function StepCard({
   const [focus, setFocus] = useState<"subject" | "body">("body");
 
   const isEmail = step.kind === "email";
-  const v: Variant = step.variants[Math.min(vi, step.variants.length - 1)];
+  const v: Variant = step.variants[Math.min(vi, step.variants.length - 1)] ?? blankVariant("A", "tanisma");
   const setVariant = (patch: Partial<Variant>) => onChange({ ...step, variants: step.variants.map((x) => (x.key === v.key ? { ...x, ...patch } : x)) });
   const isFollowUp = isEmail && index > firstEmailIndex && firstEmailIndex >= 0;
 
@@ -183,18 +189,30 @@ export function StepCard({
       buttonClassName="px-5 py-4"
       panelClassName="px-5 pb-5"
       summary={summary}
+      leading={
+        <button
+          type="button"
+          aria-label={`${index + 1}. adımı sürükleyerek sırala (klavyede ↑ ve ↓)`}
+          title="Sürükleyerek sırala"
+          onPointerDown={onGripPointerDown}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp" && index > 0) {
+              e.preventDefault();
+              onMove(-1);
+            } else if (e.key === "ArrowDown" && index < total - 1) {
+              e.preventDefault();
+              onMove(1);
+            }
+          }}
+          className={`ml-2 grid h-8 w-6 shrink-0 touch-none place-items-center rounded-control text-muted transition-colors hover:bg-sunken hover:text-ink ${dragging ? "cursor-grabbing bg-sunken text-ink" : "cursor-grab"}`}
+        >
+          <svg viewBox="0 0 12 18" width="12" height="18" aria-hidden="true" fill="currentColor">
+            {[3, 9, 15].flatMap((y) => [3, 9].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.3" />))}
+          </svg>
+        </button>
+      }
       trailing={
         <span className="flex items-center gap-0.5 pr-3">
-          <button type="button" aria-label="Adımı yukarı al" disabled={index === 0} onClick={() => onMove(-1)} className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-sunken disabled:opacity-30">
-            <span className="-rotate-90">
-              <ArrowRightIcon size={14} />
-            </span>
-          </button>
-          <button type="button" aria-label="Adımı aşağı al" disabled={index === total - 1} onClick={() => onMove(1)} className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-sunken disabled:opacity-30">
-            <span className="rotate-90">
-              <ArrowRightIcon size={14} />
-            </span>
-          </button>
           <button type="button" aria-label="Adımı sil" onClick={onRemove} className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-danger">
             <TrashIcon size={15} />
           </button>

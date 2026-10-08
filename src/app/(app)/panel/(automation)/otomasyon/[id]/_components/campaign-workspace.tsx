@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { Toaster, toast } from "@/components/ui/toast";
@@ -44,6 +44,12 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
   const [saving, setSaving] = useState(false);
   const [problems, setProblems] = useState<{ code: string; message: string; overridable: boolean }[]>([]);
   const [statusBusy, setStatusBusy] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const stepsRef = useRef(seq.steps);
+  useEffect(() => {
+    stepsRef.current = seq.steps;
+  });
 
   useEffect(() => {
     if (!dirty) return;
@@ -57,6 +63,43 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
     setDirty(true);
   };
   const setSteps = (steps: Step[]) => edit({ steps: steps.map((s, i) => ({ ...s, position: i })) });
+
+  /**
+   * Sürükleyerek sıralama (fare ve dokunma): tutamaçtan tutulan adım, imleç komşu adımın ortasını geçince onunla yer değiştirir;
+   * liste kenarına yaklaşınca sayfa kendiliğinden kayar. Bırakınca sıra kaydedilmeyi bekleyen değişiklik olur.
+   */
+  function startDrag(e: React.PointerEvent<HTMLButtonElement>, id: string) {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.preventDefault();
+    setDragId(id);
+    const move = (ev: PointerEvent) => {
+      const from = stepsRef.current.findIndex((s) => s.id === id);
+      const y = ev.clientY;
+      // Hedef sıra: imlecin üstünde ortası kalan (sürüklenen dışındaki) kart sayısı. Uzun/açık kartlarda da kararlıdır.
+      const others = [...(listRef.current?.querySelectorAll<HTMLElement>("[data-step-id]") ?? [])].filter((el) => el.dataset.stepId !== id);
+      const to = others.filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top + r.height / 2 < y;
+      }).length;
+      if (to !== from && from >= 0) {
+        const arr = [...stepsRef.current];
+        const [item] = arr.splice(from, 1);
+        arr.splice(to, 0, item);
+        setSteps(arr);
+      }
+      if (y < 90) window.scrollBy(0, -14);
+      else if (y > window.innerHeight - 90) window.scrollBy(0, 14);
+    };
+    const end = () => {
+      setDragId(null);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+  }
 
   async function save(): Promise<boolean> {
     const s = seq;
@@ -163,11 +206,13 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
       )}
 
       {tab === "editor" && (
-        <div className="grid gap-3">
+        <div ref={listRef} className="grid gap-3">
           {seq.steps.length === 0 && <p className="rounded-panel bg-surface px-6 py-12 text-center text-muted ring-1 ring-line">Henüz adım yok. Aşağıdan ilk adımı ekleyin.</p>}
           {seq.steps.map((s, i) => (
+            <div key={s.id} data-step-id={s.id} className={`rounded-panel transition-shadow ${dragId === s.id ? "relative z-10 shadow-float ring-2 ring-forest" : ""}`}>
             <StepCard
-              key={s.id}
+              onGripPointerDown={(e) => startDrag(e, s.id)}
+              dragging={dragId === s.id}
               step={s}
               index={i}
               total={seq.steps.length}
@@ -183,6 +228,7 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
               }}
               onTest={sendTest}
             />
+            </div>
           ))}
           {seq.steps.length < maxSteps && (
             <div className="flex flex-wrap items-center gap-2 pt-1">

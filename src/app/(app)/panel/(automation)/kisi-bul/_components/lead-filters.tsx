@@ -52,19 +52,7 @@ export function LeadFilters({
   const keywords = q.keywords.length + q.notKeywords.length;
 
   return (
-    <aside aria-label="Filtreler" className="grid content-start gap-3 lg:sticky lg:top-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-semibold tracking-tight">
-          Filtreler
-          {activeCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-sunken px-1.5 text-xs font-medium">{activeCount}</span>}
-        </h2>
-        {activeCount > 0 && (
-          <button type="button" onClick={onClear} className="text-sm text-muted underline underline-offset-4 hover:text-ink">
-            Temizle
-          </button>
-        )}
-      </div>
-
+    <aside aria-label="Filtreler" className="grid content-start gap-3 lg:sticky lg:top-14">
       <Disclosure defaultOpen className={groupClass} buttonClassName="px-4 py-3.5" panelClassName="px-4 pb-4" summary={<GroupTitle title="Unvan" count={person} />}>
         <div className="grid gap-5">
           <ComboField legend="Şunlardan herhangi biri" hint="Yazdıkça öneriler çıkar; listede olmayan unvanı da ekleyebilirsiniz." options={titleOptions} value={q.titles} onChange={(titles) => set({ titles })} allowCustom max={8} normalize={(t) => t.trim()} placeholder="Unvan arayın" />
@@ -133,6 +121,14 @@ export function LeadFilters({
           Kaydet
         </button>
       </div>
+      {activeCount > 0 && (
+        <div className="flex items-center justify-between gap-3 px-1 text-sm text-muted">
+          <span>{activeCount} filtre seçili</span>
+          <button type="button" onClick={onClear} className="underline underline-offset-4 hover:text-ink">
+            Filtreleri temizle
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
