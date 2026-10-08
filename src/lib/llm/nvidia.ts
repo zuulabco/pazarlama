@@ -41,6 +41,23 @@ async function callModel(model: string, messages: Message[], maxTokens: number, 
   return content;
 }
 
+/** Düz metin yanıt isteyen sohbet (JSON zorunlu değil). Süre payı ve yedek model chatJson ile aynıdır. */
+export async function chatText(messages: Message[], opts: { maxTokens?: number; timeoutMs?: number; temperature?: number } = {}): Promise<string> {
+  if (!process.env.NVIDIA_API_KEY) throw new LlmUnavailableError("NVIDIA_API_KEY tanımlı değil");
+  const total = opts.timeoutMs ?? 40_000;
+  const budgets = [Math.round(total * 0.6), Math.round(total * 0.4)];
+  let last: unknown;
+  for (const [i, model] of models.entries()) {
+    try {
+      const text = (await callModel(model, messages, opts.maxTokens ?? 700, AbortSignal.timeout(budgets[i] ?? budgets[1]), false, opts.temperature ?? 0.3)).trim();
+      if (text) return text;
+    } catch (e) {
+      last = e;
+    }
+  }
+  throw new LlmUnavailableError(last instanceof Error ? last.message : "Model yanıt vermedi");
+}
+
 /** JSON döndürmesi istenen bir sohbet isteği. Model yanıt vermezse yedeğe geçer. */
 export async function chatJson(messages: Message[], opts: { maxTokens?: number; timeoutMs?: number; thinking?: boolean; temperature?: number } = {}) {
   if (!process.env.NVIDIA_API_KEY) throw new LlmUnavailableError("NVIDIA_API_KEY tanımlı değil");

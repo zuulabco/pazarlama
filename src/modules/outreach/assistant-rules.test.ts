@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assistantMessages, contextText, toAnswer } from "./assistant-rules";
+import { assistantMessages, contextText, fallbackReply, toAnswer } from "./assistant-rules";
 import { buildOverview } from "./report-overview";
 
 const reports = {
@@ -26,14 +26,21 @@ describe("yardımcı bağlamı", () => {
   });
 });
 
-describe("yanıt doğrulama", () => {
-  it("bilinmeyen bağlantıları atar, tekrarları birleştirir", () => {
-    const a = toAnswer({ yanit: " Merhaba ", baglantilar: ["/panel/raporlar", "/panel/raporlar", "https://kotu.example", "/panel/admin"] });
-    expect(a.reply).toBe("Merhaba");
-    expect(a.links).toEqual([{ path: "/panel/raporlar", label: "Raporlar" }]);
+describe("yanıt metni", () => {
+  it("işaretleri temizler ve konuya göre en çok iki bağlantı seçer", () => {
+    const a = toAnswer("**Önemli:** geri dönen oranı yüksek.\n```json\nx```", "Hangi gönderici adresim sorunlu?");
+    expect(a.reply).not.toContain("**");
+    expect(a.reply).not.toContain("```");
+    expect(a.links.length).toBeLessThanOrEqual(2);
+    expect(a.links[0]).toEqual({ path: "/panel/posta-kutulari", label: "Gönderici adresleri" });
   });
-  it("bağlantı alanı yoksa boş döner; boş yanıtı reddeder", () => {
-    expect(toAnswer({ yanit: "tamam" }).links).toEqual([]);
-    expect(() => toAnswer({ yanit: "" })).toThrow();
+  it("konu yoksa bağlantı vermez", () => {
+    expect(toAnswer("Merhaba!", "selam").links).toEqual([]);
+  });
+  it("model yanıt vermezse rakam özeti döner", () => {
+    const f = fallbackReply("Paket: Ücretsiz. Kalan kredi: 25.\nSon 30 gün: 0 e-posta.\nKampanyalar: x");
+    expect(f).toContain("Kalan kredi: 25");
+    expect(f).toContain("0 e-posta");
+    expect(f).not.toContain("Kampanyalar: x");
   });
 });

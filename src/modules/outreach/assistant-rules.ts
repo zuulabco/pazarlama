@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { ReportsData } from "./reports";
 
 /**
@@ -43,7 +42,7 @@ export function assistantMessages(history: ChatTurn[], context: string) {
     {
       role: "system" as const,
       content: `Adspine'ın soğuk e-posta otomasyonu için Türkçe yardımcısısın (kişi bulma, otomasyonlar, gelen kutusu, raporlar, gönderici adresleri, ısındırma).
-Sadece JSON döndür: {"yanit": "...", "baglantilar": ["/panel/..."]}
+Yalnızca düz Türkçe metinle yanıt ver (JSON ya da kod bloğu yok).
 
 Kurallar:
 - Rakamlar yalnızca aşağıdaki "Kullanıcının verileri"nden gelir. Orada olmayan bir rakamı, otomasyonu ya da sonucu uydurma; veri yoksa "henüz veri yok" de.
@@ -53,7 +52,6 @@ Kurallar:
 - Genel kurallar: yeni adres günde 5 e-postayla başlar ve haftalar içinde artar; geri dönen oranı %2 altı hedeftir, %5 üstü tehlikelidir; soğuk e-postayı ana alan adından gönderme; her e-postada abonelikten çıkma bağlantısı olmalı.
 - Otomasyon metni yazman istenirse kısa bir örnek yaz, ama gerçek yazım için Otomasyonlar > adım editöründeki "Adspine AI ile yaz"ı öner.
 - Yapamayacağın bir işi (örn. e-posta göndermek, veri silmek) yapıyormuş gibi davranma; ilgili sayfaya yönlendir.
-- baglantilar: en çok 2 yol, yalnızca şunlardan: ${assistantLinks.map((l) => l.path).join(", ")}. Gerek yoksa boş dizi.
 
 Kullanıcının verileri:
 ${context}`,
@@ -62,11 +60,40 @@ ${context}`,
   ];
 }
 
-const outSchema = z.object({ yanit: z.string().min(1), baglantilar: z.array(z.string()).default([]) });
+/** Konudan ilgili sayfaları seçer (kural tabanlı; model bağlantı üretmez). En çok 2. */
+const topics: { path: string; words: RegExp }[] = [
+  { path: "/panel/posta-kutulari", words: /gönderici|adres|ısın|spam|geri dön|bounce|dmarc|spf/i },
+  { path: "/panel/gelen-kutusu", words: /yanıt|gelen kutusu|cevap|toplantı/i },
+  { path: "/panel/otomasyon", words: /otomasyon|adım|e-posta dizi|metin|yaz/i },
+  { path: "/panel/kisi-bul", words: /kişi|liste|kredi|unvan|bul/i },
+  { path: "/panel/raporlar", words: /rapor|oran|performans|nasıl gidiyor|gönderilen/i },
+];
 
-/** Model çıktısını doğrular: yalnızca bilinen sayfalara bağlantı verilir. */
-export function toAnswer(raw: unknown): { reply: string; links: { path: string; label: string }[] } {
-  const o = outSchema.parse(raw);
-  const links = [...new Set(o.baglantilar)].map((p) => assistantLinks.find((l) => l.path === p)).filter((l): l is (typeof assistantLinks)[number] => Boolean(l)).slice(0, 2);
-  return { reply: o.yanit.trim().slice(0, 1500), links: links.map((l) => ({ path: l.path, label: l.label })) };
+export function linksFor(question: string): { path: string; label: string }[] {
+  const text = question; // yalnızca sorudan: yanıt metninden bağlantı çıkarmak gereksiz öneriler üretiyordu
+  return topics
+    .filter((t) => t.words.test(text))
+    .slice(0, 2)
+    .map((t) => assistantLinks.find((l) => l.path === t.path)!)
+    .map((l) => ({ path: l.path, label: l.label }));
+}
+
+/** Model metnini temizler: kalın/başlık işaretleri ve kod çitleri atılır, uzunluk sınırlanır. */
+export function cleanReply(text: string): string {
+  return text
+    .replace(/```[a-z]*\n?/gi, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .trim()
+    .slice(0, 1500);
+}
+
+/** Model yanıt veremediğinde: hata göstermek yerine elimizdeki rakamları özetler. */
+export function fallbackReply(context: string): string {
+  return `Adspine AI şu an yanıt üretemedi; bu arada son durumunuz:\n${context.split("\n").slice(0, 2).join("\n")}\nBirazdan tekrar sorabilirsiniz.`;
+}
+
+export function toAnswer(text: string, question: string): { reply: string; links: { path: string; label: string }[] } {
+  const reply = cleanReply(text);
+  return { reply, links: linksFor(question) };
 }

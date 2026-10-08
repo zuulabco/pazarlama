@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { z, ZodError } from "zod";
-import { chatJson, LlmUnavailableError } from "@/lib/llm/nvidia";
-import { assistantMessages, contextText, toAnswer } from "@/modules/outreach/assistant-rules";
+import { z } from "zod";
+import { chatText } from "@/lib/llm/nvidia";
+import { assistantMessages, contextText, fallbackReply, toAnswer } from "@/modules/outreach/assistant-rules";
 import { fail, guard, outreachFailure, rateLimiter } from "@/modules/outreach/http";
 import { loadReports } from "@/modules/outreach/reports";
 import { accountSummary } from "@/modules/outreach/usage";
@@ -25,10 +25,16 @@ export async function POST(req: NextRequest) {
   try {
     const [reports, account] = await Promise.all([loadReports(g.user.uid, 30), accountSummary(g.user.uid)]);
     const context = contextText(reports, { planName: account.plan.label, credits: account.credits, senders: account.senders, campaigns: account.campaigns }, 30);
-    const raw = await chatJson(assistantMessages(body.data.messages, context), { maxTokens: 1200, timeoutMs: 45_000, thinking: false, temperature: 0.3 });
-    return NextResponse.json(toAnswer(raw));
+    const question = body.data.messages.at(-1)!.content;
+    try {
+      const text = await chatText(assistantMessages(body.data.messages, context), { maxTokens: 700, timeoutMs: 40_000, temperature: 0.3 });
+      return NextResponse.json(toAnswer(text, question));
+    } catch (e) {
+      // Model geçici olarak yanıt vermiyorsa kullanıcıya hata değil, elimizdeki rakamların özeti gösterilir.
+      console.error("Adspine AI yanıt veremedi:", e instanceof Error ? e.message : e);
+      return NextResponse.json({ reply: fallbackReply(context), links: [{ path: "/panel/raporlar", label: "Raporlar" }] });
+    }
   } catch (e) {
-    if (e instanceof LlmUnavailableError || e instanceof ZodError || e instanceof SyntaxError) return fail("Yardımcı şu an yanıt veremedi. Biraz sonra tekrar deneyin.", 503);
     return outreachFailure(e);
   }
 }
