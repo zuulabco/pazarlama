@@ -178,7 +178,7 @@ export function PlanForm({
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={saving || (touched && invalid)}>
-          {saving ? "Kaydediliyor…" : item ? "Kaydet" : "Plana ekle"}
+          {saving ? "Kaydediliyor…" : item ? "Kaydet" : "Takvime ekle"}
         </Button>
         <Button variant="quiet" onClick={onCancel} disabled={saving}>
           Vazgeç

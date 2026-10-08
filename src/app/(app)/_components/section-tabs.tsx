@@ -33,12 +33,11 @@ export function SectionTabs({ title, tabs = [] }: { title: string; tabs?: readon
   );
 }
 
-/** Müşteri bölümünün sekmeleri. */
+/** Yerel firmalar bölümünün sekmeleri: bul → takip et → mesaj yaz. */
 export const customerTabs = [
-  { href: "/panel/musteri-bul", label: "Müşteri bul" },
+  { href: "/panel/musteri-bul", label: "Firma bul" },
   { href: "/panel/firmalar", label: "Takip et" },
-  { href: "/panel/calis", label: "İletişim kur" },
-  { href: "/panel/plan", label: "Plan" },
+  { href: "/panel/calis", label: "Mesaj yaz" },
 ] as const;
 
 /** Kişiler uygulamasının sekmeleri (Instantly: SuperSearch · Leads). */

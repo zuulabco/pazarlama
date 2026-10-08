@@ -4,7 +4,7 @@ import { customerTabs, SectionTabs } from "../../_components/section-tabs";
 export default function CustomerLayout({ children }: LayoutProps<"/panel">) {
   return (
     <>
-      <SectionTabs title="Müşteri" tabs={customerTabs} />
+      <SectionTabs title="Yerel firmalar" tabs={customerTabs} />
       {children}
     </>
   );

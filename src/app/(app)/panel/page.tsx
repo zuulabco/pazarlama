@@ -160,7 +160,7 @@ function Performance({ data }: { data: HomeData }) {
 
 function Customer({ c }: { c: HomeData["customer"] }) {
   return (
-    <Section title="Yerel müşteriler" action={<Link href="/panel/musteri" className="text-sm text-accent underline underline-offset-4 hover:no-underline">Bölüme git</Link>}>
+    <Section title="Yerel firmalar" action={<Link href="/panel/musteri" className="text-sm text-accent underline underline-offset-4 hover:no-underline">Bölüme git</Link>}>
       <p className="text-sm text-muted">Bölgenizdeki firmaları bulun, takip edin ve onlara mesaj yazın.</p>
       <p className="mt-3 text-sm">
         <span className="text-2xl font-semibold tracking-tight tabular-nums">{num(c.tracked)}</span> <span className="text-muted">takipteki firma</span>
@@ -182,13 +182,13 @@ function Customer({ c }: { c: HomeData["customer"] }) {
       )}
       <div className="mt-4 flex flex-wrap gap-2">
         <ButtonLink href="/panel/musteri-bul" className="h-9" variant="secondary">
-          Müşteri bul
+          Firma bul
         </ButtonLink>
         <ButtonLink href="/panel/calis" className="h-9" variant="secondary">
           Mesaj yaz
         </ButtonLink>
         <ButtonLink href="/panel/plan" className="h-9" variant="secondary">
-          Plan
+          Takvim
         </ButtonLink>
       </div>
     </Section>

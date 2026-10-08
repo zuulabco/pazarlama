@@ -35,7 +35,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: true; data
   }
 }
 
-/** Plan: aylık takvim + ajanda görünümü, seçili günün paneli ve plan formu. */
+/** Takvim: aylık takvim + ajanda görünümü, seçili günün paneli ve plan formu. */
 export function PlanWorkspace({
   favorites,
   initialItems,
@@ -128,7 +128,7 @@ export function PlanWorkspace({
     setItems((prev) => [...prev.filter((i) => i.id !== saved.id), saved]);
     setPanel(null);
     showDay(dayKey(new Date(saved.startsAt)));
-    toast(editing ? "Plan güncellendi" : "Plana eklendi");
+    toast(editing ? "Etkinlik güncellendi" : "Takvime eklendi");
   }
 
   async function toggle(item: PlanItem) {
@@ -148,7 +148,7 @@ export function PlanWorkspace({
     if (!r.ok) return toast(r.error, { kind: "error" });
     setItems((prev) => prev.filter((i) => i.id !== item.id));
     setPanel(null);
-    toast("Plan silindi", {
+    toast("Etkinlik silindi", {
       action: {
         label: "Geri al",
         onClick: async () => {
@@ -157,7 +157,7 @@ export function PlanWorkspace({
           const back = await api<{ item: PlanItem }>("/api/plan", { method: "POST", body: JSON.stringify(rest) });
           if (!back.ok) return toast(back.error, { kind: "error" });
           setItems((prev) => [...prev, back.data.item]);
-          toast("Plan geri getirildi");
+          toast("Etkinlik geri getirildi");
         },
       },
     });
@@ -170,7 +170,7 @@ export function PlanWorkspace({
         <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-accent">
           <CalendarIcon size={22} />
         </span>
-        <p className="text-lg font-semibold tracking-tight">Plan henüz etkinleştirilmedi</p>
+        <p className="text-lg font-semibold tracking-tight">Takvim henüz etkinleştirilmedi</p>
         <p className="max-w-[30rem] text-muted">Takvim için veritabanı güncellemesi gerekiyor. Kısa süre sonra tekrar deneyin.</p>
       </div>
     );
@@ -231,7 +231,7 @@ export function PlanWorkspace({
             <p className="font-medium">Önümüzdeki 60 günde planınız yok</p>
             <Button onClick={() => openNew(blankDraft(todayKey))}>
               <PlusIcon size={16} />
-              Plan ekle
+              Etkinlik ekle
             </Button>
           </div>
         ) : (

@@ -165,7 +165,7 @@ function FavoriteCard({
               className="inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent"
             >
               <CalendarIcon size={16} />
-              Plan yap
+              Takvime ekle
             </Link>
             <div className="ml-auto flex items-center gap-2">
               {tel && <ActionLink iconOnly href={tel} icon={<PhoneIcon />} label={`Ara: ${fav.phone}`} />}

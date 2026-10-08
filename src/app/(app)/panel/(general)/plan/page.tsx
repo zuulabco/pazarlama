@@ -10,7 +10,7 @@ import type { PlanItem } from "@/modules/plan/types";
 import { PageSkeleton } from "../../../_components/skeletons";
 import { PlanWorkspace } from "./_components/plan-workspace";
 
-export const metadata: Metadata = { title: "Plan" };
+export const metadata: Metadata = { title: "Takvim" };
 
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 
