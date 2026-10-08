@@ -154,6 +154,15 @@ export const InboxIcon = ({ size }: P) => (
   </Svg>
 );
 
+export const ChartIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M3.5 16.5h13" />
+    <rect x="4.6" y="9.6" width="2.6" height="6.9" rx="0.6" />
+    <rect x="8.7" y="5.2" width="2.6" height="11.3" rx="0.6" />
+    <rect x="12.8" y="11.4" width="2.6" height="5.1" rx="0.6" />
+  </Svg>
+);
+
 export const HomeIcon = ({ size }: P) => (
   <Svg size={size}>
     <path d="M3.5 9.2 10 3.8l6.5 5.4V16a.8.8 0 0 1-.8.8H4.3a.8.8 0 0 1-.8-.8V9.2Z" />

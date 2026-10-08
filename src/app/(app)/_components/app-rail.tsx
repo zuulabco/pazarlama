@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { HomeIcon, InboxIcon, MailIcon, MapPinIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
+import { ChartIcon, HomeIcon, InboxIcon, MailIcon, MapPinIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
 import { Wordmark } from "@/components/ui/wordmark";
 
 /**
@@ -16,6 +16,7 @@ const items = [
   { label: "Kişiler", href: "/panel/kisi-bul", icon: UsersIcon, prefixes: ["/panel/kisi-bul", "/panel/kisiler"] },
   { label: "Kampanyalar", href: "/panel/kampanyalar", icon: SendIcon, prefixes: ["/panel/kampanyalar", "/panel/otomasyon"] },
   { label: "Gelen kutusu", href: "/panel/gelen-kutusu", icon: InboxIcon, prefixes: ["/panel/gelen-kutusu"] },
+  { label: "Raporlar", href: "/panel/raporlar", icon: ChartIcon, prefixes: ["/panel/raporlar"] },
   { label: "Gönderici adresleri", href: "/panel/posta-kutulari", icon: MailIcon, prefixes: ["/panel/posta-kutulari"] },
 ] as const;
 
