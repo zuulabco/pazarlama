@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Disclosure } from "@/components/ui/disclosure";
-import { MailIcon } from "@/components/ui/icons";
+import { CheckIcon, MailIcon } from "@/components/ui/icons";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Select } from "@/components/ui/select";
 import { ShapeLoader } from "@/components/ui/shape-loader";
@@ -73,6 +73,8 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
   const [touched, setTouched] = useState(false);
   const [googleConsent, setGoogleConsent] = useState(false);
   const [googleTouched, setGoogleTouched] = useState(false);
+  /** Gmail / Google Workspace seçildi: bağlantı yöntemi (OAuth ya da uygulama şifresi) seçiliyor. */
+  const [googleChoice, setGoogleChoice] = useState(false);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
   const emailError = email.trim() && !emailValid ? "Geçerli bir e-posta adresi yazın." : undefined;
@@ -122,43 +124,101 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
     );
   }
 
-  if (!provider) {
+  if (!provider && googleChoice) {
+    const pros = ["Kurulumu daha kolay", "Daha istikrarlı, daha az bağlantı kopması", "Google Workspace hesapları için de geçerlidir"];
+    const cons = ["Bireysel hesaplar için kullanılabilir", "İki faktörlü kimlik doğrulama gerekir", "Bağlantı kopmalarına daha yatkın"];
     return (
-      <div className="grid gap-4">
-        <p className="text-sm text-muted">E-postaları kendi adresinizden göndereceğiz. Gmail ve Google Workspace için tek tıkla bağlanabilirsiniz.</p>
-        {googleReady && (
-          <div className="grid gap-3 rounded-row bg-forest-soft/50 p-4 ring-1 ring-forest/30">
-            <div className="grid gap-0.5">
-              <span className="font-medium">Google ile bağlan (önerilen)</span>
-              <span className="text-sm text-muted">Şifre ya da 2 adımlı doğrulama gerekmez. Google ekranında Adspine&apos;a e-posta gönderme ve gelen yanıtları okuma izni verirsiniz; iletilerinizi silmez ya da değiştirmeyiz.</span>
+      <div className="grid gap-5">
+        <div className="flex items-center gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-sunken">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.75 2.98-4.32 2.98-7.35Z" />
+              <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.42l-3.24-2.5c-.9.6-2.04.95-3.38.95-2.6 0-4.8-1.76-5.59-4.12H3.07v2.58A10 10 0 0 0 12 22Z" />
+              <path fill="#FBBC05" d="M6.41 13.91a6 6 0 0 1 0-3.82V7.51H3.07a10 10 0 0 0 0 8.98l3.34-2.58Z" />
+              <path fill="#EA4335" d="M12 5.97c1.47 0 2.79.5 3.83 1.5l2.87-2.87C16.95 2.99 14.7 2 12 2A10 10 0 0 0 3.07 7.51l3.34 2.58C7.2 7.73 9.4 5.97 12 5.97Z" />
+            </svg>
+          </span>
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight">Google hesabınızı bağlayın</h3>
+            <p className="text-sm text-muted">Gmail / Google Workspace · bağlantı yöntemini seçin</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <section aria-label="OAuth ile bağlan" className="grid content-start gap-4 rounded-row p-4 ring-2 ring-forest/60">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold">OAuth</h4>
+              <span className="rounded-full bg-forest-soft px-2.5 py-0.5 text-xs font-medium text-accent">Önerilen</span>
             </div>
-            <label className="flex items-start gap-3 text-sm">
+            <ul className="grid gap-2 text-sm">
+              {pros.map((t) => (
+                <li key={t} className="flex gap-2.5">
+                  <span className="mt-0.5 shrink-0 text-accent">
+                    <CheckIcon size={14} />
+                  </span>
+                  {t}
+                </li>
+              ))}
+            </ul>
+            <label className="flex items-start gap-2.5 text-xs text-muted">
               <input type="checkbox" checked={googleConsent} onChange={(e) => setGoogleConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-[var(--color-forest)]" />
               <span>Yalnızca izinli, işle ilgili alıcılara yazacağımı ve her e-postada abonelikten çıkma bağlantısı bulunacağını kabul ediyorum.</span>
             </label>
             {googleTouched && !googleConsent && (
-              <p role="alert" className="text-sm text-danger">
+              <p role="alert" className="-mt-2 text-sm text-danger">
                 Devam etmek için onay kutusunu işaretleyin.
               </p>
             )}
             <Button
+              disabled={!googleReady}
               onClick={() => {
                 setGoogleTouched(true);
                 if (googleConsent) window.location.assign(new URL("/api/outreach/oauth/google/start", window.location.origin));
               }}
-              className="w-fit"
+              className="w-full"
             >
-              Google ile bağlan
+              OAuth ile bağlantı kur
             </Button>
-          </div>
-        )}
-        <p className="text-sm font-medium">{googleReady ? "Ya da şifreyle bağlayın" : "Sağlayıcınızı seçin"}</p>
+            <p className="text-xs text-muted">
+              {googleReady
+                ? "Google, e-posta gönderme ve gelen yanıtları okuma izni ister; iletilerinizi silmez ya da değiştirmeyiz. “Doğrulanmamış uygulama” uyarısı görürseniz Gelişmiş → devam edin."
+                : "Google bağlantısı şu an etkin değil; uygulama şifresiyle bağlanabilirsiniz."}
+            </p>
+          </section>
+
+          <section aria-label="Uygulama şifresiyle bağlan" className="grid content-start gap-4 rounded-row p-4 ring-1 ring-line-strong">
+            <h4 className="font-semibold">Uygulama şifresi</h4>
+            <ul className="grid gap-2 text-sm">
+              {cons.map((t, i) => (
+                <li key={t} className="flex gap-2.5">
+                  <span className={`mt-0.5 grid size-4 shrink-0 place-items-center rounded-full text-[0.65rem] font-bold ${i === 0 ? "bg-forest-soft text-accent" : "bg-danger-soft text-danger"}`}>{i === 0 ? "✓" : "!"}</span>
+                  {t}
+                </li>
+              ))}
+            </ul>
+            <Button variant="secondary" onClick={() => choose("gmail")} className="mt-auto w-full">
+              Uygulama şifresiyle bağlan
+            </Button>
+          </section>
+        </div>
+
+        <Button variant="quiet" onClick={() => setGoogleChoice(false)} className="w-fit">
+          Geri
+        </Button>
+      </div>
+    );
+  }
+
+  if (!provider) {
+    return (
+      <div className="grid gap-4">
+        <p className="text-sm text-muted">E-postaları kendi adresinizden göndereceğiz. Hesabınızın sağlayıcısını seçin.</p>
         <div className="grid gap-2.5">
-          {(googleReady ? (["outlook", "ozel", "gmail"] as const) : (["gmail", "outlook", "ozel"] as const)).map((p) => (
+          {(["gmail", "outlook", "ozel"] as const).map((p) => (
             <button
               key={p}
               type="button"
-              onClick={() => choose(p)}
+              onClick={() => (p === "gmail" ? setGoogleChoice(true) : choose(p))}
               className="flex items-center gap-3.5 rounded-row p-4 text-left ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-sunken text-accent">
@@ -191,7 +251,7 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-semibold tracking-tight">{providerLabels[provider]}</h3>
         <button type="button" onClick={() => setProvider(null)} className="text-sm text-muted underline underline-offset-4 hover:text-ink">
-          Sağlayıcıyı değiştir
+          {provider === "gmail" ? "Yöntemi değiştir" : "Sağlayıcıyı değiştir"}
         </button>
       </div>
 
