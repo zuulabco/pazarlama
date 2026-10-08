@@ -9,7 +9,7 @@ const error = (message: string, status: number) => NextResponse.json({ error: me
 
 function unavailable(e: unknown) {
   if (e instanceof FavoritesUnavailableError) {
-    return error("Takip listesi henüz etkinleştirilmedi. Kısa süre sonra tekrar deneyin.", 503);
+    return error("Kayıtlı firmalar henüz etkinleştirilmedi. Kısa süre sonra tekrar deneyin.", 503);
   }
   console.error("Favori işlemi başarısız:", e);
   return error("İşlem tamamlanamadı. Tekrar deneyin.", 500);

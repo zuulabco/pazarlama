@@ -6,7 +6,7 @@ import { listContacts, listLists, listSuppressions, OutreachUnavailableError, ty
 import type { Contact } from "@/modules/outreach/schema";
 import { accountSummary, type AccountSummary } from "@/modules/outreach/usage";
 import { getProfile } from "@/modules/profile/repository";
-import { PageSkeleton } from "../../../_components/skeletons";
+import { ListSkeleton } from "../../../_components/skeletons";
 import { ContactsWorkspace } from "./_components/contacts-workspace";
 
 export const metadata: Metadata = { title: "Kişiler" };
@@ -38,7 +38,7 @@ async function Content() {
 
 export default function ContactsPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<ListSkeleton />}>
       <Content />
     </Suspense>
   );

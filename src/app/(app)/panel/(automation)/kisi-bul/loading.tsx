@@ -1,5 +1,5 @@
-import { PageSkeleton } from "../../../_components/skeletons";
+import { LeadsSkeleton } from "../../../_components/skeletons";
 
 export default function Loading() {
-  return <PageSkeleton />;
+  return <LeadsSkeleton />;
 }

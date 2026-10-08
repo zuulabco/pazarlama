@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import { Select } from "@/components/ui/select";
@@ -48,25 +49,28 @@ export function ResultsArea({
   bodyRef,
   opening,
   hasHistory,
+  presetProvince,
   summary,
   children,
 }: {
   search: SearchView | null;
   filters: ResultFilters;
-  /** Aramadaki süzgeçsiz skorlanmış firma sayısı. */
+  /** Aramadaki filtresiz skorlanmış firma sayısı. */
   total: number;
-  /** Süzgeçlerden sonra listelenen firma sayısı. */
+  /** Filtrelerden sonra listelenen firma sayısı. */
   shown: number;
   /** Arama gönderildi, sunucu yanıtı ya da yeni sayfa henüz gelmedi. */
   waiting: boolean;
-  /** Süzgeç değişti, liste yenileniyor. */
+  /** Filtre değişti, liste yenileniyor. */
   pending: boolean;
   navigate: Navigate;
   /** Geçmiş bir arama açılıyor (sunucudan getiriliyor). */
   opening: boolean;
   /** Kullanıcının daha önce yaptığı aramalar var. */
   hasHistory: boolean;
-  /** Aramanın süzgeçsiz özeti. */
+  /** Hazır aramalarda kullanılacak il (profildeki ilk il; yoksa İstanbul). */
+  presetProvince: string;
+  /** Aramanın filtresiz özeti. */
   summary: Facets["summary"];
   /** Gövde alanı; yeni arama gönderilince görünür alana kaydırmak için. */
   bodyRef: RefObject<HTMLDivElement | null>;
@@ -134,19 +138,37 @@ export function ResultsArea({
     );
   }
 
-  // 2) Henüz seçili arama yok.
+  // 2) Henüz seçili arama yok: Kişi bul'un başlangıç paneliyle aynı düzen (başlık, açıklama, hazır aramalar).
   if (!view) {
+    const il = presetProvince || "İstanbul";
+    const presets = ["Diş kliniği", "Kafe", "Restoran", "Kuaför", "Emlak ofisi", "Oto servis"];
     return (
-      <div ref={bodyRef} className={`${bodyPlace} grid min-h-[28rem] scroll-mt-6 place-items-center rounded-panel bg-surface px-6 py-16 ring-1 ring-line`}>
-        <div className="grid justify-items-center gap-10">
-          <Message
-            title={hasHistory ? "Yeni bir arama yapın" : "İlk aramanızı başlatın"}
-            text={
-              hasHistory
-                ? "Soldan firma türünü ve bölgeyi seçin. Önceki aramalarınıza soldaki “Son aramalar” bölümünden ulaşabilirsiniz."
-                : "Soldan firma türünü ve bölgeyi seçin. Firmaları bulup hedef profilinize göre puanlayalım."
-            }
-          />
+      <div ref={bodyRef} className={`${bodyPlace} scroll-mt-6 rounded-panel bg-surface p-5 ring-1 ring-line`}>
+        <div className="grid gap-6">
+          <div className="grid gap-1.5">
+            <h2 className="text-2xl font-semibold tracking-tight">{hasHistory ? "Yeni arama başlatın" : "İlk aramanızı başlatın"}</h2>
+            <p className="max-w-[40rem] text-muted">
+              Soldan firma türünü ve bölgeyi seçin; firmaları bulup hedef profilinize göre puanlayalım.
+              {hasHistory ? " Önceki aramalarınıza soldaki “Son aramalar” bölümünden ulaşabilirsiniz." : ""}
+            </p>
+          </div>
+          <div className="grid gap-2.5">
+            <h3 className="text-sm font-medium">Hazır aramalar</h3>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {presets.map((p) => (
+                <li key={p}>
+                  <Link
+                    href={`/panel/musteri-bul?tur=${encodeURIComponent(p)}&il=${encodeURIComponent(il)}`}
+                    scroll={false}
+                    className="grid w-full gap-0.5 rounded-row p-3.5 text-left ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50"
+                  >
+                    <span className="font-medium">{p}</span>
+                    <span className="text-sm text-muted">{il} · tüm ilçeler</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     );
@@ -189,7 +211,7 @@ export function ResultsArea({
               </ul>
             </div>
             {chips.length > 0 && (
-              <ul className="flex flex-wrap gap-2" aria-label="Uygulanan süzgeçler">
+              <ul className="flex flex-wrap gap-2" aria-label="Uygulanan filtreler">
                 {chips.map((c) => (
                   <li key={c.key}>
                     <button

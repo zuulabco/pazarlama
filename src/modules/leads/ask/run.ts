@@ -26,7 +26,7 @@ export type AskResult = {
   kind: "list" | "stats" | "interpret";
   answer: string;
   items: AskItem[];
-  /** Soruda tanınan süzgeçler (yanıt kartında etiket). */
+  /** Soruda tanınan filtreler (yanıt kartında etiket). */
   applied: string[];
   /** Yanıtın dil modeliyle üretilip üretilmediği. */
   usedAi: boolean;
@@ -94,7 +94,7 @@ function profileBrief(p: Profile) {
   };
 }
 
-/** Yorum sorusu: backend süzgeç ve sıralamayla en çok 20 aday seçer; model yalnızca bunları yorumlar. */
+/** Yorum sorusu: backend filtre ve sıralamayla en çok 20 aday seçer; model yalnızca bunları yorumlar. */
 async function interpret(
   question: string,
   pool: LeadRow[],
@@ -206,7 +206,7 @@ export async function answerQuestion(question: string, leads: LeadRow[], profile
   if (ordered.length === 0) {
     return {
       kind: "interpret",
-      answer: `${condition(applied)} firma yok; yorumlayacak veri bulunamadı. Soruyu süzgeçsiz sormayı deneyin.`,
+      answer: `${condition(applied)} firma yok; yorumlayacak veri bulunamadı. Soruyu filtresiz sormayı deneyin.`,
       items: [],
       applied,
       usedAi: false,

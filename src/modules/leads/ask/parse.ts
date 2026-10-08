@@ -2,7 +2,7 @@ import { fold } from "@/lib/text";
 
 /**
  * Soru kutusunun LLM'siz katmanı: Türkçe soruyu kurallarla çözümler.
- * Süzgeç, sıralama ve sayım soruları doğrudan veritabanı verisinden yanıtlanır; yalnızca
+ * Filtre, sıralama ve sayım soruları doğrudan veritabanı verisinden yanıtlanır; yalnızca
  * yorum/öneri soruları dil modeline gider.
  */
 
@@ -117,7 +117,7 @@ export function parseQuestion(question: string, knownDistricts: string[] = []): 
   return { kind, filters, sort, limit, sortGiven };
 }
 
-/** Uygulanan süzgeçlerin okunabilir özeti (yanıt kartında etiket olarak gösterilir). */
+/** Uygulanan filtrelerin okunabilir özeti (yanıt kartında etiket olarak gösterilir). */
 export function describeFilters(f: AskFilters): string[] {
   const out: string[] = [];
   if (f.web) out.push(`Web sitesi ${f.web}`);

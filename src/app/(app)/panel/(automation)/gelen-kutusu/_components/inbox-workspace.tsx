@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Collapse } from "@/components/ui/collapse";
 import { ArrowLeftIcon, SearchIcon } from "@/components/ui/icons";
 import { Select } from "@/components/ui/select";
 import { Toaster, toast } from "@/components/ui/toast";
@@ -37,12 +38,13 @@ const statusTone: Record<LeadStatus, string> = {
 };
 
 /**
- * Gelen kutusu (Instantly Unibox yapısı): solda durum etiketleri ve süzgeçler, ortada konuşmalar, sağda konuşma ve yanıt kutusu.
+ * Gelen kutusu (Instantly Unibox yapısı): solda durum etiketleri ve filtreler, ortada konuşmalar, sağda konuşma ve yanıt kutusu.
  * Yanıtlar gelince otomatik etiketlenir; etiketi değiştirebilir ve yanıt yazabilirsiniz.
  */
 export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Data; campaigns: Option[]; mailboxes: Option[] }) {
   const [data, setData] = useState(initial);
   const [status, setStatus] = useState<LeadStatus | "hepsi">("hepsi");
+  const [moreFilters, setMoreFilters] = useState(false);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [campaign, setCampaign] = useState("");
   const [mailbox, setMailbox] = useState("");
@@ -70,7 +72,7 @@ export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Dat
     if (mine === seq.current && r.ok) setData(r.data);
   }, [query]);
 
-  // Süzgeç değişince (yazarken kısa gecikmeyle) ve her 45 saniyede yeni yanıtlar için yenile.
+  // Filtre değişince (yazarken kısa gecikmeyle) ve her 45 saniyede yeni yanıtlar için yenile.
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
@@ -123,50 +125,60 @@ export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Dat
   const pane = "min-h-0 overflow-y-auto";
 
   return (
-    <div className="grid h-[calc(100svh-6.5rem)] min-h-[32rem] gap-4 lg:grid-cols-[13rem_minmax(0,21rem)_minmax(0,1fr)]">
+    <div className="grid h-[calc(100svh-6.5rem)] min-h-[32rem] gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
       <Toaster />
-
-      {/* Durum etiketleri ve süzgeçler */}
-      <aside aria-label="Durumlar" className={`${pane} ${selected ? "hidden lg:block" : ""} grid content-start gap-4`}>
-        <ul className="grid gap-0.5" aria-label="Durum">
-          {[{ value: "hepsi" as const, label: "Tüm yanıtlar", n: counts.toplam }, ...leadStatuses.map((s) => ({ value: s.value, label: s.label, n: counts[s.value] }))].map((s) => (
-            <li key={s.value}>
-              <button
-                type="button"
-                aria-pressed={status === s.value}
-                onClick={() => setStatus(s.value)}
-                className="flex w-full items-center justify-between gap-2 rounded-control px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-sunken hover:text-ink aria-pressed:bg-forest-soft aria-pressed:font-medium aria-pressed:text-accent"
-              >
-                <span className="truncate">{s.label}</span>
-                {s.n > 0 && <span className="text-xs tabular-nums">{num(s.n)}</span>}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <label className="flex cursor-pointer items-center justify-between gap-2 rounded-control px-3 py-2 text-sm">
-          <span>Yalnızca okunmamış{counts.okunmamis > 0 ? ` (${num(counts.okunmamis)})` : ""}</span>
-          <input type="checkbox" checked={unreadOnly} onChange={(e) => setUnreadOnly(e.target.checked)} className="size-4 accent-[var(--color-forest)]" />
-        </label>
-        <div className="grid gap-2 px-1">
-          <Select<string> label="Kampanya" value={campaign} options={[{ value: "", label: "Tüm kampanyalar" }, ...campaigns.map((c) => ({ value: c.id, label: c.label }))]} onChange={setCampaign} />
-          <Select<string> label="Gönderici adresi" value={mailbox} options={[{ value: "", label: "Tüm gönderici adresleri" }, ...mailboxes.map((m) => ({ value: m.id, label: m.label }))]} onChange={setMailbox} />
-        </div>
-      </aside>
 
       {/* Konuşmalar */}
       <section aria-label="Konuşmalar" className={`${selected ? "hidden lg:flex" : "flex"} min-h-0 flex-col overflow-hidden rounded-panel bg-surface ring-1 ring-line`}>
-        <label className="relative block border-b border-line p-3">
-          <span className="sr-only">Konuşma ara</span>
-          <span className="pointer-events-none absolute top-1/2 left-6 -translate-y-1/2 text-muted">
-            <SearchIcon size={15} />
-          </span>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ad, firma ya da e-posta ara" className="h-10 w-full rounded-control bg-sunken pr-3 pl-9 outline-none placeholder:text-muted focus:ring-2 focus:ring-forest" />
-        </label>
+        <div className="grid gap-2 border-b border-line p-3">
+          <label className="relative block">
+            <span className="sr-only">Konuşma ara</span>
+            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
+              <SearchIcon size={15} />
+            </span>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ad, firma ya da e-posta ara" className="h-10 w-full rounded-control bg-sunken pr-3 pl-9 outline-none placeholder:text-muted focus:ring-2 focus:ring-forest" />
+          </label>
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <Select<string>
+                label="Durum"
+                value={status}
+                options={[{ value: "hepsi", label: `Tüm yanıtlar (${num(counts.toplam)})` }, ...leadStatuses.map((st) => ({ value: st.value, label: counts[st.value] > 0 ? `${st.label} (${num(counts[st.value])})` : st.label }))]}
+                onChange={(v) => setStatus(v as LeadStatus | "hepsi")}
+              />
+            </div>
+            <button
+              type="button"
+              aria-pressed={unreadOnly}
+              onClick={() => setUnreadOnly((u) => !u)}
+              className="h-10 shrink-0 rounded-control px-3 text-sm text-muted ring-1 ring-line-strong ring-inset transition-colors hover:text-ink aria-pressed:bg-forest-soft aria-pressed:text-accent aria-pressed:ring-forest"
+            >
+              Okunmamış{counts.okunmamis > 0 ? ` ${num(counts.okunmamis)}` : ""}
+            </button>
+            <button
+              type="button"
+              aria-expanded={moreFilters}
+              aria-label="Kampanya ve gönderici adresi filtreleri"
+              onClick={() => setMoreFilters((m) => !m)}
+              className={`grid size-10 shrink-0 place-items-center rounded-control ring-1 ring-inset transition-colors ${moreFilters || campaign || mailbox ? "bg-forest-soft text-accent ring-forest" : "text-muted ring-line-strong hover:text-ink"}`}
+            >
+              <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                <path d="M3.5 5.5h13M6 10h8M8.5 14.5h3" />
+              </svg>
+            </button>
+          </div>
+          <Collapse open={moreFilters}>
+            <div className="grid gap-2 pt-1">
+              <Select<string> label="Kampanya" value={campaign} options={[{ value: "", label: "Tüm kampanyalar" }, ...campaigns.map((c) => ({ value: c.id, label: c.label }))]} onChange={setCampaign} />
+              <Select<string> label="Gönderici adresi" value={mailbox} options={[{ value: "", label: "Tüm gönderici adresleri" }, ...mailboxes.map((m) => ({ value: m.id, label: m.label }))]} onChange={setMailbox} />
+            </div>
+          </Collapse>
+        </div>
         <ul className={`${pane} divide-y divide-line`}>
           {conversations.length === 0 && (
             <li className="grid justify-items-center gap-2 px-6 py-16 text-center">
-              <p className="font-semibold">{counts.toplam === 0 ? "Gelen kutunuz boş" : "Süzgeçe uyan konuşma yok"}</p>
-              <p className="max-w-[16rem] text-sm text-muted">{counts.toplam === 0 ? "Kampanya e-postalarınıza gelen yanıtlar burada toplanır; her 5 dakikada bir kontrol edilir." : "Süzgeçleri gevşetmeyi deneyin."}</p>
+              <p className="font-semibold">{counts.toplam === 0 ? "Gelen kutunuz boş" : "Filtreye uyan konuşma yok"}</p>
+              <p className="max-w-[16rem] text-sm text-muted">{counts.toplam === 0 ? "Kampanya e-postalarınıza gelen yanıtlar burada toplanır; her 5 dakikada bir kontrol edilir." : "Filtreleri gevşetmeyi deneyin."}</p>
               {counts.toplam === 0 && (
                 <Link href="/panel/kampanyalar" className="text-sm text-accent underline underline-offset-4 hover:no-underline">
                   Kampanyalara git
@@ -200,7 +212,7 @@ export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Dat
           <div className="grid flex-1 place-items-center px-6 text-center">
             <div className="grid max-w-[18rem] gap-1">
               <p className="font-semibold">Bir konuşma seçin</p>
-              <p className="text-sm text-muted">Soldaki listeden bir yanıt seçin; konuşmayı görür, durumunu değiştirir ve yanıt yazarsınız.</p>
+              <p className="text-sm text-muted">Listeden bir yanıt seçin; konuşmayı görür, durumunu değiştirir ve yanıt yazarsınız.</p>
             </div>
           </div>
         ) : !thread ? (

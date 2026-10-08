@@ -16,7 +16,7 @@ import { LeadAddModal } from "./lead-add-modal";
 import { LeadFilters } from "./lead-filters";
 import { LeadResults } from "./lead-results";
 
-const tips = ["Süzgeçlerinize uyan kişiler taranıyor…", "Unvan, şirket ve konum bilgileri toplanıyor…", "Aynı şirketten tekrarlar ayıklanıyor…", "Sonuçlar hazırlanıyor…"];
+const tips = ["Filtrelerinize uyan kişiler taranıyor…", "Unvan, şirket ve konum bilgileri toplanıyor…", "Aynı şirketten tekrarlar ayıklanıyor…", "Sonuçlar hazırlanıyor…"];
 const num = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const inputClass =
@@ -25,7 +25,7 @@ const inputClass =
 type Stage = { kind: "idle" } | { kind: "running" } | { kind: "results"; search: LeadBrowse } | { kind: "failed"; message: string };
 
 /**
- * Kişi bul (Instantly SuperSearch yapısı): solda süzgeçler, sağda başlangıç ekranı / sonuç tablosu.
+ * Kişi bul (Instantly SuperSearch yapısı): solda filtreler, sağda başlangıç ekranı / sonuç tablosu.
  * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 kredi) → kampanyaya ekle.
  */
 export function LeadSearchWorkspace({ initialAccount }: { initialAccount: AccountSummary }) {
@@ -111,9 +111,9 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
     if (!r.ok) return toast(r.error, { kind: "error" });
     const next = { ...emptySearch(), ...r.data.filters, count: size };
     setQ(next);
-    toast("Süzgeçler hazırlandı");
+    toast("Filtreler hazırlandı");
     if (next.roles.length + next.titles.length + next.industries.length + next.keywords.length > 0) void run(next);
-    else toast("İsteğinizden bir süzgeç çıkarılamadı. Süzgeçleri soldan seçin.", { kind: "error" });
+    else toast("İsteğinizden bir filtre çıkarılamadı. Filtreleri soldan seçin.", { kind: "error" });
   }
 
   function preset(p: LeadPreset) {
@@ -213,7 +213,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
               <ul className="grid gap-3 sm:grid-cols-3">
                 <li className="grid gap-1 rounded-row bg-forest-soft/50 p-4 ring-1 ring-forest/30">
                   <span className="font-medium">Veritabanında ara</span>
-                  <span className="text-sm text-muted">Unvan, kıdem, konum ve şirket süzgeçleriyle ya da Adspine AI ile.</span>
+                  <span className="text-sm text-muted">Unvan, kıdem, konum ve şirket filtreleriyle ya da Adspine AI ile.</span>
                 </li>
                 <li>
                   <Link href="/panel/musteri-bul" className="grid h-full gap-1 rounded-row p-4 ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken/60">
@@ -224,7 +224,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
                 <li>
                   <Link href="/panel/kisiler" className="grid h-full gap-1 rounded-row p-4 ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken/60">
                     <span className="font-medium">Kendi listenizi getirin</span>
-                    <span className="text-sm text-muted">CSV yükleyin, Takip&apos;ten ekleyin ya da elle yazın.</span>
+                    <span className="text-sm text-muted">CSV yükleyin, kayıtlı firmalarınızdan ekleyin ya da elle yazın.</span>
                   </Link>
                 </li>
               </ul>
@@ -306,7 +306,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
           <label className="grid gap-1.5 text-sm font-medium">
             Arama adı
             <input value={saveName} onChange={(e) => setSaveName(e.target.value)} maxLength={80} placeholder="Örn. İstanbul pazarlama müdürleri" className={inputClass} autoFocus />
-            <span className="text-sm font-normal text-muted">Yalnızca süzgeçler kaydedilir; sonuçlar kaydedilmez.</span>
+            <span className="text-sm font-normal text-muted">Yalnızca filtreler kaydedilir; sonuçlar kaydedilmez.</span>
           </label>
           <div className="flex justify-end gap-2">
             <Button variant="quiet" onClick={() => setSaveOpen(false)}>
@@ -323,7 +323,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
         {saved === null ? (
           <p className="text-sm text-muted">Yükleniyor…</p>
         ) : saved.length === 0 ? (
-          <p className="text-sm text-muted">Henüz kayıtlı aramanız yok. Süzgeçleri seçip “Kaydet”e basın.</p>
+          <p className="text-sm text-muted">Henüz kayıtlı aramanız yok. Filtreleri seçip “Kaydet”e basın.</p>
         ) : (
           <ul className="grid gap-2">
             {saved.map((s) => (

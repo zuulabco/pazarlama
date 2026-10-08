@@ -163,6 +163,14 @@ export const ChartIcon = ({ size }: P) => (
   </Svg>
 );
 
+export const GaugeIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M3.2 14a7 7 0 1 1 13.6 0" />
+    <path d="m10 11 3-4" />
+    <circle cx="10" cy="11.5" r="1" />
+  </Svg>
+);
+
 export const HomeIcon = ({ size }: P) => (
   <Svg size={size}>
     <path d="M3.5 9.2 10 3.8l6.5 5.4V16a.8.8 0 0 1-.8.8H4.3a.8.8 0 0 1-.8-.8V9.2Z" />

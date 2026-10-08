@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
 const bodySchema = z.object({ name: z.string().trim().min(1, "Aramaya bir ad verin.").max(80, "En fazla 80 karakter."), query: leadSearchSchema });
 
-/** Süzgeçleri adıyla kaydeder (sonuçlar saklanmaz). */
+/** Filtreleri adıyla kaydeder (sonuçlar saklanmaz). */
 export async function POST(req: NextRequest) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;

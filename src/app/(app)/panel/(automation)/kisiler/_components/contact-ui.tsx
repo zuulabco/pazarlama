@@ -26,7 +26,7 @@ export function KindChip({ kind }: { kind: EmailKind | null }) {
   );
 }
 
-export const sourceLabels = { elle: "Elle", csv: "CSV", takip: "Takip", arama: "Arama", kisi_bul: "Kişi bul" } as const;
+export const sourceLabels = { elle: "Elle", csv: "CSV", takip: "Kayıtlı firma", arama: "Arama", kisi_bul: "Kişi bul" } as const;
 
 /** Tarayıcıda dosya indirir. */
 export function download(filename: string, content: string, type = "text/csv;charset=utf-8") {

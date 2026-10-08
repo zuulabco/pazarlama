@@ -46,7 +46,7 @@ const leads = [
 const profile = { businessName: "X", workType: "ajans", services: [], businessDescription: "" } as unknown as Profile;
 
 describe("answerQuestion (LLM'siz yollar)", () => {
-  it("süzgeç sorusunu gerçek verilerle yanıtlar ve skora göre sıralar", async () => {
+  it("filtre sorusunu gerçek verilerle yanıtlar ve skora göre sıralar", async () => {
     const r = await answerQuestion("web sitesi olmayan firmaları göster", leads, profile);
     expect(r.kind).toBe("list");
     expect(r.usedAi).toBe(false);
@@ -78,7 +78,7 @@ describe("answerQuestion (LLM'siz yollar)", () => {
     expect(r.answer).toContain("firma yok");
   });
 
-  it("yorum sorusunda süzgeçten sonra aday kalmazsa modele gitmez", async () => {
+  it("yorum sorusunda filtreden sonra aday kalmazsa modele gitmez", async () => {
     const r = await answerQuestion("skoru 95 üstü olanlardan hangisini aramalıyım?", leads, profile);
     expect(r.usedAi).toBe(false);
     expect(r.answer).toContain("firma yok");

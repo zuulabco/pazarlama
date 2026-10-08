@@ -13,8 +13,8 @@ const kindLabel: Record<WorkKind, string> = { message: "WhatsApp / DM mesajı", 
  * açılır; metin hazır dolu gelir. Takipten bir firma seçildiyse adresi/numarası hazır yazılıdır ve "Gönderdim"
  * Takip'e not düşer.
  */
-export function SendBox({ kind, draft, firm }: { kind: WorkKind; draft: Draft; firm: WorkFirm | null }) {
-  const [text, setText] = useState(() => (kind === "email" ? (firm?.email ?? firm?.phone) : (firm?.phone ?? firm?.email)) ?? "");
+export function SendBox({ kind, draft, firm, defaultTo }: { kind: WorkKind; draft: Draft; firm: WorkFirm | null; defaultTo?: string | null }) {
+  const [text, setText] = useState(() => (kind === "email" ? (firm?.email ?? firm?.phone) : (firm?.phone ?? firm?.email)) ?? defaultTo ?? "");
   const [sent, setSent] = useState(false);
 
   const recipient = parseRecipient(text);
@@ -54,7 +54,7 @@ export function SendBox({ kind, draft, firm }: { kind: WorkKind; draft: Draft; f
         });
       }
       setSent(true);
-      toast("Takip'e işlendi", { action: { label: "Takip listesi", href: "/panel/firmalar" } });
+      toast("Notlara işlendi", { action: { label: "Kayıtlı firmalar", href: "/panel/firmalar" } });
     } catch (e) {
       toast(e instanceof Error ? e.message : "Takip'e işlenemedi. Tekrar deneyin.", { kind: "error" });
     }
@@ -115,7 +115,7 @@ export function SendBox({ kind, draft, firm }: { kind: WorkKind; draft: Draft; f
             className="ml-auto inline-flex h-9 items-center gap-2 rounded-full bg-forest px-4 text-sm font-medium text-white transition-colors hover:bg-forest-hover disabled:opacity-60"
           >
             <CheckIcon />
-            {sent ? "Takip'e işlendi" : "Gönderdim"}
+            {sent ? "Notlara işlendi" : "Gönderdim"}
           </button>
         )}
       </div>

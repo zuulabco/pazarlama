@@ -11,6 +11,7 @@ import { TextArea } from "@/components/ui/text-fields";
 import { toast } from "@/components/ui/toast";
 import { goals, lengths, refinements, tones, type Draft, type Goal, type Length, type Refinement, type Tone, type WorkFirm, type WorkKind } from "@/modules/work/context";
 import Link from "next/link";
+import type { ContactPick } from "@/modules/outreach/contacts";
 import { FirmInfo } from "./firm-info";
 import { SendBox } from "./send-box";
 
@@ -28,6 +29,10 @@ const refineTips = ["İsteğiniz uygulanıyor…", "Cümleler yeniden kuruluyor�
 const inputClass =
   "h-11 w-full min-w-0 rounded-control bg-surface px-3.5 font-normal ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest";
 
+/** Kayıtlı kişiyi alıcı alanlarına çevirir: kullanıcı bunları görür ve değiştirebilir; model yalnızca bunları bilir. */
+const contactName = (c: ContactPick) => [c.name, c.company].filter(Boolean).join(" · ");
+const contactAbout = (c: ContactPick) => [c.jobTitle && `Unvanı: ${c.jobTitle}.`, c.company && `Şirketi: ${c.company}.`, c.city && `Şehri: ${c.city}.`].filter(Boolean).join(" ");
+
 const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 
 type RunRequest = {
@@ -40,6 +45,8 @@ type RunRequest = {
  */
 export function Composer({
   favorites,
+  contacts,
+  initialContactId,
   firm,
   onPickFirm,
   initialKind,
@@ -47,21 +54,28 @@ export function Composer({
   suggestedService,
 }: {
   favorites: PickerItem[];
+  contacts: ContactPick[];
+  initialContactId: string | null;
   firm: WorkFirm | null;
   onPickFirm: (id: string) => void;
   initialKind: WorkKind;
   services: Service[];
   suggestedService: string | null;
 }) {
-  const [kind, setKind] = useState<WorkKind>(initialKind);
+  const pickedInit = contacts.find((c) => c.id === initialContactId) ?? null;
+  const [kind, setKind] = useState<WorkKind>(pickedInit?.email ? "email" : initialKind);
+  /** Alıcı türü: kayıtlı firma (ya da elle yazılan) ya da kayıtlı kişi. */
+  const [target, setTarget] = useState<"firma" | "kisi">(pickedInit ? "kisi" : "firma");
+  const [contactId, setContactId] = useState(pickedInit?.id ?? "");
+  const contact = contacts.find((c) => c.id === contactId) ?? null;
   const [goal, setGoal] = useState<Goal>("ilk-temas");
   const [tone, setTone] = useState<Tone>("samimi");
   const [length, setLength] = useState<Length>("standart");
   const [service, setService] = useState(suggestedService ?? "");
   const [extra, setExtra] = useState("");
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
-  const [about, setAbout] = useState("");
+  const [name, setName] = useState(pickedInit ? contactName(pickedInit) : "");
+  const [category, setCategory] = useState(pickedInit?.jobTitle ?? "");
+  const [about, setAbout] = useState(pickedInit ? contactAbout(pickedInit) : "");
   const [custom, setCustom] = useState("");
   /** Her kanal için sürüm geçmişi; sonuncusu görünendir ("Geri al" bir öncekine döner). */
   const [history, setHistory] = useState<Record<WorkKind, Draft[]>>({ message: [], email: [] });
@@ -97,8 +111,8 @@ export function Composer({
           length,
           service: service || null,
           extra: extra.trim() || null,
-          favoriteId: firm?.id || null,
-          recipient: firm ? null : { name: name.trim() || null, category: category.trim() || null, about: about.trim() || null },
+          favoriteId: target === "firma" ? firm?.id || null : null,
+          recipient: target === "firma" && firm ? null : { name: name.trim() || null, category: category.trim() || null, about: about.trim() || null },
           ...request,
         }),
       });
@@ -151,34 +165,75 @@ export function Composer({
         </div>
 
         <div className="grid gap-4 rounded-row bg-sunken/60 p-4">
-          <p className="text-sm font-medium">Alıcı hakkında</p>
-          <Select<string>
-            label="Alıcı"
-            value={firm?.id ?? ""}
-            options={[
-              { value: "", label: "Müşteri seçmeden yaz", hint: "Genel bir mesaj hazırlar" },
-              ...favorites.map((f) => ({ value: f.id, label: f.name, hint: [f.category, f.district].filter(Boolean).join(" · ") || undefined })),
+          <p className="text-sm font-medium">Alıcı</p>
+          <Segmented
+            label="Alıcı türü"
+            items={[
+              { key: "firma", label: "Firma", pressed: target === "firma", onClick: () => setTarget("firma") },
+              { key: "kisi", label: "Kişi", pressed: target === "kisi", onClick: () => setTarget("kisi") },
             ]}
-            onChange={onPickFirm}
           />
-          {favorites.length === 0 && (
-            <p className="-mt-2 text-sm text-muted">
-              Takibe aldığınız firmaları buradan seçebilirsiniz.{" "}
-              <Link href="/panel/musteri-bul" className="font-medium text-accent underline underline-offset-4 hover:no-underline">
-                Müşteri bul
-              </Link>
-            </p>
+          {target === "firma" ? (
+            <>
+              <Select<string>
+                label="Kayıtlı firma"
+                value={firm?.id ?? ""}
+                options={[
+                  { value: "", label: "Firma seçmeden yaz", hint: "Genel bir mesaj hazırlar" },
+                  ...favorites.map((f) => ({ value: f.id, label: f.name, hint: [f.category, f.district].filter(Boolean).join(" · ") || undefined })),
+                ]}
+                onChange={onPickFirm}
+              />
+              {favorites.length === 0 && (
+                <p className="-mt-2 text-sm text-muted">
+                  Kaydettiğiniz firmaları buradan seçebilirsiniz.{" "}
+                  <Link href="/panel/musteri-bul" className="font-medium text-accent underline underline-offset-4 hover:no-underline">
+                    Firma bul
+                  </Link>
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <Select<string>
+                label="Kayıtlı kişi"
+                value={contactId}
+                options={[
+                  { value: "", label: "Kişi seçmeden yaz", hint: "Aşağıya bilgileri kendiniz yazın" },
+                  ...contacts.map((c) => ({ value: c.id, label: c.name || c.company || c.email || "İsimsiz kişi", hint: [c.jobTitle, c.company].filter(Boolean).join(" · ") || undefined })),
+                ]}
+                onChange={(id) => {
+                  setContactId(id);
+                  const c = contacts.find((x) => x.id === id);
+                  setHistory({ message: [], email: [] });
+                  if (c) {
+                    setName(contactName(c));
+                    setCategory(c.jobTitle ?? "");
+                    setAbout(contactAbout(c));
+                    if (c.email) setKind("email");
+                  }
+                }}
+              />
+              {contacts.length === 0 && (
+                <p className="-mt-2 text-sm text-muted">
+                  Kayıtlı kişiniz yok.{" "}
+                  <Link href="/panel/kisi-bul" className="font-medium text-accent underline underline-offset-4 hover:no-underline">
+                    Kişi bul
+                  </Link>
+                </p>
+              )}
+            </>
           )}
-          {firm ? (
+          {target === "firma" && firm ? (
             <FirmInfo firm={firm} />
           ) : (
             <>
               <label className="grid gap-1.5 text-sm">
-                Firma ya da kişi
+                Firma ya da kişi adı
                 <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Örn. Lale Diş Kliniği" className={inputClass} />
               </label>
               <label className="grid gap-1.5 text-sm">
-                Sektör
+                {target === "kisi" ? "Unvan" : "Sektör"}
                 <input value={category} onChange={(e) => setCategory(e.target.value)} maxLength={80} placeholder="Örn. Diş kliniği" className={inputClass} />
               </label>
               <TextArea
@@ -315,7 +370,7 @@ export function Composer({
               )}
             </div>
 
-            <SendBox key={kind} kind={kind} draft={draft} firm={firm} />
+            <SendBox key={`${kind}-${target}-${contactId}`} kind={kind} draft={draft} firm={target === "firma" ? firm : null} defaultTo={target === "kisi" ? contact?.email : null} />
           </>
         )}
       </section>

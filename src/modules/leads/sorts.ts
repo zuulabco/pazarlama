@@ -1,4 +1,4 @@
-/** Sonuç sıralama seçenekleri ve süzgeç tipleri. Sunucu ve istemci tarafından ortak kullanılır. */
+/** Sonuç sıralama seçenekleri ve filtre tipleri. Sunucu ve istemci tarafından ortak kullanılır. */
 export const leadSorts = {
   score: { column: "lead_score", label: "Genel skor" },
   digital: { column: "digital_need", label: "Dijital ihtiyaç" },

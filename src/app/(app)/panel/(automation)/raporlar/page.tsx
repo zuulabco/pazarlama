@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth/session";
 import { OutreachUnavailableError } from "@/modules/outreach/contacts";
 import { loadReports, type ReportsData } from "@/modules/outreach/reports";
 import { getProfile } from "@/modules/profile/repository";
-import { PageSkeleton } from "../../../_components/skeletons";
+import { ReportsSkeleton } from "../../../_components/skeletons";
 import { ReportsWorkspace } from "./_components/reports-workspace";
 
 export const metadata: Metadata = { title: "Raporlar" };
@@ -33,7 +33,7 @@ async function Content() {
 
 export default function ReportsPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<ReportsSkeleton />}>
       <Content />
     </Suspense>
   );

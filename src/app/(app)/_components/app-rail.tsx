@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { CalendarIcon, HomeIcon, MailIcon } from "@/components/ui/icons";
 import { sections } from "./nav-config";
+import { UsageMenu } from "./usage-menu";
 import { Wordmark } from "@/components/ui/wordmark";
 
 type Item = { label: string; href: string; icon: typeof HomeIcon; prefixes: readonly string[]; exact?: boolean };
@@ -64,6 +65,7 @@ export function AppRail({ account }: { account: ReactNode }) {
         {tools.map((it) => (
           <RailLink key={it.href} it={it} path={path} />
         ))}
+        <UsageMenu />
       </nav>
       <div className="md:mt-1">{account}</div>
     </aside>

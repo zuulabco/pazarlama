@@ -52,8 +52,8 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(body?.error ?? "İşlem tamamlanamadı. Tekrar deneyin.");
       }
-      toast(next ? `${lead.name} takibe alındı` : `${lead.name} takipten çıkarıldı`, {
-        action: next ? { label: "Takip listesi", href: "/panel/firmalar" } : { label: "Geri al", onClick: () => void setFavorite(true) },
+      toast(next ? `${lead.name} kaydedildi` : `${lead.name} kayıtlı firmalardan çıkarıldı`, {
+        action: next ? { label: "Kayıtlı firmalar", href: "/panel/firmalar" } : { label: "Geri al", onClick: () => void setFavorite(true) },
       });
     } catch (e) {
       setFav(!next);
@@ -100,8 +100,8 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
             type="button"
             onClick={toggle}
             aria-pressed={fav}
-            aria-label={fav ? `${lead.name} firmasını takipten çıkar` : `${lead.name} firmasını takibe al`}
-            title={fav ? "Takipten çıkar" : "Takibe al"}
+            aria-label={fav ? `${lead.name} firmasını kayıtlı firmalardan çıkar` : `${lead.name} firmasını kaydet`}
+            title={fav ? "Kayıttan çıkar" : "Kaydet"}
             className="group absolute top-2.5 right-2.5 z-10 grid size-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-accent aria-pressed:text-accent"
           >
             <BookmarkIcon filled={fav} />
@@ -166,7 +166,7 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
               className="group inline-flex h-9 items-center gap-2 rounded-full bg-surface px-3.5 text-sm font-medium text-accent ring-1 ring-forest/40 ring-inset transition-[background-color,color] duration-200 hover:bg-forest-soft aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
             >
               <BookmarkIcon size={16} filled={fav} />
-              {fav ? "Takipte" : "Takibe al"}
+              {fav ? "Kayıtlı" : "Kaydet"}
             </button>
             <button
               type="button"

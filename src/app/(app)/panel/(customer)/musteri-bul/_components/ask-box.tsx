@@ -55,7 +55,7 @@ function Item({ item }: { item: AskItem }) {
 
 /**
  * Sonuçlar hakkında soru kutusu: ekranın alt ortasında sabit, açılıp kapanabilen yapay zekâ girişi.
- * Süzgeç, sıralama ve sayım soruları sunucuda kurallarla ve gerçek verilerle yanıtlanır; yorum
+ * Filtre, sıralama ve sayım soruları sunucuda kurallarla ve gerçek verilerle yanıtlanır; yorum
  * soruları en iyi adaylar seçildikten sonra yapay zekâya gider. Yanıt, girişin üstünde açılır.
  */
 export function AskBox({ searchId }: { searchId: string }) {
@@ -176,7 +176,7 @@ export function AskBox({ searchId }: { searchId: string }) {
                 <div className="grid gap-3.5">
                   <p className="whitespace-pre-line">{result.answer}</p>
                   {result.applied.length > 0 && (
-                    <p className="text-sm text-muted">Uygulanan süzgeçler: {result.applied.join(" · ")}</p>
+                    <p className="text-sm text-muted">Uygulanan filtreler: {result.applied.join(" · ")}</p>
                   )}
                   {result.items.length > 0 && (
                     <ul className="divide-y divide-line">

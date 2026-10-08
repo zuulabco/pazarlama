@@ -22,7 +22,7 @@ const leads = [
 ];
 
 describe("matchesFilters", () => {
-  it("tüm süzgeçleri birlikte uygular", () => {
+  it("tüm filtreleri birlikte uygular", () => {
     expect(leads.filter((l) => matchesFilters(l, { web: "yok", tel: "var" }))).toHaveLength(1);
     expect(leads.filter((l) => matchesFilters(l, { rev: 200 }))).toHaveLength(1);
     expect(leads.filter((l) => matchesFilters(l, { d: "bostanci" }))).toHaveLength(2);
@@ -40,18 +40,18 @@ describe("filterAndSort", () => {
 });
 
 describe("computeFacets", () => {
-  it("bir seçeneğin getireceği sayıyı, diğer süzgeçler korunarak verir", () => {
+  it("bir seçeneğin getireceği sayıyı, diğer filtreler korunarak verir", () => {
     const f = computeFacets(leads, { web: "yok" });
     expect(f.matching).toBe(2);
     // web süzgeci hariç tutulur: Var=2, Yok=2
     expect(f.counts.web.options).toEqual({ var: 2, yok: 2 });
     expect(f.counts.web.all).toBe(4);
-    // diğer süzgeçler web=yok ile birlikte hesaplanır
+    // diğer filtreler web=yok ile birlikte hesaplanır
     expect(f.counts.tel.options).toEqual({ var: 1, yok: 1 });
     expect(f.counts.min.options["85"]).toBe(1);
   });
 
-  it("semtleri en kalabalık önce, süzgeçlerle birlikte sayar", () => {
+  it("semtleri en kalabalık önce, filtrelerle birlikte sayar", () => {
     expect(computeFacets(leads, {}).districts).toEqual([
       { name: "Bostancı", count: 2 },
       { name: "Kadıköy", count: 2 },

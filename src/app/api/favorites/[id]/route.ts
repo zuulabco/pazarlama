@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/favorites/
     const updated = await updateFavorite(user.uid, id, body.data);
     return updated ? NextResponse.json({ ok: true }) : error("Firma bulunamadı.", 404);
   } catch (e) {
-    if (e instanceof FavoritesUnavailableError) return error("Takip listesi henüz etkinleştirilmedi.", 503);
+    if (e instanceof FavoritesUnavailableError) return error("Kayıtlı firmalar henüz etkinleştirilmedi.", 503);
     console.error("Favori güncellenemedi:", e);
     return error("Kaydedilemedi. Tekrar deneyin.", 500);
   }

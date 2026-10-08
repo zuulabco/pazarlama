@@ -410,3 +410,18 @@ export async function listMemberIds(uid: string, listId: string): Promise<string
   check("Liste okunamadı", error);
   return (data ?? []).map((m) => m.contact_id);
 }
+
+export type ContactPick = { id: string; name: string | null; company: string | null; email: string | null; jobTitle: string | null; city: string | null; phone: string | null };
+
+/** Mesaj hazırlarken alıcı olarak seçilebilecek kişiler (en yeni 300; yalnızca gerekli alanlar). */
+export async function listContactPicks(uid: string): Promise<ContactPick[]> {
+  const { data, error } = await db()
+    .from("outreach_contacts")
+    .select("id, name, company, email, job_title, city, phone")
+    .eq("user_uid", uid)
+    .order("created_at", { ascending: false })
+    .limit(300)
+    .returns<{ id: string; name: string | null; company: string | null; email: string | null; job_title: string | null; city: string | null; phone: string | null }[]>();
+  check("Kişiler okunamadı", error);
+  return (data ?? []).map((r) => ({ id: r.id, name: r.name, company: r.company, email: r.email, jobTitle: r.job_title, city: r.city, phone: r.phone }));
+}

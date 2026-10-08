@@ -82,7 +82,7 @@ export const sizeOptions = [
 ] as const;
 
 /**
- * Kişi türleri: tek tıkla bir grup unvanı (Türkçe ve İngilizce) arar. Apollo/Instantly'deki "kıdem" ve "departman" süzgeçlerinin karşılığı;
+ * Kişi türleri: tek tıkla bir grup unvanı (Türkçe ve İngilizce) arar. Apollo/Instantly'deki "kıdem" ve "departman" filtrelerinin karşılığı;
  * her grup yönetici düzeyindeki unvanları kapsar, böylece "Marketing" aramasındaki stajyer/uzman gürültüsü gelmez.
  */
 export const roleOptions = [
@@ -175,7 +175,7 @@ export const skippedLabels: Record<keyof LeadJob["skipped"], string> = {
   kisi_siniri: "kişi sınırı doldu",
 };
 
-/** Hazır aramalar: tek tıkla süzgeçleri doldurur. */
+/** Hazır aramalar: tek tıkla filtreleri doldurur. */
 export type LeadPreset = { id: string; label: string; hint: string; query: Partial<Pick<LeadSearchInput, "roles" | "titles" | "notTitles" | "country" | "city" | "industries" | "sizes" | "keywords">> };
 
 export const leadPresets: LeadPreset[] = [

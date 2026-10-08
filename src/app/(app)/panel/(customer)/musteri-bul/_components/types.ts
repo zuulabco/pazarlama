@@ -15,12 +15,12 @@ export type SearchView = {
   createdAt: string;
 };
 
-/** Sonuç süzgeçleri ve sıralama; adres çubuğundaki parametrelerden okunur. */
+/** Sonuç filtreleri ve sıralama; adres çubuğundaki parametrelerden okunur. */
 export type ResultFilters = FacetFilters & { sort: LeadSort };
 
 export const filterKeys = facetKeys;
 
 export const isActiveStatus = (s: SearchStatus) => s === "pending" || s === "scraping" || s === "scoring";
 
-/** Süzgeç parametrelerini değiştiren yardımcı: adres çubuğundaki parametreleri günceller. */
+/** Filtre parametrelerini değiştiren yardımcı: adres çubuğundaki parametreleri günceller. */
 export type Navigate = (mutate: (params: URLSearchParams) => void) => void;

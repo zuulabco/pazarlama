@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof LlmUnavailableError || e instanceof z.ZodError || e instanceof SyntaxError) {
       console.error("Soru yanıtlanamadı (yapay zekâ):", e instanceof Error ? e.message : e);
-      return error("Adspine AI şu an yanıt veremedi. Süzgeç ve sıralama sorularını (ör. “web sitesi olmayanlar”) yine sorabilirsiniz; biraz sonra tekrar deneyin.", 503);
+      return error("Adspine AI şu an yanıt veremedi. Filtre ve sıralama sorularını (ör. “web sitesi olmayanlar”) yine sorabilirsiniz; biraz sonra tekrar deneyin.", 503);
     }
     console.error("Soru yanıtlanamadı:", e);
     return error("Soru yanıtlanamadı. Tekrar deneyin.", 500);

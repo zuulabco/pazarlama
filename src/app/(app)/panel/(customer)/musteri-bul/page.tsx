@@ -28,7 +28,7 @@ const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : u
 const pick = <T extends number>(v: string | undefined, allowed: readonly T[]) => allowed.find((a) => String(a) === v);
 const presence = (v: string | undefined): Presence | undefined => (v === "var" || v === "yok" ? v : undefined);
 
-/** Adres çubuğundaki süzgeç parametrelerini okur; yalnızca bilinen değerler kabul edilir. */
+/** Adres çubuğundaki filtre parametrelerini okur; yalnızca bilinen değerler kabul edilir. */
 function parseFilters(sp: Params): ResultFilters {
   const sort = one(sp.sort);
   return {
@@ -73,7 +73,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
       : null;
 
   // Arama sürerken de o ana kadar puanlanan firmalar listelenir (sonuçlar geldikçe belirir).
-  // Bir arama en çok 100 firma içerdiği için süzme, sıralama ve süzgeç sayıları tek sorguyla bellekte yapılır.
+  // Bir arama en çok 100 firma içerdiği için süzme, sıralama ve filtre sayıları tek sorguyla bellekte yapılır.
   const allLeads = selected ? await listScoredLeads(user.uid, selected.id) : [];
   const rows = filterAndSort(allLeads, filters, filters.sort);
   const facets = computeFacets(allLeads, filters);
@@ -91,7 +91,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
       total={total}
       shown={rows.length}
       facets={facets}
-      defaults={{ province: firstCity ?? "", district: "" }}
+      defaults={{ query: one(sp.tur)?.slice(0, 80) ?? "", province: canonicalProvince(one(sp.il) ?? "") ?? firstCity ?? "", district: "" }}
     >
       {rows.length > 0 ? (
         <LeadList rows={rows} favorites={favorites} />
@@ -99,7 +99,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/muste
         selected && (
           <p className="px-5 py-10 text-center text-muted">
             {filtered
-              ? "Bu süzgeçlere uyan firma yok. Bir süzgeci kaldırın ya da gevşetin."
+              ? "Bu filtrelere uyan firma yok. Bir süzgeci kaldırın ya da gevşetin."
               : selected?.status === "done"
                 ? "Bu aramada firma bulunamadı. Daha geniş bir bölge ya da farklı bir firma türü deneyin."
                 : null}

@@ -41,7 +41,7 @@ export function FirmInfo({ firm }: { firm: WorkFirm }) {
         )}
         <p className="text-xs text-muted">Notlarınız da mesajda kullanılır. Not eklemek için Takip sayfasına bakın.</p>
         <Link href="/panel/firmalar" className="w-fit text-sm font-medium text-accent underline underline-offset-4 hover:no-underline">
-          Takip listesinde aç
+          Kayıtlı firmalarda aç
         </Link>
       </div>
     </Disclosure>

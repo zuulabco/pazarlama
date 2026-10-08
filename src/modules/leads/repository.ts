@@ -272,7 +272,7 @@ export async function queryLeads(uid: string, searchId: string, q: LeadQuery) {
   return { rows: data, total: count ?? 0 };
 }
 
-/** Aramadaki, süzgeçsiz toplam skorlanmış firma sayısı. */
+/** Aramadaki, filtresiz toplam skorlanmış firma sayısı. */
 export async function countLeads(uid: string, searchId: string) {
   const { count, error } = await db()
     .from("leads")

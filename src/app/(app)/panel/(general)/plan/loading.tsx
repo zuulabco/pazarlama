@@ -1,5 +1,5 @@
-import { PageSkeleton } from "../../../_components/skeletons";
+import { CalendarSkeleton } from "../../../_components/skeletons";
 
 export default function Loading() {
-  return <PageSkeleton />;
+  return <CalendarSkeleton />;
 }

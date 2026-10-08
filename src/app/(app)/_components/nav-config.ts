@@ -1,4 +1,4 @@
-import { ChartIcon, InboxIcon, MapPinIcon, SearchIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
+import { ChartIcon, InboxIcon, MapPinIcon, PenIcon, SearchIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
 
 type Icon = typeof SearchIcon;
 
@@ -18,7 +18,7 @@ export const sections: readonly Section[] = [
     href: "/panel/kisi-bul",
     links: [
       { label: "Kişiler", href: "/panel/kisi-bul", icon: UsersIcon, prefixes: ["/panel/kisi-bul", "/panel/kisiler"] },
-      { label: "Firmalar", href: "/panel/musteri-bul", icon: MapPinIcon, prefixes: ["/panel/musteri", "/panel/musteri-bul", "/panel/firmalar", "/panel/calis"] },
+      { label: "Firmalar", href: "/panel/musteri-bul", icon: MapPinIcon, prefixes: ["/panel/musteri", "/panel/musteri-bul", "/panel/firmalar"] },
     ],
   },
   {
@@ -30,6 +30,7 @@ export const sections: readonly Section[] = [
     links: [
       { label: "Kampanyalar", href: "/panel/kampanyalar", icon: SendIcon, prefixes: ["/panel/kampanyalar", "/panel/otomasyon"] },
       { label: "Gelen kutusu", href: "/panel/gelen-kutusu", icon: InboxIcon, prefixes: ["/panel/gelen-kutusu"] },
+      { label: "Mesaj hazırla", href: "/panel/calis", icon: PenIcon, prefixes: ["/panel/calis"] },
       { label: "Raporlar", href: "/panel/raporlar", icon: ChartIcon, prefixes: ["/panel/raporlar"] },
     ],
   },

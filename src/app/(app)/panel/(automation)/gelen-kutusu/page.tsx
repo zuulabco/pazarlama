@@ -7,7 +7,7 @@ import { listMailboxes } from "@/modules/outreach/mailboxes";
 import { listSequences } from "@/modules/outreach/sequences";
 import { listConversations } from "@/modules/outreach/unibox";
 import { getProfile } from "@/modules/profile/repository";
-import { PageSkeleton } from "../../../_components/skeletons";
+import { InboxSkeleton } from "../../../_components/skeletons";
 import { InboxWorkspace } from "./_components/inbox-workspace";
 
 export const metadata: Metadata = { title: "Gelen kutusu" };
@@ -41,7 +41,7 @@ async function Content() {
 
 export default function InboxPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<InboxSkeleton />}>
       <Content />
     </Suspense>
   );

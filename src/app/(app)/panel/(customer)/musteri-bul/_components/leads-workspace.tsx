@@ -9,7 +9,7 @@ import { ResultsArea } from "./results-area";
 import type { Navigate, ResultFilters, SearchView } from "./types";
 
 /**
- * Müşteri Bul çalışma alanı: solda süzgeç paneli, sağda sonuçlar. İki taraf aynı durumu paylaşır;
+ * Müşteri Bul çalışma alanı: solda filtre paneli, sağda sonuçlar. İki taraf aynı durumu paylaşır;
  * "Firmaları bul" tıklandığı anda sağ taraf yükleme animasyonunu gösterir.
  */
 export function LeadsWorkspace({
@@ -27,9 +27,9 @@ export function LeadsWorkspace({
   filters: ResultFilters;
   total: number;
   shown: number;
-  /** Süzgeç sayıları (Apollo tarzı). */
+  /** Filtre sayıları (Apollo tarzı). */
   facets: Facets;
-  defaults: { province: string; district: string };
+  defaults: { query: string; province: string; district: string };
   /** Sunucuda çizilen firma listesi. */
   children: ReactNode;
 }) {
@@ -42,7 +42,7 @@ export function LeadsWorkspace({
   const [panelOpen, setPanelOpen] = useState(!search);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  /** Süzgeç değişince adres çubuğunu günceller; liste sunucuda yeniden çizilir. */
+  /** Filtre değişince adres çubuğunu günceller; liste sunucuda yeniden çizilir. */
   const navigate: Navigate = (mutate) => {
     const next = new URLSearchParams(params.toString());
     mutate(next);
@@ -80,6 +80,7 @@ export function LeadsWorkspace({
         opening={opening}
         summary={facets.summary}
         hasHistory={searches.length > 0}
+        presetProvince={defaults.province}
       >
         {children}
       </ResultsArea>
@@ -96,6 +97,7 @@ export function LeadsWorkspace({
         </button>
         <div className={panelOpen ? "block" : "hidden lg:block"}>
           <FiltersPanel
+            key={`${defaults.query}|${defaults.province}|${defaults.district}`}
             defaults={defaults}
             filters={filters}
             searches={searches}

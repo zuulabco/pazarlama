@@ -4,7 +4,7 @@ import { chatJson } from "@/lib/llm/nvidia";
 import { countryOptions, emptySearch, industryOptions, roleOptions, sizeOptions, type LeadSearchInput } from "./lead-options";
 
 /**
- * "Yapay zekâ ile ara": doğal dildeki isteği (örn. "İstanbul'daki 10-50 çalışanlı ajansların kurucuları") süzgeçlere çevirir.
+ * "Yapay zekâ ile ara": doğal dildeki isteği (örn. "İstanbul'daki 10-50 çalışanlı ajansların kurucuları") filtrelere çevirir.
  * Model yalnızca bizim sabit seçeneklerimizi döndürebilir; geçersiz değerler atılır, hiçbir şey uydurulmaz.
  */
 
@@ -24,7 +24,7 @@ export function leadFilterMessages(text: string) {
   return [
     {
       role: "system" as const,
-      content: `Bir B2B potansiyel müşteri arama aracının süzgeçlerini kuruyorsun. Kullanıcının isteğini yalnızca aşağıdaki seçeneklerle JSON'a çevir.
+      content: `Bir B2B potansiyel müşteri arama aracının filtrelerini kuruyorsun. Kullanıcının isteğini yalnızca aşağıdaki seçeneklerle JSON'a çevir.
 Sadece JSON döndür (başka metin yok). Emin olmadığın alanı boş bırak; hiçbir şey uydurma.
 
 Şema:
@@ -53,7 +53,7 @@ Kurallar:
   ];
 }
 
-/** Model çıktısını bizim süzgeç türümüze çevirir; seçenek dışı değerleri atar. */
+/** Model çıktısını bizim filtre türümüze çevirir; seçenek dışı değerleri atar. */
 export function toFilters(raw: z.infer<typeof aiSchema>): Pick<LeadSearchInput, "roles" | "titles" | "country" | "city" | "industries" | "sizes" | "keywords"> {
   const pick = <T extends readonly { value: string }[]>(values: string[], options: T, max: number) => [...new Set(values.map((v) => v.trim()).filter((v) => options.some((o) => o.value === v)))].slice(0, max);
   const country = raw.ulke && countryOptions.some((c) => c.value === raw.ulke) ? raw.ulke : emptySearch().country;

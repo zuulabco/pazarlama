@@ -33,7 +33,7 @@ async function validateBusinessType(text: string): Promise<boolean> {
   return ((await res.json()) as { valid: boolean }).valid;
 }
 
-/** Apollo tarzı daraltılabilir süzgeç grubu; yumuşakça açılıp kapanır. */
+/** Apollo tarzı daraltılabilir filtre grubu; yumuşakça açılıp kapanır. */
 function FilterGroup({
   title,
   badge,
@@ -79,7 +79,7 @@ type Counts = { all: number; options: Record<string, number> };
 
 const Count = ({ n }: { n: number }) => <span className="ml-1 text-xs tabular-nums opacity-60">{n}</span>;
 
-/** Süzgeç için "Hepsi + seçenekler" düğmeleri; "Hepsi" süzgeci kaldırır. Sayılar, seçeneğe tıklanırsa kaç firma kalacağını gösterir. */
+/** Filtre için "Hepsi + seçenekler" düğmeleri; "Hepsi" süzgeci kaldırır. Sayılar, seçeneğe tıklanırsa kaç firma kalacağını gösterir. */
 function FilterSegmented<T extends string | number>({
   label,
   options,
@@ -153,12 +153,12 @@ export function FiltersPanel({
   onCreated,
   onFailed,
 }: {
-  defaults: { province: string; district: string };
+  defaults: { query: string; province: string; district: string };
   filters: ResultFilters;
   searches: SearchView[];
   selectedId: string | null;
   navigate: Navigate;
-  /** Süzgeç sayıları; seçili arama yokken (ya da sonuç yokken) null. */
+  /** Filtre sayıları; seçili arama yokken (ya da sonuç yokken) null. */
   facets: Facets | null;
   /** Geçmiş bir aramayı açar (yükleme animasyonuyla). */
   onOpenSearch: (id: string) => void;
@@ -168,7 +168,7 @@ export function FiltersPanel({
   onFailed: () => void;
 }) {
   // ── Arama ──
-  const [query, setQuery] = useState<string[]>([]);
+  const [query, setQuery] = useState<string[]>(defaults.query ? [defaults.query] : []);
   const [province, setProvince] = useState<string[]>(defaults.province ? [defaults.province] : []);
   const [district, setDistrict] = useState<string[]>(defaults.district ? [defaults.district] : []);
   const [countMode, setCountMode] = useState<CountMode>(String(searchLimits.defaultResults) as CountMode);
@@ -244,7 +244,7 @@ export function FiltersPanel({
     }
   }
 
-  // ── Süzgeçler (liste anında daralır; web sitesi seçimi yeni aramalarda da kullanılır) ──
+  // ── Filtreler (liste anında daralır; web sitesi seçimi yeni aramalarda da kullanılır) ──
   const active = filterKeys.filter((k) => filters[k] !== undefined).length;
   const setFilter = (key: (typeof filterKeys)[number]) => (value: string | number | undefined) =>
     navigate((p) => (value === undefined ? p.delete(key) : p.set(key, String(value))));

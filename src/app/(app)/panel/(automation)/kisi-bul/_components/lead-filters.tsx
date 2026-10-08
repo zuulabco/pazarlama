@@ -20,7 +20,7 @@ function GroupTitle({ title, count }: { title: string; count: number }) {
 }
 
 /**
- * Sol süzgeç çubuğu (Instantly SuperSearch yapısı): açılır gruplar, her grupta seçili süzgeç sayısı rozeti,
+ * Sol filtre çubuğu (Instantly SuperSearch yapısı): açılır gruplar, her grupta seçili filtre sayısı rozeti,
  * altta "zaten kayıtlı olanları atla" ve "her şirketten bir kişi" anahtarları, Kaydet/Yükle düğmeleri.
  */
 export function LeadFilters({
@@ -52,10 +52,10 @@ export function LeadFilters({
   const keywords = q.keywords.length + q.notKeywords.length;
 
   return (
-    <aside aria-label="Süzgeçler" className="grid content-start gap-3 lg:sticky lg:top-6">
+    <aside aria-label="Filtreler" className="grid content-start gap-3 lg:sticky lg:top-6">
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 font-semibold tracking-tight">
-          Süzgeçler
+          Filtreler
           {activeCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-sunken px-1.5 text-xs font-medium">{activeCount}</span>}
         </h2>
         {activeCount > 0 && (

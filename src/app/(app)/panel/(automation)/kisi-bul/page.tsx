@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth/session";
 import { OutreachUnavailableError } from "@/modules/outreach/contacts";
 import { accountSummary, type AccountSummary } from "@/modules/outreach/usage";
 import { getProfile } from "@/modules/profile/repository";
-import { PageSkeleton } from "../../../_components/skeletons";
+import { LeadsSkeleton } from "../../../_components/skeletons";
 import { LeadSearchWorkspace } from "./_components/lead-search-workspace";
 
 export const metadata: Metadata = { title: "Kişi bul" };
@@ -34,7 +34,7 @@ async function Content() {
 
 export default function LeadSearchPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<LeadsSkeleton />}>
       <Content />
     </Suspense>
   );

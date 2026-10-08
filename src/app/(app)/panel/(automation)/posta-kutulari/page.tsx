@@ -8,7 +8,7 @@ import { googleConfigured } from "@/modules/outreach/gmail";
 import { listMailboxes } from "@/modules/outreach/mailboxes";
 import { accountSummary } from "@/modules/outreach/usage";
 import { getProfile } from "@/modules/profile/repository";
-import { PageSkeleton } from "../../../_components/skeletons";
+import { ListSkeleton } from "../../../_components/skeletons";
 import { MailboxesWorkspace } from "./_components/mailboxes-workspace";
 
 export const metadata: Metadata = { title: "Gönderici adresleri" };
@@ -34,7 +34,7 @@ async function Content() {
 
 export default function MailboxesPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<ListSkeleton />}>
       <Content />
     </Suspense>
   );

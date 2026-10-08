@@ -6,7 +6,7 @@ import { OutreachUnavailableError } from "@/modules/outreach/contacts";
 import { listMailboxes } from "@/modules/outreach/mailboxes";
 import { getSequence } from "@/modules/outreach/sequences";
 import { getProfile } from "@/modules/profile/repository";
-import { PageSkeleton } from "../../../../_components/skeletons";
+import { ListSkeleton } from "../../../../_components/skeletons";
 import { CampaignWorkspace } from "./_components/campaign-workspace";
 
 export const metadata: Metadata = { title: "Kampanya" };
@@ -30,7 +30,7 @@ async function Content({ params }: { params: PageProps<"/panel/kampanyalar/[id]"
 
 export default function CampaignPage(props: PageProps<"/panel/kampanyalar/[id]">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<ListSkeleton />}>
       <Content params={props.params} />
     </Suspense>
   );

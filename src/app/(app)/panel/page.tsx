@@ -134,7 +134,7 @@ function Lanes({ data }: { data: HomeData }) {
         </div>
         <div className="-mx-3 grid grid-cols-3 gap-1">
           <Stat label="Kayıtlı kişi" value={num(p.contacts)} href="/panel/kisiler" />
-          <Stat label="Takipteki firma" value={num(data.customer.tracked)} href="/panel/firmalar" />
+          <Stat label="Kayıtlı firma" value={num(data.customer.tracked)} href="/panel/firmalar" />
           <Stat label="Kalan kredi" value={num(account.credits)} sub={account.plan.label} href="/panel/kisi-bul" />
         </div>
         <p className="mt-2 text-xs text-muted">

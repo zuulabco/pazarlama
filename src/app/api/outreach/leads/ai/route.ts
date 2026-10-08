@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 const tooFast = rateLimiter(10);
 
-/** "Yapay zekâ ile ara": doğal dildeki isteği süzgeçlere çevirir (arama başlatmaz, kredi düşmez). */
+/** "Yapay zekâ ile ara": doğal dildeki isteği filtrelere çevirir (arama başlatmaz, kredi düşmez). */
 export async function POST(req: NextRequest) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     return NextResponse.json({ filters: await aiLeadFilters(body.data.text) });
   } catch (e) {
-    if (e instanceof LlmUnavailableError || e instanceof z.ZodError || e instanceof SyntaxError) return fail("İstek şu an süzgeçlere çevrilemedi. Süzgeçleri elle seçebilirsiniz.", 503);
+    if (e instanceof LlmUnavailableError || e instanceof z.ZodError || e instanceof SyntaxError) return fail("İstek şu an filtrelere çevrilemedi. Filtreleri elle seçebilirsiniz.", 503);
     return outreachFailure(e);
   }
 }

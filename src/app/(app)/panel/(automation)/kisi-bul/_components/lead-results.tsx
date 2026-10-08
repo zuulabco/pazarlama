@@ -55,7 +55,7 @@ export function LeadResults({
       </div>
 
       {search.rows.length === 0 ? (
-        <p className="rounded-row bg-pollen/50 px-4 py-3 text-sm">Gösterilecek kişi kalmadı. Süzgeçleri gevşetin ya da “zaten kayıtlı” ve “her şirketten bir kişi” anahtarlarını kapatın.</p>
+        <p className="rounded-row bg-pollen/50 px-4 py-3 text-sm">Gösterilecek kişi kalmadı. Filtreleri gevşetin ya da “zaten kayıtlı” ve “her şirketten bir kişi” anahtarlarını kapatın.</p>
       ) : (
         <div className="overflow-x-auto rounded-row ring-1 ring-line">
           <table className="w-full min-w-[46rem] text-left text-sm">

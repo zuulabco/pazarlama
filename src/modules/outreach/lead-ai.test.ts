@@ -8,7 +8,7 @@ const { leadSearchSchema } = await import("./lead-options");
 
 const raw = (over: Record<string, unknown> = {}) => ({ kisi_turleri: [], unvanlar: [], ulke: null, sehir: null, sektorler: [], calisan_araliklari: [], anahtar_kelimeler: [], ...over });
 
-describe("yapay zekâ süzgeçleri", () => {
+describe("yapay zekâ filtreleri", () => {
   it("istemde tüm seçenek kodları ve kurallar bulunur", () => {
     const [system, user] = leadFilterMessages("İstanbul'daki ajansların kurucuları");
     expect(system.content).toContain("- pazarlama (Pazarlama yöneticileri)");

@@ -7,7 +7,7 @@ import { FavoritesUnavailableError, listFavorites, type FavoriteWithNotes } from
 import { getProfile } from "@/modules/profile/repository";
 import { listPlan, PlanUnavailableError } from "@/modules/plan/repository";
 import type { PlanItem } from "@/modules/plan/types";
-import { PageSkeleton } from "../../../_components/skeletons";
+import { CalendarSkeleton } from "../../../_components/skeletons";
 import { PlanWorkspace } from "./_components/plan-workspace";
 
 export const metadata: Metadata = { title: "Takvim" };
@@ -58,7 +58,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/plan"
 
 export default function PlanPage(props: PageProps<"/panel/plan">) {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<CalendarSkeleton />}>
       <Content searchParams={props.searchParams} />
     </Suspense>
   );

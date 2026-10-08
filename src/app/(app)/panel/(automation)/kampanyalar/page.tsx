@@ -6,7 +6,7 @@ import { OutreachUnavailableError } from "@/modules/outreach/contacts";
 import type { SequenceSummary } from "@/modules/outreach/sequence-schema";
 import { listSequences } from "@/modules/outreach/sequences";
 import { getProfile } from "@/modules/profile/repository";
-import { PageSkeleton } from "../../../_components/skeletons";
+import { ListSkeleton } from "../../../_components/skeletons";
 import { CampaignsList } from "./_components/campaigns-list";
 
 export const metadata: Metadata = { title: "Kampanyalar" };
@@ -28,7 +28,7 @@ async function Content() {
 
 export default function CampaignsPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<ListSkeleton />}>
       <Content />
     </Suspense>
   );

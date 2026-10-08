@@ -1,7 +1,7 @@
 import { fold } from "@/lib/text";
 import { leadSorts, type LeadSort, type Presence } from "./sorts";
 
-/** Sonuç süzgeçleri (adres çubuğundaki parametreler). */
+/** Sonuç filtreleri (adres çubuğundaki parametreler). */
 export type FacetFilters = {
   min?: 50 | 70 | 85;
   dn?: 60 | 80;
@@ -53,15 +53,15 @@ export function filterAndSort<T extends FacetLead>(leads: readonly T[], f: Facet
 }
 
 export type Facets = {
-  /** Mevcut süzgeçlerle eşleşen firma sayısı. */
+  /** Mevcut filtrelerle eşleşen firma sayısı. */
   matching: number;
-  /** Her süzgeç için: "Hepsi" ve her seçenek, DİĞER süzgeçler korunarak kaç firma getirir. */
+  /** Her filtre için: "Hepsi" ve her seçenek, DİĞER filtreler korunarak kaç firma getirir. */
   counts: Record<Exclude<FacetKey, "d">, { all: number; options: Record<string, number> }>;
-  /** Semtler ve (diğer süzgeçlerle) firma sayıları; en kalabalık önce. */
+  /** Semtler ve (diğer filtrelerle) firma sayıları; en kalabalık önce. */
   districts: { name: string; count: number }[];
-  /** Semt süzgeci hariç, diğer süzgeçlerle eşleşen firma sayısı ("Tüm semtler"). */
+  /** Semt süzgeci hariç, diğer filtrelerle eşleşen firma sayısı ("Tüm semtler"). */
   districtAll: number;
-  /** Aramanın süzgeçsiz özeti (sonuç başlığında gösterilir). */
+  /** Aramanın filtresiz özeti (sonuç başlığında gösterilir). */
   summary: { total: number; avgScore: number; noWebsite: number };
 };
 
@@ -76,8 +76,8 @@ const options: Record<Exclude<FacetKey, "d">, readonly (string | number)[]> = {
 };
 
 /**
- * Apollo tarzı süzgeç sayıları: bir seçeneğe tıklanırsa kaç firma kalacağını gösterir. Sayılar,
- * o süzgeç hariç diğer tüm etkin süzgeçler korunarak hesaplanır.
+ * Apollo tarzı filtre sayıları: bir seçeneğe tıklanırsa kaç firma kalacağını gösterir. Sayılar,
+ * o filtre hariç diğer tüm etkin filtreler korunarak hesaplanır.
  */
 export function computeFacets(leads: readonly FacetLead[], f: FacetFilters): Facets {
   const without = (k: FacetKey): FacetFilters => {

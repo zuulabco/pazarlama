@@ -35,7 +35,7 @@ const kindOptions = [
 /** İkinci-sınıf: bir kişiye e-posta bulma gerekli mi? (adres yok/geçersiz/doğrulanamamış ve web sitesi var) */
 const canFind = (c: Contact) => Boolean(c.website) && (!c.email || c.emailStatus === "gecersiz" || c.emailStatus === "riskli");
 
-/** Kişiler: tablo, süzgeçler, e-posta bulma, listeler, kara liste, CSV içe/dışa aktarma. */
+/** Kişiler: tablo, filtreler, e-posta bulma, listeler, kara liste, CSV içe/dışa aktarma. */
 export function ContactsWorkspace({
   initialContacts,
   initialTotal,
@@ -82,7 +82,7 @@ export function ContactsWorkspace({
     if (r.ok) setSuppressions(r.data.suppressions);
   }, []);
 
-  // Süzgeç/sayfa değişince (yazarken kısa gecikmeyle) kişileri yeniden çeker; sonuç sırası bozulursa eski yanıt atılır.
+  // Filtre/sayfa değişince (yazarken kısa gecikmeyle) kişileri yeniden çeker; sonuç sırası bozulursa eski yanıt atılır.
   useEffect(() => {
     if (firstLoad.current) {
       firstLoad.current = false;
@@ -200,7 +200,7 @@ export function ContactsWorkspace({
   async function importFromFollow() {
     const r = await api<{ added: number; skipped: number }>("/api/outreach/contacts/import", { method: "POST", body: JSON.stringify({ source: "takip" }) });
     if (!r.ok) return toast(r.error, { kind: "error" });
-    toast(r.data.added > 0 ? `${r.data.added} firma Takip listenizden eklendi` : "Takipteki tüm firmalar zaten kişilerinizde");
+    toast(r.data.added > 0 ? `${r.data.added} firma kayıtlı firmalarınızdan eklendi` : "Tüm kayıtlı firmalar zaten kişilerinizde");
     refetch();
   }
 
@@ -284,7 +284,7 @@ export function ContactsWorkspace({
               </ButtonLink>
             )}
             <Button variant="secondary" onClick={() => void importFromFollow()}>
-              Takipten ekle
+              Kayıtlı firmalardan ekle
             </Button>
             <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
               CSV içe aktar
@@ -410,7 +410,7 @@ export function ContactsWorkspace({
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted">
                 <p>
-                  {total} kişi{filtered ? " (süzgeçle)" : ""} · bu sayfada {withEmail} tanesinin geçerli e-postası var
+                  {total} kişi{filtered ? " (filtreyle)" : ""} · bu sayfada {withEmail} tanesinin geçerli e-postası var
                 </p>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => void findAllMissing()} disabled={Boolean(run)} className="font-medium text-accent underline underline-offset-4 hover:no-underline disabled:opacity-50">
@@ -428,8 +428,8 @@ export function ContactsWorkspace({
                 <p className="text-lg font-semibold tracking-tight">{filtered ? "Süzgece uyan kişi yok" : "Henüz kişiniz yok"}</p>
                 <p className="max-w-[30rem] text-muted">
                   {filtered
-                    ? "Süzgeçleri gevşetmeyi deneyin."
-                    : "Kişi bul ile unvana göre iş e-postalarını bulun, Takip listenizdeki firmaları ekleyin, CSV yükleyin ya da elle kişi ekleyin."}
+                    ? "Filtreleri gevşetmeyi deneyin."
+                    : "Kişi bul ile unvana göre iş e-postalarını bulun, Kayıtlı firmalarınızı ekleyin, CSV yükleyin ya da elle kişi ekleyin."}
                 </p>
                 {!filtered && (
                   <div className="flex flex-wrap justify-center gap-2">
@@ -440,7 +440,7 @@ export function ContactsWorkspace({
                       </ButtonLink>
                     )}
                     <Button variant={account ? "secondary" : "primary"} onClick={() => void importFromFollow()}>
-                      Takipten ekle
+                      Kayıtlı firmalardan ekle
                     </Button>
                     <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
                       CSV içe aktar
