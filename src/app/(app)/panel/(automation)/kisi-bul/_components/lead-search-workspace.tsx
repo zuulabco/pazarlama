@@ -205,7 +205,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
                   <input id="ai-arama" value={aiText} onChange={(e) => setAiText(e.target.value)} maxLength={400} placeholder="Örn. İstanbul'daki 10-50 çalışanlı ajansların kurucuları" className={`${inputClass} min-w-[16rem] flex-1`} />
                   <Button type="submit" variant="secondary" disabled={aiBusy || aiText.trim().length < 4}>
                     <SparkleIcon size={16} />
-                    {aiBusy ? "Hazırlanıyor…" : "Yapay zekâ ile ara"}
+                    {aiBusy ? "Hazırlanıyor…" : "Adspine AI ile ara"}
                   </Button>
                 </form>
               </div>
@@ -213,7 +213,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
               <ul className="grid gap-3 sm:grid-cols-3">
                 <li className="grid gap-1 rounded-row bg-forest-soft/50 p-4 ring-1 ring-forest/30">
                   <span className="font-medium">Veritabanında ara</span>
-                  <span className="text-sm text-muted">Unvan, kıdem, konum ve şirket süzgeçleriyle ya da yapay zekâyla.</span>
+                  <span className="text-sm text-muted">Unvan, kıdem, konum ve şirket süzgeçleriyle ya da Adspine AI ile.</span>
                 </li>
                 <li>
                   <Link href="/panel/musteri-bul" className="grid h-full gap-1 rounded-row p-4 ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken/60">

@@ -32,7 +32,7 @@ export function WorkWorkspace({
     <div className="grid gap-6">
       <Toaster />
       <div className="grid gap-1.5">
-        <h2 className="text-xl font-semibold tracking-tight">Yapay zekâ ile saniyeler içinde mesaj yazın</h2>
+        <h2 className="text-xl font-semibold tracking-tight">Adspine AI ile saniyeler içinde mesaj yazın</h2>
         <p className="max-w-[44rem] text-muted">
           Amacı ve tonu seçin; Adspine işletmenize ve alıcıya göre gönderilmeye hazır bir mesaj yazsın. İstediğiniz gibi düzenleyin, tek tıkla WhatsApp&apos;ta ya da
           e-postada gönderin. Takip listenizdeki bir firmayı seçerseniz mesaj o firmaya özel olur.

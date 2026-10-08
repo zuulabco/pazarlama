@@ -74,7 +74,7 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
       <Segmented
         label="Yöntem"
         items={[
-          { key: "ai", label: "Yapay zekâ ile", pressed: method === "ai", onClick: () => setMethod("ai") },
+          { key: "ai", label: "Adspine AI ile", pressed: method === "ai", onClick: () => setMethod("ai") },
           { key: "sablon", label: "Şablondan", pressed: method === "sablon", onClick: () => setMethod("sablon") },
           { key: "bos", label: "Sıfırdan", pressed: method === "bos", onClick: () => setMethod("bos") },
         ]}
@@ -151,7 +151,7 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={busy}>
           {method === "ai" && <SparkleIcon size={16} />}
-          {busy ? "Oluşturuluyor…" : method === "ai" ? "Yapay zekâ ile yaz" : "Kampanyayı oluştur"}
+          {busy ? "Oluşturuluyor…" : method === "ai" ? "Adspine AI ile yaz" : "Kampanyayı oluştur"}
         </Button>
         <Button variant="quiet" onClick={onCancel} disabled={busy}>
           Vazgeç
@@ -161,7 +161,7 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   );
 }
 
-/** Kampanyalar: liste, durum, özet sayılar; oluşturma paneli (yapay zekâ / şablon / boş). */
+/** Kampanyalar: liste, durum, özet sayılar; oluşturma paneli (Adspine AI / şablon / boş). */
 export function CampaignsList({ initial, unavailable }: { initial: SequenceSummary[]; unavailable: boolean }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
@@ -236,7 +236,7 @@ export function CampaignsList({ initial, unavailable }: { initial: SequenceSumma
       {items.length === 0 ? (
         <div className="grid justify-items-center gap-3 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
           <p className="text-lg font-semibold tracking-tight">Henüz kampanyanız yok</p>
-          <p className="max-w-[30rem] text-muted">Hedef kitlenizi ve amacınızı yazın, yapay zekâ ilk e-posta dizinizi yazsın; ya da hazır bir şablonla başlayın.</p>
+          <p className="max-w-[30rem] text-muted">Hedef kitlenizi ve amacınızı yazın, Adspine AI ilk e-posta dizinizi yazsın; ya da hazır bir şablonla başlayın.</p>
           <Button onClick={() => setCreating(true)}>Kampanya oluştur</Button>
         </div>
       ) : (

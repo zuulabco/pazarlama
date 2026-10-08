@@ -9,14 +9,14 @@ type Turn = { role: "user" | "assistant"; content: string; links?: { path: strin
 
 const suggestions = ["Kampanyalarım nasıl gidiyor?", "Geri dönen oranım neden önemli?", "Hangi gönderici adresim sorunlu?", "Yeni bir kampanya için nereden başlamalıyım?"];
 
-/** Yapay zekâ simgesi: büyük ve küçük parıltı, mavi-mor geçişli. */
+/** Yapay zekâ simgesi: büyük ve küçük parıltı, marka mavisi geçişli. */
 function AiIcon({ size = 20, id }: { size?: number; id: string }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
       <defs>
         <linearGradient id={id} x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#7cc4ff" />
-          <stop offset="1" stopColor="#c9a7ff" />
+          <stop stopColor="#5aa9ff" />
+          <stop offset="1" stopColor="#0072e5" />
         </linearGradient>
       </defs>
       <path d="M10 2.5c.5 4.4 2.6 6.5 7 7-4.4.5-6.5 2.6-7 7-.5-4.4-2.6-6.5-7-7 4.4-.5 6.5-2.6 7-7Z" fill={`url(#${id})`} />
@@ -48,6 +48,20 @@ export function AssistantPanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  const latest = useRef<(q: string) => Promise<void>>(async () => {});
+
+  // Sayfalardaki "Adspine AI'ya sor" çubuğu paneli açar ve soruyu gönderir.
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const t = (e as CustomEvent<{ text: string }>).detail?.text;
+      if (!t) return;
+      setOpen(true);
+      void latest.current(t);
+    };
+    window.addEventListener("adspine-ai", onAsk);
+    return () => window.removeEventListener("adspine-ai", onAsk);
+  }, []);
+
   async function ask(q: string) {
     const content = q.trim();
     if (!content || busy) return;
@@ -65,6 +79,10 @@ export function AssistantPanel() {
     setTurns([...next, { role: "assistant", content: r.data.reply, links: r.data.links }]);
   }
 
+  useEffect(() => {
+    latest.current = ask;
+  });
+
   return (
     <>
       <button
@@ -72,9 +90,11 @@ export function AssistantPanel() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls="assistant-panel"
-        className="fixed right-4 bottom-20 z-40 flex h-12 items-center gap-2 rounded-full bg-linear-to-br from-[#0b57d0] via-[#4a3fd6] to-[#8a4fe0] pr-5 pl-4 text-sm font-semibold text-white shadow-[0_8px_24px_-6px_rgb(74_63_214/0.6)] ring-1 ring-white/20 transition-transform hover:-translate-y-0.5 md:bottom-6"
+        aria-label="Adspine AI"
+        title="Adspine AI"
+        className="fixed right-4 bottom-20 z-40 grid size-12 place-items-center rounded-full bg-surface shadow-float ring-1 ring-line transition-transform hover:-translate-y-0.5 md:bottom-6"
       >
-        <AiIcon id="ai-fab" size={22} /> Adspine AI
+        <AiIcon id="ai-fab" size={26} />
       </button>
 
       <section
@@ -86,9 +106,7 @@ export function AssistantPanel() {
       >
         <header className="flex items-center justify-between border-b border-line px-4 py-3">
           <h2 className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="grid size-7 place-items-center rounded-full bg-linear-to-br from-[#0b57d0] via-[#4a3fd6] to-[#8a4fe0]">
-              <AiIcon id="ai-head" size={16} />
-            </span>
+            <AiIcon id="ai-head" size={20} />
             Adspine AI
           </h2>
           <button type="button" onClick={() => setOpen(false)} aria-label="Kapat" className="grid size-9 place-items-center rounded-full text-muted hover:bg-sunken hover:text-ink">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AppRail } from "./_components/app-rail";
 import { AssistantPanel } from "./_components/assistant-panel";
+import { SectionShell } from "./_components/section-shell";
 import { ThemeScope } from "./_components/theme-scope";
 import { UserMenu } from "./_components/user-menu";
 
@@ -27,7 +28,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         />
       </Suspense>
       <AssistantPanel />
-      <main className="min-h-svh px-4 pb-20 sm:px-6 md:pb-8 md:pl-[calc(3.5rem+1.5rem)] md:pr-6">{children}</main>
+      <main className="min-h-svh px-4 pb-20 sm:px-6 md:pb-8 md:pl-[calc(3.5rem+1.5rem)] md:pr-6"><Suspense fallback={null}>
+          <SectionShell>{children}</SectionShell>
+        </Suspense>
+      </main>
     </div>
   );
 }

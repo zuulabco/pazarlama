@@ -23,7 +23,7 @@ export function setupSteps(f: HomeFacts): Step[] {
     { key: "adres", title: "Gönderici adresi bağlayın", hint: "E-postaları kendi adresinizden göndermek için Google hesabınızla tek tıkla bağlanın.", href: "/panel/posta-kutulari", cta: "Adres bağla", done: f.connectedMailboxes > 0 },
     { key: "isinma", title: "Isındırmayı açın", hint: "Yeni adreslerin itibarı haftalar içinde oluşur; erken başlamak spam'e düşmeyi azaltır.", href: "/panel/posta-kutulari", cta: "Isındırmayı aç", done: f.warmupOn > 0 },
     { key: "kisi", title: "İlk kişileri ekleyin", hint: "Unvan ve sektöre göre listeleyin, seçtiklerinizi e-postalarıyla birlikte kaydedin.", href: "/panel/kisi-bul", cta: "Kişi bul", done: f.contacts > 0 },
-    { key: "kampanya", title: "İlk kampanyanızı başlatın", hint: "Yapay zekâ ile adımları yazdırın, kişileri ekleyin ve başlatın.", href: "/panel/kampanyalar", cta: "Kampanya oluştur", done: f.sent > 0 || f.campaigns > 0 },
+    { key: "kampanya", title: "İlk kampanyanızı başlatın", hint: "Adspine AI ile adımları yazdırın, kişileri ekleyin ve başlatın.", href: "/panel/kampanyalar", cta: "Kampanya oluştur", done: f.sent > 0 || f.campaigns > 0 },
     { key: "yanit", title: "İlk yanıtı alın", hint: "Yanıtlar Gelen kutusunda toplanır ve otomatik etiketlenir.", href: "/panel/gelen-kutusu", cta: "Gelen kutusu", done: f.replies > 0 },
   ];
 }

@@ -138,7 +138,7 @@ const exchanges = [
   },
   {
     question: "Bunlardan hangilerine web tasarımı satma şansım daha yüksek?",
-    source: "Yapay zekâ yorumu",
+    source: "Adspine AI yorumu",
     sourceClass: "bg-pollen text-ink",
     answer:
       "En güçlü iki aday Lale Diş Kliniği ve Feneryolu Dental. İkisinin de web sitesi yok ama yorum sayıları yüksek: hasta trafiği var, internette karşılığı yok. Online randevu içeren tek sayfalık bir siteyle başlayan bir teklif, ikisi için de iyi bir giriş olur.",
@@ -150,7 +150,7 @@ export function Ask() {
     <Section className="grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
       <SectionIntro title="Sorunuzu yazın, cevap sorunun türüne göre gelsin">
         Listeyi daraltan sorular verilerinizden anında yanıtlanır. Karşılaştırma ve strateji gibi yorum gerektiren
-        sorularda yapay zekâ devreye girer ve yalnızca en uygun adayları değerlendirir. Böylece cevaplar hem hızlı hem
+        sorularda Adspine AI devreye girer ve yalnızca en uygun adayları değerlendirir. Böylece cevaplar hem hızlı hem
         odaklı olur.
       </SectionIntro>
 
@@ -192,8 +192,8 @@ export const faqs = [
     a: "Her firma, hesabınızı kurarken anlattığınız hedefe göre yedi kriterde değerlendirilir. Toplam puan bu kriterlerin ağırlıklı ortalamasıdır ve ağırlıkları sizin hedefiniz belirler.",
   },
   {
-    q: "Yapay zekâ her soruda kullanılıyor mu?",
-    a: "Hayır. Filtreleme, sıralama ve sayma gibi sorular doğrudan verilerinizden yanıtlanır. Yapay zekâ yalnızca karşılaştırma, strateji veya satış mesajı gibi yorum gereken sorularda çalışır.",
+    q: "Adspine AI her soruda kullanılıyor mu?",
+    a: "Hayır. Filtreleme, sıralama ve sayma gibi sorular doğrudan verilerinizden yanıtlanır. Adspine AI yalnızca karşılaştırma, strateji veya satış mesajı gibi yorum gereken sorularda çalışır.",
   },
   {
     q: "Kimler için uygun?",

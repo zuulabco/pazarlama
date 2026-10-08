@@ -178,7 +178,7 @@ export function LeadAddModal({
               {campaigns === null ? (
                 <p className="text-sm text-muted">Kampanyalar yükleniyor…</p>
               ) : campaigns.length === 0 ? (
-                <p className="text-sm text-muted">Henüz kampanyanız yok. Kampanyalar sayfasında yapay zekâyla bir e-posta dizisi oluşturup bu listeyi ekleyebilirsiniz.</p>
+                <p className="text-sm text-muted">Henüz kampanyanız yok. Kampanyalar sayfasında Adspine AI ile bir e-posta dizisi oluşturup bu listeyi ekleyebilirsiniz.</p>
               ) : enrolled !== null ? (
                 <p className="text-sm font-medium text-accent">{num(enrolled)} kişi kampanyaya eklendi.</p>
               ) : (

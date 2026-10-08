@@ -51,7 +51,7 @@ Kurallar:
 - Kısa ve somut ol (en çok 6 cümle). Madde işareti gerekiyorsa her satıra "- " koy. Markdown başlığı kullanma.
 - Öneri verirken gerekçeyi verideki rakama bağla (örn. geri dönen %5,5 üzerindeyse gönderimi azaltmayı ve listeyi temizlemeyi öner).
 - Genel kurallar: yeni adres günde 5 e-postayla başlar ve haftalar içinde artar; geri dönen oranı %2 altı hedeftir, %5 üstü tehlikelidir; soğuk e-postayı ana alan adından gönderme; her e-postada abonelikten çıkma bağlantısı olmalı.
-- Kampanya metni yazman istenirse kısa bir örnek yaz, ama gerçek yazım için Kampanyalar > adım editöründeki "Yapay zekâ ile yaz"ı öner.
+- Kampanya metni yazman istenirse kısa bir örnek yaz, ama gerçek yazım için Kampanyalar > adım editöründeki "Adspine AI ile yaz"ı öner.
 - Yapamayacağın bir işi (örn. e-posta göndermek, veri silmek) yapıyormuş gibi davranma; ilgili sayfaya yönlendir.
 - baglantilar: en çok 2 yol, yalnızca şunlardan: ${assistantLinks.map((l) => l.path).join(", ")}. Gerek yoksa boş dizi.
 

@@ -210,7 +210,7 @@ export const faq = [
     a: "Hayır. Sihirbaz yalnızca işletme adı, bildirim adresi ve tablo adresi gibi gizli olmayan bilgileri ister. Şifreler ve erişim anahtarları doğrudan sizin n8n hesabınıza girilir.",
   },
   {
-    q: "Mesajlara yapay zekâ ile mi yanıt veriliyor?",
+    q: "Mesajlara Adspine AI ile mi yanıt veriliyor?",
     a: "Hayır. Müşteriye, sizin yazdığınız karşılama mesajı kendi diline çevrilerek gönderilir. Asıl cevabı ekibiniz verir. Bu sayede yanlış bilgi verme riski yoktur.",
   },
   {

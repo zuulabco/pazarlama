@@ -252,8 +252,8 @@ export function StepCard({
                 label="Yazma yöntemi"
                 items={[
                   { key: "sablon", label: "Kendim yazarım", pressed: v.mode === "sablon", onClick: () => setVariant({ mode: "sablon" }) },
-                  { key: "asistan", label: "Yapay zekâ · Seçeneklerle", pressed: v.mode === "asistan", onClick: () => setVariant({ mode: "asistan" }) },
-                  { key: "istem", label: "Yapay zekâ · İstemle", pressed: v.mode === "istem", onClick: () => setVariant({ mode: "istem" }) },
+                  { key: "asistan", label: "Adspine AI · Seçeneklerle", pressed: v.mode === "asistan", onClick: () => setVariant({ mode: "asistan" }) },
+                  { key: "istem", label: "Adspine AI · İstemle", pressed: v.mode === "istem", onClick: () => setVariant({ mode: "istem" }) },
                 ]}
               />
 
@@ -305,13 +305,13 @@ export function StepCard({
                           </Field>
                         </div>
                       ) : (
-                        <Field label="Ne yazılsın?" hint="Kendi cümlelerinizle anlatın; yapay zekâ bunu kurallara uygun bir e-posta şablonuna çevirir.">
+                        <Field label="Ne yazılsın?" hint="Kendi cümlelerinizle anlatın; Adspine AI bunu kurallara uygun bir e-posta şablonuna çevirir.">
                           <textarea value={v.ai.extra} onChange={(e) => setVariant({ ai: { ...v.ai, extra: e.target.value } })} maxLength={500} rows={3} placeholder="Örn. Yeni kurulan şirketlere ilk yıl muhasebe desteği öneriyorum; kısa ve samimi olsun, kahve içmeyi teklif et" className={textareaClass} />
                         </Field>
                       )}
                       <Button onClick={() => void writeWithAi()} className="w-fit">
                         <SparkleIcon size={16} />
-                        {v.body ? "Yeniden yaz" : "Yapay zekâ ile yaz"}
+                        {v.body ? "Yeniden yaz" : "Adspine AI ile yaz"}
                       </Button>
                     </>
                   )}
@@ -366,7 +366,7 @@ export function StepCard({
               <Toggle
                 checked={v.opener}
                 onChange={(o) => setVariant({ opener: o })}
-                label="Her kişi için kişisel açılış cümlesi ekle (yapay zekâ)"
+                label="Her kişi için kişisel açılış cümlesi ekle (Adspine AI)"
                 hint="Web sitesi olan kişilerde, sitesinde okunanlara dayanan tek bir cümle selamlamadan sonra eklenir. Site yoksa ya da güvenli bir şey çıkmazsa eklenmez."
               />
             </div>

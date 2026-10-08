@@ -3,33 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarIcon, ChartIcon, HomeIcon, InboxIcon, MailIcon, MapPinIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
+import { CalendarIcon, HomeIcon, MailIcon } from "@/components/ui/icons";
+import { sections } from "./nav-config";
 import { Wordmark } from "@/components/ui/wordmark";
 
 type Item = { label: string; href: string; icon: typeof HomeIcon; prefixes: readonly string[]; exact?: boolean };
 
 /**
- * Ana gezinti: solda yalnızca simgeli dikey çubuk. Simgeler iş akışına göre üç gruba ayrılır (ince çizgilerle):
- *   Bul → Ulaş → Genel; alt kısımda her yerden kullanılan araçlar (Takvim, Gönderici adresleri) ve hesap menüsü bulunur.
- * Bir uygulamanın kendi alt görünümleri sayfanın üst çubuğunda sekme olarak durur. Dar ekranda alt çubuğa dönüşür.
+ * Ana gezinti: solda yalnızca simgeli dikey çubuk. Ana sayfa, iki iş akışı bölümü (Bul, Ulaş: her biri kendi ikinci sol çubuğunu
+ * açar) ve altta her yerden kullanılan araçlar (Takvim, Gönderici adresleri) ile hesap menüsü. Dar ekranda alt çubuğa dönüşür.
  */
-const groups: { name: string; items: Item[] }[] = [
-  { name: "Başlangıç", items: [{ label: "Ana sayfa", href: "/panel", exact: true, icon: HomeIcon, prefixes: [] }] },
-  {
-    name: "Bul",
-    items: [
-      { label: "Yerel firmalar", href: "/panel/musteri-bul", icon: MapPinIcon, prefixes: ["/panel/musteri", "/panel/musteri-bul", "/panel/firmalar", "/panel/calis"] },
-      { label: "Kişiler", href: "/panel/kisi-bul", icon: UsersIcon, prefixes: ["/panel/kisi-bul", "/panel/kisiler"] },
-    ],
-  },
-  {
-    name: "Ulaş",
-    items: [
-      { label: "Kampanyalar", href: "/panel/kampanyalar", icon: SendIcon, prefixes: ["/panel/kampanyalar", "/panel/otomasyon"] },
-      { label: "Gelen kutusu", href: "/panel/gelen-kutusu", icon: InboxIcon, prefixes: ["/panel/gelen-kutusu"] },
-      { label: "Raporlar", href: "/panel/raporlar", icon: ChartIcon, prefixes: ["/panel/raporlar"] },
-    ],
-  },
+const main: Item[] = [
+  { label: "Ana sayfa", href: "/panel", exact: true, icon: HomeIcon, prefixes: [] },
+  ...sections.map((s) => ({ label: s.label, href: s.href, icon: s.icon, prefixes: s.links.flatMap((l) => l.prefixes) })),
 ];
 
 /** Alt kısım: belirli bir bölüme bağlı olmayan genel araçlar. */
@@ -68,13 +54,8 @@ export function AppRail({ account }: { account: ReactNode }) {
       </Link>
 
       <nav aria-label="Ana menü" className="contents">
-        {groups.map((g, i) => (
-          <div key={g.name} role="group" aria-label={g.name} className="contents md:flex md:flex-col md:items-center md:gap-1">
-            {i > 0 && divider}
-            {g.items.map((it) => (
-              <RailLink key={it.href} it={it} path={path} />
-            ))}
-          </div>
+        {main.map((it) => (
+          <RailLink key={it.href} it={it} path={path} />
         ))}
       </nav>
 
