@@ -6,7 +6,7 @@ import { addEvent, finishContactEnrollments } from "./enrollments";
 
 /**
  * Abonelikten çıkma: bağlantıdaki imzalı jetondan kayıt (enrollment) bulunur; kişinin e-postası kara listeye alınır ve
- * kişinin tüm etkin kampanya kayıtları bitirilir. İşlem tekrar çağrılsa da aynı sonucu verir (idempotent).
+ * kişinin tüm etkin otomasyon kayıtları bitirilir. İşlem tekrar çağrılsa da aynı sonucu verir (idempotent).
  */
 
 type Target = { uid: string; contactId: string; sequenceId: string; email: string };

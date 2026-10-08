@@ -15,7 +15,7 @@ import { listSpamTokens } from "./gmail";
  * Isındırma (warm-up). Isındırmaya katılan ve onay veren gönderici adresleri bir havuz oluşturur; her adres günlük kotası kadar
  * havuzdaki başka bir adrese kısa, doğal bir e-posta gönderir. Alıcı adres iletiyi gelen kutusunda bulursa kaydeder (ve çoğunlukla
  * yanıtlar), spam'de bulursa (IMAP ise) gelen kutusuna taşır. Sonuçlar gönderen adresin ısınma skorunu verir.
- * Isındırma e-postaları kampanya limitlerine ve kampanya kayıtlarına karışmaz.
+ * Isındırma e-postaları otomasyon limitlerine ve otomasyon kayıtlarına karışmaz.
  */
 
 export const WARMUP_HEADER = "X-Adspine-Warmup";

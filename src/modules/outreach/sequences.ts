@@ -12,7 +12,7 @@ function check(what: string, error: DbError | null) {
   throw new Error(`${what}: ${error.message}`);
 }
 
-/** Kullanıcı başına en çok bu kadar kampanya. */
+/** Kullanıcı başına en çok bu kadar otomasyon. */
 export const maxSequences = 50;
 
 type SeqRow = {
@@ -56,7 +56,7 @@ const toStep = (r: StepRow): Step => ({
 
 export async function listSequences(uid: string): Promise<SequenceSummary[]> {
   const { data, error } = await db().from("outreach_sequences").select(seqColumns).eq("user_uid", uid).neq("status", "arsiv").order("created_at", { ascending: false }).returns<SeqRow[]>();
-  check("Kampanyalar okunamadı", error);
+  check("Otomasyonlar okunamadı", error);
   const rows = data ?? [];
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
@@ -88,7 +88,7 @@ export async function listSequences(uid: string): Promise<SequenceSummary[]> {
 
 export async function getSequence(uid: string, id: string): Promise<Sequence | null> {
   const { data, error } = await db().from("outreach_sequences").select(seqColumns).eq("user_uid", uid).eq("id", id).maybeSingle<SeqRow>();
-  check("Kampanya okunamadı", error);
+  check("Otomasyon okunamadı", error);
   if (!data) return null;
   const steps = await db().from("outreach_steps").select(stepColumns).eq("sequence_id", id).order("position", { ascending: true }).returns<StepRow[]>();
   check("Adımlar okunamadı", steps.error);
@@ -98,13 +98,13 @@ export async function getSequence(uid: string, id: string): Promise<Sequence | n
 export async function createSequence(uid: string, input: { name: string; description?: string; steps?: Omit<Step, "id" | "position">[] }): Promise<Sequence> {
   const { count: n } = await db().from("outreach_sequences").select("id", { count: "exact", head: true }).eq("user_uid", uid).neq("status", "arsiv");
   const { plan } = await getAccount(uid);
-  if ((n ?? 0) >= Math.min(maxSequences, plan.campaigns)) throw new Error(`En fazla ${Math.min(maxSequences, plan.campaigns)} kampanya oluşturabilirsiniz (${plan.label} paketi).`);
+  if ((n ?? 0) >= Math.min(maxSequences, plan.campaigns)) throw new Error(`En fazla ${Math.min(maxSequences, plan.campaigns)} otomasyon oluşturabilirsiniz (${plan.label} paketi).`);
   const { data, error } = await db()
     .from("outreach_sequences")
     .insert({ user_uid: uid, name: input.name, description: input.description ?? "", schedule: defaultSchedule, settings: defaultSettings })
     .select(seqColumns)
     .single<SeqRow>();
-  check("Kampanya oluşturulamadı", error);
+  check("Otomasyon oluşturulamadı", error);
   const seq = toSequence(data!);
   if (input.steps?.length) return (await replaceSteps(uid, seq.id, input.steps.slice(0, maxSteps))) ?? seq;
   return seq;
@@ -116,7 +116,7 @@ export async function createSequence(uid: string, input: { name: string; descrip
  */
 export async function replaceSteps(uid: string, sequenceId: string, steps: (Omit<Step, "id" | "position"> & { id?: string })[]): Promise<Sequence | null> {
   const seq = await db().from("outreach_sequences").select("id").eq("user_uid", uid).eq("id", sequenceId).maybeSingle();
-  check("Kampanya okunamadı", seq.error);
+  check("Otomasyon okunamadı", seq.error);
   if (!seq.data) return null;
 
   const existing = await db().from("outreach_steps").select("id").eq("sequence_id", sequenceId).returns<{ id: string }[]>();
@@ -159,7 +159,7 @@ export async function updateSequence(
   if (patch.settings !== undefined) update.settings = patch.settings;
   if (Object.keys(update).length > 0) {
     const { data, error } = await db().from("outreach_sequences").update(update).eq("user_uid", uid).eq("id", id).select("id").maybeSingle();
-    check("Kampanya güncellenemedi", error);
+    check("Otomasyon güncellenemedi", error);
     if (!data) return null;
   }
   if (patch.steps !== undefined) return replaceSteps(uid, id, patch.steps);
@@ -168,16 +168,16 @@ export async function updateSequence(
 
 export async function setSequenceStatus(uid: string, id: string, status: SequenceStatus, reason: string | null = null): Promise<Sequence | null> {
   const { data, error } = await db().from("outreach_sequences").update({ status, paused_reason: reason }).eq("user_uid", uid).eq("id", id).select("id").maybeSingle();
-  check("Kampanya durumu güncellenemedi", error);
+  check("Otomasyon durumu güncellenemedi", error);
   return data ? getSequence(uid, id) : null;
 }
 
 export async function deleteSequence(uid: string, id: string) {
   const { error } = await db().from("outreach_sequences").delete().eq("user_uid", uid).eq("id", id);
-  check("Kampanya silinemedi", error);
+  check("Otomasyon silinemedi", error);
 }
 
-/** Kampanyayı (adımlarıyla) taslak olarak çoğaltır; kişiler ve günlük kopyalanmaz. */
+/** Otomasyonu (adımlarıyla) taslak olarak çoğaltır; kişiler ve günlük kopyalanmaz. */
 export async function duplicateSequence(uid: string, id: string): Promise<Sequence | null> {
   const src = await getSequence(uid, id);
   if (!src) return null;

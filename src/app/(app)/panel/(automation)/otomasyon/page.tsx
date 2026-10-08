@@ -9,7 +9,7 @@ import { getProfile } from "@/modules/profile/repository";
 import { ListSkeleton } from "../../../_components/skeletons";
 import { CampaignsList } from "./_components/campaigns-list";
 
-export const metadata: Metadata = { title: "Kampanyalar" };
+export const metadata: Metadata = { title: "Otomasyon" };
 
 async function Content() {
   const user = await requireUser();

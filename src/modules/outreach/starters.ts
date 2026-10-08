@@ -1,6 +1,6 @@
 import type { Step } from "./sequence-schema";
 
-/** Hazır kampanya şablonları ("Şablondan başla"). Metinler düzenlenebilir; değişkenler kişiye göre doldurulur. */
+/** Hazır otomasyon şablonları ("Şablondan başla"). Metinler düzenlenebilir; değişkenler kişiye göre doldurulur. */
 
 type StarterStep = Omit<Step, "id" | "position">;
 

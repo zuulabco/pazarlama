@@ -19,7 +19,7 @@ import type { Mailbox } from "./mailbox-schema";
 import type { SenderContext } from "./ai-prompts";
 
 /**
- * Gönderici (zamanlayıcının "tick"i): vadesi gelen kampanya kayıtlarını kilitler, her biri için pencere, limit ve kurallara
+ * Gönderici (zamanlayıcının "tick"i): vadesi gelen otomasyon kayıtlarını kilitler, her biri için pencere, limit ve kurallara
  * bakar, e-postayı doğru gönderici adresinden gönderir ve bir sonraki adımı planlar. Her çağrı sınırlı iş yapar (zaman aşımına karşı).
  */
 
@@ -158,7 +158,7 @@ const unsubscribeLinks = (enrollmentId: string) => {
   return { unsubscribeUrl: `${site.url}/u/${token}`, oneClickUrl: `${site.url}/api/outreach/unsub/${token}` };
 };
 
-/** Manuel adım (arama, görev, WhatsApp, manuel e-posta): Plan'a bir görev düşer ve kampanya sonraki adıma geçer. */
+/** Manuel adım (arama, görev, WhatsApp, manuel e-posta): Plan'a bir görev düşer ve otomasyon sonraki adıma geçer. */
 async function runManualStep(en: EnrollmentRow, seq: Sequence, active: Step[], step: Step, ctx: Ctx, res: TickResult) {
   const contact = await getContact(en.user_uid, en.contact_id);
   const sender = await loadSender(en.user_uid, ctx);
@@ -181,7 +181,7 @@ async function runManualStep(en: EnrollmentRow, seq: Sequence, active: Step[], s
       done: false,
     });
   } catch (e) {
-    // Plan tablosu yoksa ya da dolduysa görev düşmez; kampanya yine de ilerler (kullanıcı olay günlüğünde görür).
+    // Plan tablosu yoksa ya da dolduysa görev düşmez; otomasyon yine de ilerler (kullanıcı olay günlüğünde görür).
     await addEvent({ uid: en.user_uid, kind: "hata", sequenceId: seq.id, enrollmentId: en.id, contactId: en.contact_id, meta: { step: step.kind, error: e instanceof Error ? e.message.slice(0, 120) : "plan" } });
   }
   await addEvent({ uid: en.user_uid, kind: "gorev", sequenceId: seq.id, enrollmentId: en.id, contactId: en.contact_id, meta: { title, kind: step.kind } });
@@ -194,7 +194,7 @@ async function runEmailStep(en: EnrollmentRow, seq: Sequence, active: Step[], st
   const contact = await getContact(uid, en.contact_id);
   if (!contact?.email) return void (await finish(en, "gecersiz"), res.finished++);
   if (contact.emailStatus === "gecersiz") return void (await finish(en, "gecersiz"), res.finished++);
-  if (contact.emailKind === "kisisel" && !seq.settings.allowPersonal) return void (await finish(en, "elle", "Kişisel adres: kampanya ayarında kapalı."), res.finished++);
+  if (contact.emailKind === "kisisel" && !seq.settings.allowPersonal) return void (await finish(en, "elle", "Kişisel adres: otomasyon ayarında kapalı."), res.finished++);
 
   let sup = ctx.suppressions.get(uid);
   if (!sup) ctx.suppressions.set(uid, (sup = await suppressionSets(uid)));

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { defaultSchedule, type Schedule } from "./schedule";
 
-/** Kampanya (e-posta dizisi) türleri ve kuralları (sunucu ve istemci ortak). */
+/** Otomasyon (e-posta dizisi) türleri ve kuralları (sunucu ve istemci ortak). */
 
 export const stepKinds = [
   { value: "email", label: "Otomatik e-posta", auto: true },
@@ -58,7 +58,7 @@ export type SequenceStatus = "taslak" | "aktif" | "duraklatildi" | "arsiv";
 export type SequenceSettings = {
   /** Gönderimde kullanılabilecek gönderici adresleri; boşsa bağlı tüm kutular. */
   mailboxIds: string[];
-  /** Kampanyanın kayan 24 saatlik üst sınırı (boşsa yalnızca gönderici adresi limitleri). */
+  /** Otomasyonun kayan 24 saatlik üst sınırı (boşsa yalnızca gönderici adresi limitleri). */
   maxPer24h: number | null;
   cc: string[];
   bcc: string[];
@@ -194,13 +194,13 @@ export const stepSchema = z.object({
 });
 
 export const sequenceCreateSchema = z.object({
-  name: z.string().trim().min(1, "Kampanyaya bir ad verin.").max(80, "En fazla 80 karakter."),
+  name: z.string().trim().min(1, "Otomasyona bir ad verin.").max(80, "En fazla 80 karakter."),
   description: z.string().trim().max(300).default(""),
 });
 
 export const sequenceUpdateSchema = z
   .object({
-    name: z.string().trim().min(1, "Kampanyaya bir ad verin.").max(80),
+    name: z.string().trim().min(1, "Otomasyona bir ad verin.").max(80),
     description: z.string().trim().max(300),
     schedule: scheduleSchema,
     settings: settingsSchema,

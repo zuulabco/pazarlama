@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Disclosure } from "@/components/ui/disclosure";
+import { LockIcon } from "@/components/ui/icons";
+import { Switch } from "@/components/ui/switch";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { finishLabels } from "@/modules/outreach/enrollment-labels";
@@ -14,7 +17,7 @@ import type { SequenceReport } from "@/modules/outreach/report";
 import { defaultSchedule } from "@/modules/outreach/schedule";
 import type { Sequence, SequenceSettings } from "@/modules/outreach/sequence-schema";
 import { api } from "../../../kisiler/_components/contact-ui";
-import { Field, Toggle, fmtDate, inputClass, pct } from "./campaign-ui";
+import { Field, SettingsCard, fmtDate, inputClass, pct } from "./campaign-ui";
 
 const dayNames = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 const statusText = { aktif: "Sırada", bitti: "Bitti", duraklatildi: "Duraklatıldı", hata: "Hata" } as const;
@@ -35,7 +38,7 @@ const eventText: Record<string, string> = {
 
 const who = (c: { name: string | null; company: string | null; email: string | null } | null) => c?.company ?? c?.name ?? c?.email ?? "Kişi";
 
-/** Kişiler sekmesi: kampanyadakiler + kişi/liste ekleme. */
+/** Kişiler sekmesi: otomasyondakiler + kişi/liste ekleme. */
 export function PeopleTab({ sequenceId, onChanged }: { sequenceId: string; onChanged: () => void }) {
   const [status, setStatus] = useState<"hepsi" | "aktif" | "bitti" | "duraklatildi" | "hata">("hepsi");
   const [page, setPage] = useState(1);
@@ -251,7 +254,7 @@ export function ReportTab({ sequenceId }: { sequenceId: string }) {
       <div className={`flex flex-wrap items-center gap-3 rounded-panel px-5 py-4 ${bandStyle[r.health.band]}`}>
         <span className="font-semibold">Gönderim sağlığı: {bandText[r.health.band]}</span>
         <span className="text-sm">
-          Son {r.health.windowDays} günde {r.health.sent} e-postanın {r.health.bounced} tanesi geri döndü ({pct(r.health.rate)}). Hedef %2&apos;nin altı; %5,5 ve üstünde kampanya kendiliğinden durur.
+          Son {r.health.windowDays} günde {r.health.sent} e-postanın {r.health.bounced} tanesi geri döndü ({pct(r.health.rate)}). Hedef %2&apos;nin altı; %5,5 ve üstünde otomasyon kendiliğinden durur.
         </span>
       </div>
 
@@ -316,7 +319,10 @@ export function ReportTab({ sequenceId }: { sequenceId: string }) {
   );
 }
 
-/** Ayarlar sekmesi: ad, saatler, gönderici adresleri, kurallar, limitler. */
+/**
+ * Ayarlar sekmesi: her bölüm tek bir soruya yanıt verir (adı ne? ne zaman? hangi adreslerden? ne zaman dursun? e-postada ne yazsın?).
+ * Seyrek kullanılan seçenekler en altta "Gelişmiş" başlığı altında toplanır.
+ */
 export function SettingsTab({ seq, mailboxes, onChange }: { seq: Sequence; mailboxes: Mailbox[]; onChange: (patch: Partial<Pick<Sequence, "name" | "description" | "schedule" | "settings">>) => void }) {
   const s = seq.settings;
   const set = (patch: Partial<SequenceSettings>) => onChange({ settings: { ...s, ...patch } });
@@ -324,109 +330,132 @@ export function SettingsTab({ seq, mailboxes, onChange }: { seq: Sequence; mailb
   const [cc, setCc] = useState(s.cc.join(", "));
   const [bcc, setBcc] = useState(s.bcc.join(", "));
   const mailList = (v: string) => v.split(/[,\s;]+/).map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 5);
+  const connected = mailboxes.filter((m) => m.status === "bagli");
 
   return (
-    <div className="grid gap-8">
-      <section className="grid gap-4">
-        <h3 className="font-semibold tracking-tight">Genel</h3>
-        <Field label="Kampanya adı">
-          <input value={seq.name} onChange={(e) => onChange({ name: e.target.value })} maxLength={80} className={inputClass} />
-        </Field>
-        <Field label="Açıklama (isteğe bağlı)">
-          <input value={seq.description} onChange={(e) => onChange({ description: e.target.value })} maxLength={300} className={inputClass} />
-        </Field>
-      </section>
-
-      <section className="grid gap-4">
-        <h3 className="font-semibold tracking-tight">Gönderim saatleri</h3>
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Gönderim günleri">
-          {dayNames.map((d, i) => {
-            const on = sch.days.includes(i + 1);
-            return (
-              <button
-                key={d}
-                type="button"
-                aria-pressed={on}
-                onClick={() => {
-                  const days = on ? sch.days.filter((x) => x !== i + 1) : [...sch.days, i + 1].sort();
-                  if (days.length) onChange({ schedule: { ...sch, days } });
-                }}
-                className="h-9 w-12 rounded-full text-sm ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
-              >
-                {d}
-              </button>
-            );
-          })}
+    <div className="mx-auto grid w-full max-w-3xl gap-5">
+      <SettingsCard title="Genel" description="Otomasyonu listede ayırt etmenizi sağlar; kişilere görünmez.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Otomasyon adı">
+            <input value={seq.name} onChange={(e) => onChange({ name: e.target.value })} maxLength={80} className={inputClass} />
+          </Field>
+          <Field label="Açıklama (isteğe bağlı)">
+            <input value={seq.description} onChange={(e) => onChange({ description: e.target.value })} maxLength={300} className={inputClass} />
+          </Field>
         </div>
-        <div className="grid max-w-sm grid-cols-2 gap-4">
-          <Field label="Başlangıç">
+      </SettingsCard>
+
+      <SettingsCard title="Ne zaman gönderilsin?" description="E-postalar yalnızca seçtiğiniz gün ve saatlerde, küçük rastgele aralıklarla gönderilir.">
+        <div className="grid gap-2">
+          <p className="text-sm font-medium">Günler</p>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Gönderim günleri">
+            {dayNames.map((d, i) => {
+              const on = sch.days.includes(i + 1);
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    const days = on ? sch.days.filter((x) => x !== i + 1) : [...sch.days, i + 1].sort();
+                    if (days.length) onChange({ schedule: { ...sch, days } });
+                  }}
+                  className="h-9 w-12 rounded-full text-sm ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="grid max-w-md grid-cols-2 gap-4">
+          <Field label="Başlangıç saati">
             <input type="time" value={sch.start} onChange={(e) => e.target.value && onChange({ schedule: { ...sch, start: e.target.value } })} className={inputClass} />
           </Field>
-          <Field label="Bitiş">
+          <Field label="Bitiş saati">
             <input type="time" value={sch.end} onChange={(e) => e.target.value && onChange({ schedule: { ...sch, end: e.target.value } })} className={inputClass} />
           </Field>
         </div>
-        <p className="text-sm text-muted">Saat dilimi: {sch.tz}. E-postalar bu aralıkta, küçük rastgele aralıklarla gönderilir.</p>
-      </section>
+        <p className="text-sm text-muted">Saat dilimi: {sch.tz}</p>
+      </SettingsCard>
 
-      <section className="grid gap-3">
-        <h3 className="font-semibold tracking-tight">Gönderici adresleri</h3>
+      <SettingsCard title="Hangi adreslerden gönderilsin?" description="Hiçbiri seçilmezse bağlı tüm gönderici adresleriniz sırayla kullanılır.">
         {mailboxes.length === 0 ? (
-          <p className="text-sm text-muted">Bağlı gönderici adresi yok. Gönderici adresleri sekmesinden bir adres bağlayın.</p>
+          <p className="rounded-control bg-sunken/60 px-4 py-3 text-sm text-muted">Bağlı gönderici adresi yok. Önce “Gönderici adresleri” sayfasından bir adres bağlayın.</p>
         ) : (
-          <>
-            <p className="text-sm text-muted">Hiçbiri seçilmezse bağlı tüm kutular sırayla kullanılır.</p>
+          <div className="grid gap-3">
             {mailboxes.map((m) => (
-              <Toggle
+              <Switch
                 key={m.id}
                 checked={s.mailboxIds.includes(m.id)}
                 disabled={m.status !== "bagli"}
                 onChange={(on) => set({ mailboxIds: on ? [...s.mailboxIds, m.id] : s.mailboxIds.filter((x) => x !== m.id) })}
                 label={m.email}
-                hint={m.status !== "bagli" ? "Bağlı değil" : `Günlük ${m.dailyLimit}, saatlik ${m.hourlyLimit} e-posta`}
+                hint={m.status !== "bagli" ? "Bağlı değil; bu adres kullanılamaz" : `Günlük en çok ${m.dailyLimit}, saatlik ${m.hourlyLimit} e-posta`}
               />
             ))}
-          </>
+          </div>
         )}
         <div className="grid max-w-xs">
-          <Field label="Kampanya günlük üst sınırı (isteğe bağlı)" hint="Kayan 24 saatte en çok kaç e-posta.">
+          <Field label="Bu otomasyonun günlük üst sınırı (isteğe bağlı)" hint={connected.length ? "Kayan 24 saatte en çok kaç e-posta gitsin. Boşsa adreslerin kendi limitleri geçerlidir." : "Kayan 24 saatte en çok kaç e-posta."}>
             <input inputMode="numeric" value={s.maxPer24h ?? ""} placeholder="Sınırsız" onChange={(e) => set({ maxPer24h: e.target.value ? Math.min(Number(e.target.value.replace(/\D/g, "")) || 1, 500) : null })} className={inputClass} />
           </Field>
         </div>
-      </section>
+      </SettingsCard>
 
-      <section className="grid gap-3">
-        <h3 className="font-semibold tracking-tight">Kurallar</h3>
-        <Toggle checked={s.pauseOnOoo} onChange={(v) => set({ pauseOnOoo: v })} label="Ofis dışı yanıtında kişiyi birkaç gün beklet" />
-        <Toggle checked={s.stopOnCompanyReply} onChange={(v) => set({ stopOnCompanyReply: v })} label="Aynı şirketten biri yanıt verince o şirketin diğer kişilerini durdur" hint="İş arkadaşına aynı konuda tekrar yazılmaz. Şirket, e-posta alan adından anlaşılır." />
-        <Toggle checked={s.finishOnClick} onChange={(v) => set({ finishOnClick: v })} label="Bağlantıya tıklayan kişiyi dizide bitir" />
-        <Toggle checked={s.allowPersonal} onChange={(v) => set({ allowPersonal: v })} label="Kişisel adreslere de gönder (gmail, hotmail vb.)" hint="Tacir olmayan kişilere ticari e-posta için önceden onay gerekir; bilinçli açın." />
-        <Toggle checked={s.includeSignature} onChange={(v) => set({ includeSignature: v })} label="Gönderici adresinin imzasını ekle" />
-        <Toggle checked={s.trackOpens} onChange={(v) => set({ trackOpens: v })} label="Açılmaları izle" hint="Takip pikseli spam sinyali olabilir; varsayılan kapalıdır." />
-        <Toggle checked={s.unresponsiveDays !== null} onChange={(v) => set({ unresponsiveDays: v ? 14 : null })} label="Son adımdan sonra yanıt gelmezse kişiyi “yanıtsız” say" />
-        {s.unresponsiveDays !== null && (
-          <div className="grid max-w-[10rem]">
-            <Field label="Gün">
-              <input inputMode="numeric" value={s.unresponsiveDays} onChange={(e) => set({ unresponsiveDays: Math.min(Math.max(Number(e.target.value.replace(/\D/g, "")) || 1, 1), 90) })} className={inputClass} />
-            </Field>
-          </div>
-        )}
-        <p className="text-sm text-muted">Abonelikten çıkan, geri dönen ve şikâyet eden kişilere bir daha e-posta gitmez; bu kural kapatılamaz.</p>
-      </section>
+      <SettingsCard title="Ne zaman durdurulsun?" description="Bir kişi için dizi şu durumlarda otomatik olarak durur ya da bekler.">
+        <div className="grid gap-4">
+          <Switch checked={s.pauseOnOoo} onChange={(v) => set({ pauseOnOoo: v })} label="Ofis dışı yanıtında beklet" hint="Kişi ofis dışı otomatik yanıtı gönderirse birkaç gün sonra devam edilir." />
+          <Switch checked={s.stopOnCompanyReply} onChange={(v) => set({ stopOnCompanyReply: v })} label="Şirketten biri yanıt verince diğerlerini durdur" hint="Aynı şirketteki iş arkadaşına aynı konuda tekrar yazılmaz. Şirket, e-posta alan adından anlaşılır." />
+          <Switch checked={s.finishOnClick} onChange={(v) => set({ finishOnClick: v })} label="Bağlantıya tıklayınca bitir" hint="E-postadaki bir bağlantıya tıklayan kişiye sonraki adımlar gitmez." />
+          <Switch checked={s.unresponsiveDays !== null} onChange={(v) => set({ unresponsiveDays: v ? 14 : null })} label="Yanıt gelmezse “yanıtsız” say" hint="Son adımdan sonra belirlenen süre geçince kişi yanıtsız olarak işaretlenir." />
+          {s.unresponsiveDays !== null && (
+            <div className="grid max-w-[11rem] pl-0 sm:pl-0">
+              <Field label="Kaç gün sonra">
+                <input inputMode="numeric" value={s.unresponsiveDays} onChange={(e) => set({ unresponsiveDays: Math.min(Math.max(Number(e.target.value.replace(/\D/g, "")) || 1, 1), 90) })} className={inputClass} />
+              </Field>
+            </div>
+          )}
+        </div>
+        <p className="flex items-start gap-2.5 rounded-control bg-sunken/60 px-4 py-3 text-sm text-muted">
+          <span className="mt-0.5 shrink-0">
+            <LockIcon size={16} />
+          </span>
+          Abonelikten çıkan, e-postası geri dönen ve şikâyet eden kişilere bir daha e-posta gitmez. Bu kural yasal gereklilik olduğu için kapatılamaz.
+        </p>
+      </SettingsCard>
 
-      <section className="grid gap-4">
-        <h3 className="font-semibold tracking-tight">Alt bilgi ve kopyalar</h3>
-        <Field label="Gönderici adresi / telefonu" hint="Her e-postanın altında gönderici kimliğiyle birlikte görünür (ticari iletide gönderici bilgisi gereklidir).">
-          <input value={s.footerAddress} onChange={(e) => set({ footerAddress: e.target.value })} maxLength={200} placeholder="Örn. Bağdat Cad. 12, Kadıköy · 0216 000 00 00" className={inputClass} />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="CC (en çok 5)">
-            <input value={cc} onChange={(e) => setCc(e.target.value)} onBlur={() => set({ cc: mailList(cc) })} placeholder="ornek@firma.com" className={inputClass} />
-          </Field>
-          <Field label="BCC (en çok 5)">
-            <input value={bcc} onChange={(e) => setBcc(e.target.value)} onBlur={() => set({ bcc: mailList(bcc) })} placeholder="ornek@firma.com" className={inputClass} />
+      <SettingsCard title="E-postanın içeriği" description="Her e-postanın sonuna eklenenler.">
+        <div className="grid gap-4">
+          <Switch checked={s.includeSignature} onChange={(v) => set({ includeSignature: v })} label="Gönderici adresinin imzasını ekle" hint="İmza, Gönderici adresleri sayfasında her adres için ayrı yazılır." />
+          <Field label="Gönderici adresi ya da telefonu" hint="E-postanın altında, çıkış bağlantısıyla birlikte görünür. Ticari iletide gönderici bilgisi bulunmalıdır.">
+            <input value={s.footerAddress} onChange={(e) => set({ footerAddress: e.target.value })} maxLength={200} placeholder="Örn. Bağdat Cad. 12, Kadıköy · 0216 000 00 00" className={inputClass} />
           </Field>
         </div>
+      </SettingsCard>
+
+      <section className="rounded-panel bg-surface ring-1 ring-line">
+        <Disclosure
+          buttonClassName="px-5 py-4 sm:px-6"
+          panelClassName="grid gap-5 border-t border-line px-5 py-5 sm:px-6"
+          summary={
+            <span className="grid gap-0.5 text-left">
+              <span className="font-semibold tracking-tight">Gelişmiş</span>
+              <span className="text-sm font-normal text-muted">Kişisel adresler, açılma izleme, CC ve BCC</span>
+            </span>
+          }
+        >
+          <Switch checked={s.allowPersonal} onChange={(v) => set({ allowPersonal: v })} label="Kişisel adreslere de gönder (gmail, hotmail vb.)" hint="Tacir olmayan kişilere ticari e-posta için önceden onay gerekir; bilinçli açın." />
+          <Switch checked={s.trackOpens} onChange={(v) => set({ trackOpens: v })} label="Açılmaları izle" hint="İzleme pikseli spam sinyali olabilir; bu yüzden varsayılan olarak kapalıdır." />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="CC (en çok 5)" hint="Her e-postanın bir kopyası bu adreslere de gider.">
+              <input value={cc} onChange={(e) => setCc(e.target.value)} onBlur={() => set({ cc: mailList(cc) })} placeholder="ornek@firma.com" className={inputClass} />
+            </Field>
+            <Field label="BCC (en çok 5)" hint="Kopya gider, alıcı görmez.">
+              <input value={bcc} onChange={(e) => setBcc(e.target.value)} onBlur={() => set({ bcc: mailList(bcc) })} placeholder="ornek@firma.com" className={inputClass} />
+            </Field>
+          </div>
+        </Disclosure>
       </section>
     </div>
   );

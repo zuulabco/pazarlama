@@ -8,7 +8,7 @@ describe("ısındırma kotası", () => {
   });
 });
 
-describe("ısınırken kampanya limiti", () => {
+describe("ısınırken otomasyon limiti", () => {
   const start = "2026-10-01T00:00:00Z";
   const day = (n: number) => Date.parse(start) + n * 86_400_000 + 3_600_000;
   it("ısınma kapalıysa kullanıcının limiti geçerlidir", () => {

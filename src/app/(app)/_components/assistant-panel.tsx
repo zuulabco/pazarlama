@@ -7,7 +7,7 @@ import { api } from "../panel/(automation)/kisiler/_components/contact-ui";
 
 type Turn = { role: "user" | "assistant"; content: string; links?: { path: string; label: string }[] };
 
-const suggestions = ["Kampanyalarım nasıl gidiyor?", "Geri dönen oranım neden önemli?", "Hangi gönderici adresim sorunlu?", "Yeni bir kampanya için nereden başlamalıyım?"];
+const suggestions = ["Otomasyonlarım nasıl gidiyor?", "Geri dönen oranım neden önemli?", "Hangi gönderici adresim sorunlu?", "Yeni bir otomasyon için nereden başlamalıyım?"];
 
 /** Yapay zekâ simgesi: büyük ve küçük parıltı, marka mavisi geçişli. */
 function AiIcon({ size = 20, id }: { size?: number; id: string }) {
@@ -36,6 +36,7 @@ export function AssistantPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const end = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });
@@ -68,6 +69,7 @@ export function AssistantPanel() {
     const next: Turn[] = [...turns, { role: "user", content }];
     setTurns(next);
     setText("");
+    if (box.current) box.current.style.height = "auto";
     setError("");
     setBusy(true);
     const r = await api<{ reply: string; links: { path: string; label: string }[] }>("/api/outreach/assistant", {
@@ -119,7 +121,7 @@ export function AssistantPanel() {
         <div className="grid flex-1 content-start gap-3 overflow-y-auto px-4 py-4" aria-live="polite">
           {turns.length === 0 && (
             <div className="grid gap-3">
-              <p className="text-sm text-muted">Son 30 günlük kampanya, gönderici adresi ve kredi rakamlarınıza bakarak sorularınızı yanıtlarım. Rakamınız olmayan bir şeyi uydurmam.</p>
+              <p className="text-sm text-muted">Son 30 günlük otomasyon, gönderici adresi ve kredi rakamlarınıza bakarak sorularınızı yanıtlarım. Rakamınız olmayan bir şeyi uydurmam.</p>
               <div className="grid gap-2">
                 {suggestions.map((s) => (
                   <button key={s} type="button" onClick={() => void ask(s)} className="rounded-control px-3 py-2 text-left text-sm ring-1 ring-line transition-colors hover:bg-sunken">
@@ -160,21 +162,27 @@ export function AssistantPanel() {
           className="flex items-end gap-2 border-t border-line p-3"
         >
           <textarea
+            ref={box}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              // Yazdıkça yükselir (en çok 8rem); tek satırda düğmeyle aynı yükseklikte kalır.
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 void ask(text);
               }
             }}
-            rows={2}
+            rows={1}
             maxLength={1000}
             placeholder="Bir şey sorun…"
             aria-label="Mesajınız"
-            className="min-h-[2.75rem] flex-1 resize-none rounded-control bg-surface px-3 py-2 text-sm ring-1 ring-line outline-none focus:ring-2 focus:ring-forest"
+            className="max-h-32 min-h-11 flex-1 resize-none rounded-control bg-surface px-3 py-[0.6875rem] text-sm leading-5 ring-1 ring-line outline-none focus:ring-2 focus:ring-forest"
           />
-          <Button type="submit" disabled={busy || !text.trim()}>
+          <Button type="submit" disabled={busy || !text.trim()} className="h-11">
             Gönder
           </Button>
         </form>

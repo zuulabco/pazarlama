@@ -31,7 +31,7 @@ const mailbox = (over: Partial<Mailbox> = {}): Mailbox => ({
 });
 
 describe("activationProblems", () => {
-  it("hazır kampanya sorunsuzdur", () => {
+  it("hazır otomasyon sorunsuzdur", () => {
     expect(activationProblems({ steps: [step()], settings: defaultSettings }, [mailbox()])).toEqual([]);
   });
   it("adım, boş mesaj, gönderici adresi ve alan adı sorunlarını ayrı ayrı bildirir", () => {
@@ -44,7 +44,7 @@ describe("activationProblems", () => {
     expect(dns[0]).toMatchObject({ code: "alan_adi", overridable: true });
     expect(dns[0].message).toContain("DKIM");
   });
-  it("yalnızca DMARC eksikse kampanya engellenmez", () => {
+  it("yalnızca DMARC eksikse otomasyon engellenmez", () => {
     const dmarcOnly = mailbox({ dnsCheck: { domain: "f.com", managed: false, ready: false, checks: [{ key: "spf", title: "SPF", status: "ok", detail: "" }, { key: "dmarc", title: "DMARC", status: "eksik", detail: "" }] } });
     expect(activationProblems({ steps: [step()], settings: defaultSettings }, [dmarcOnly])).toEqual([]);
   });
@@ -52,7 +52,7 @@ describe("activationProblems", () => {
     const steps = [step(), step({ id: "t", position: 1, variants: [{ ...blankVariant("A", "takip"), body: "Takip" }] })];
     expect(activationProblems({ steps, settings: defaultSettings }, [mailbox()])).toEqual([]);
   });
-  it("yalnızca arama/görev adımı olan kampanya gönderici adresi istemez", () => {
+  it("yalnızca arama/görev adımı olan otomasyon gönderici adresi istemez", () => {
     expect(activationProblems({ steps: [step({ kind: "arama" })], settings: defaultSettings }, [])).toEqual([]);
   });
 });

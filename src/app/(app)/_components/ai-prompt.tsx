@@ -5,7 +5,7 @@ import { useState } from "react";
 /** Adspine AI paneline soru gönderir (panel bu olayı dinler, açılır ve soruyu yanıtlar). */
 export const askAssistant = (text: string) => window.dispatchEvent(new CustomEvent("adspine-ai", { detail: { text } }));
 
-const chips = ["Bugün neye odaklanmalıyım?", "Kampanyalarım nasıl gidiyor?", "Hangi gönderici adresim sorunlu?"];
+const chips = ["Bugün neye odaklanmalıyım?", "Otomasyonlarım nasıl gidiyor?", "Hangi gönderici adresim sorunlu?"];
 
 /** Ana sayfadaki soru çubuğu: yazılan soru sağdaki Adspine AI panelinde yanıtlanır. */
 export function AiPrompt() {
@@ -34,7 +34,7 @@ export function AiPrompt() {
           <path d="M10 2.5c.5 4.4 2.6 6.5 7 7-4.4.5-6.5 2.6-7 7-.5-4.4-2.6-6.5-7-7 4.4-.5 6.5-2.6 7-7Z" fill="url(#ai-home)" />
           <path d="M18.5 14c.25 2.2 1.3 3.25 3.5 3.5-2.2.25-3.25 1.3-3.5 3.5-.25-2.2-1.3-3.25-3.5-3.5 2.2-.25 3.25-1.3 3.5-3.5Z" fill="url(#ai-home)" />
         </svg>
-        <input value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} aria-label="Adspine AI'ya sorun" placeholder="Adspine AI'ya sorun: kampanyalarım, adreslerim, ne yapmalıyım…" className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted" />
+        <input value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} aria-label="Adspine AI'ya sorun" placeholder="Adspine AI'ya sorun: otomasyonlarım, adreslerim, ne yapmalıyım…" className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted" />
         <button type="submit" disabled={!text.trim()} className="h-9 shrink-0 rounded-control bg-forest px-4 text-sm font-medium text-white transition-colors hover:bg-forest-hover disabled:opacity-50">
           Sor
         </button>

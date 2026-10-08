@@ -158,7 +158,7 @@ export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Dat
             <button
               type="button"
               aria-expanded={moreFilters}
-              aria-label="Kampanya ve gönderici adresi filtreleri"
+              aria-label="Otomasyon ve gönderici adresi filtreleri"
               onClick={() => setMoreFilters((m) => !m)}
               className={`grid size-10 shrink-0 place-items-center rounded-control ring-1 ring-inset transition-colors ${moreFilters || campaign || mailbox ? "bg-forest-soft text-accent ring-forest" : "text-muted ring-line-strong hover:text-ink"}`}
             >
@@ -169,7 +169,7 @@ export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Dat
           </div>
           <Collapse open={moreFilters}>
             <div className="grid gap-2 pt-1">
-              <Select<string> label="Kampanya" value={campaign} options={[{ value: "", label: "Tüm kampanyalar" }, ...campaigns.map((c) => ({ value: c.id, label: c.label }))]} onChange={setCampaign} />
+              <Select<string> label="Otomasyon" value={campaign} options={[{ value: "", label: "Tüm kampanyalar" }, ...campaigns.map((c) => ({ value: c.id, label: c.label }))]} onChange={setCampaign} />
               <Select<string> label="Gönderici adresi" value={mailbox} options={[{ value: "", label: "Tüm gönderici adresleri" }, ...mailboxes.map((m) => ({ value: m.id, label: m.label }))]} onChange={setMailbox} />
             </div>
           </Collapse>
@@ -178,10 +178,10 @@ export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Dat
           {conversations.length === 0 && (
             <li className="grid justify-items-center gap-2 px-6 py-16 text-center">
               <p className="font-semibold">{counts.toplam === 0 ? "Gelen kutunuz boş" : "Filtreye uyan konuşma yok"}</p>
-              <p className="max-w-[16rem] text-sm text-muted">{counts.toplam === 0 ? "Kampanya e-postalarınıza gelen yanıtlar burada toplanır; her 5 dakikada bir kontrol edilir." : "Filtreleri gevşetmeyi deneyin."}</p>
+              <p className="max-w-[16rem] text-sm text-muted">{counts.toplam === 0 ? "Otomasyon e-postalarınıza gelen yanıtlar burada toplanır; her 5 dakikada bir kontrol edilir." : "Filtreleri gevşetmeyi deneyin."}</p>
               {counts.toplam === 0 && (
-                <Link href="/panel/kampanyalar" className="text-sm text-accent underline underline-offset-4 hover:no-underline">
-                  Kampanyalara git
+                <Link href="/panel/otomasyon" className="text-sm text-accent underline underline-offset-4 hover:no-underline">
+                  Otomasyonlara git
                 </Link>
               )}
             </li>
@@ -239,7 +239,7 @@ export function InboxWorkspace({ initial, campaigns, mailboxes }: { initial: Dat
                 {thread.messages.map((m) => (
                   <li key={m.id} className={`grid max-w-[85%] gap-1 ${m.direction === "giden" ? "justify-self-end" : "justify-self-start"}`}>
                     <div className={`flex items-baseline gap-2 text-xs text-muted ${m.direction === "giden" ? "justify-end" : ""}`}>
-                      <span className="truncate font-medium text-ink">{m.direction === "giden" ? (m.kind === "kampanya" ? "Kampanya" : "Siz") : m.from}</span>
+                      <span className="truncate font-medium text-ink">{m.direction === "giden" ? (m.kind === "kampanya" ? "Otomasyon" : "Siz") : m.from}</span>
                       <span className="tabular-nums">{full(m.at)}</span>
                       {m.kind === "ooo" && <span className="rounded-full bg-pollen px-2 py-0.5 text-ink">Ofis dışı</span>}
                     </div>

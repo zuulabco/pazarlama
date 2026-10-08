@@ -58,7 +58,7 @@ function DailyChart({ daily }: { daily: Day[] }) {
 const th = "px-4 py-3 font-medium";
 const td = "px-4 py-3 tabular-nums";
 
-/** Raporlar (Instantly Reports yapısı): tarih aralığı, özet kartlar, günlük grafik, kampanya ve gönderici adresi kırılımı. */
+/** Raporlar (Instantly Reports yapısı): tarih aralığı, özet kartlar, günlük grafik, otomasyon ve gönderici adresi kırılımı. */
 export function ReportsWorkspace({ initial }: { initial: ReportsData }) {
   const [data, setData] = useState(initial);
   const [days, setDays] = useState<7 | 30 | 90>(30);
@@ -83,7 +83,7 @@ export function ReportsWorkspace({ initial }: { initial: ReportsData }) {
           label="Rapor bölümü"
           items={[
             { key: "genel", label: "Genel bakış", pressed: tab === "genel", onClick: () => setTab("genel") },
-            { key: "kampanya", label: "Kampanyalar", pressed: tab === "kampanya", onClick: () => setTab("kampanya") },
+            { key: "kampanya", label: "Otomasyonlar", pressed: tab === "kampanya", onClick: () => setTab("kampanya") },
             { key: "adres", label: "Gönderici adresleri", pressed: tab === "adres", onClick: () => setTab("adres") },
           ]}
         />
@@ -97,7 +97,7 @@ export function ReportsWorkspace({ initial }: { initial: ReportsData }) {
         {tab === "genel" && (
           <>
             <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-              <Card label="Gönderilen" value={num(o.totals.sent)} sub="Kampanya e-postaları" />
+              <Card label="Gönderilen" value={num(o.totals.sent)} sub="Otomasyon e-postaları" />
               <Card label="Yanıt oranı" value={rate(o.rates.reply)} sub={`${num(o.totals.replied)} yanıt`} />
               <Card label="Olumlu yanıt" value={rate(o.rates.positive)} sub={`${num(o.totals.positive)} kişi (ilgili, toplantı, kazanıldı)`} />
               <Card label="Toplantı" value={num(o.totals.meetings)} sub="Planlanan, yapılan ve kazanılan" />
@@ -110,9 +110,9 @@ export function ReportsWorkspace({ initial }: { initial: ReportsData }) {
               {empty ? (
                 <div className="grid justify-items-center gap-2 py-12 text-center">
                   <p className="font-semibold">Bu aralıkta gönderim yok</p>
-                  <p className="max-w-[26rem] text-sm text-muted">Bir kampanya başlattığınızda gönderim, yanıt ve geri dönen e-postalar burada görünür.</p>
-                  <Link href="/panel/kampanyalar" className="text-sm text-accent underline underline-offset-4 hover:no-underline">
-                    Kampanyalara git
+                  <p className="max-w-[26rem] text-sm text-muted">Bir otomasyon başlattığınızda gönderim, yanıt ve geri dönen e-postalar burada görünür.</p>
+                  <Link href="/panel/otomasyon" className="text-sm text-accent underline underline-offset-4 hover:no-underline">
+                    Otomasyonlara git
                   </Link>
                 </div>
               ) : (
@@ -128,7 +128,7 @@ export function ReportsWorkspace({ initial }: { initial: ReportsData }) {
             <table className="w-full min-w-[44rem] text-left text-sm">
               <thead className="border-b border-line text-xs text-muted">
                 <tr>
-                  {["Kampanya", "Gönderilen", "Yanıt", "Olumlu", "Toplantı", "Geri dönen"].map((h) => (
+                  {["Otomasyon", "Gönderilen", "Yanıt", "Olumlu", "Toplantı", "Geri dönen"].map((h) => (
                     <th key={h} scope="col" className={th}>
                       {h}
                     </th>
@@ -139,7 +139,7 @@ export function ReportsWorkspace({ initial }: { initial: ReportsData }) {
                 {data.campaigns.map((c) => (
                   <tr key={c.id} className="border-t border-line first:border-t-0 hover:bg-sunken/40">
                     <td className="max-w-[20rem] px-4 py-3">
-                      <Link href={`/panel/kampanyalar/${c.id}`} className="block truncate font-medium underline-offset-4 hover:underline">
+                      <Link href={`/panel/otomasyon/${c.id}`} className="block truncate font-medium underline-offset-4 hover:underline">
                         {c.name}
                       </Link>
                     </td>
@@ -157,7 +157,7 @@ export function ReportsWorkspace({ initial }: { initial: ReportsData }) {
                 {data.campaigns.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-10 text-center text-muted">
-                      Bu aralıkta gönderim yapan kampanya yok.
+                      Bu aralıkta gönderim yapan otomasyon yok.
                     </td>
                   </tr>
                 )}

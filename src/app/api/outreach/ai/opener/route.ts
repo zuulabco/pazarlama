@@ -10,7 +10,7 @@ export const maxDuration = 60;
 
 const tooFast = rateLimiter(10);
 
-/** Bir kişi için, sitesinden okunanlara dayanan kişisel açılış cümlesini önizler (kampanya önizlemesinde "Açılışı göster"). */
+/** Bir kişi için, sitesinden okunanlara dayanan kişisel açılış cümlesini önizler (otomasyon önizlemesinde "Açılışı göster"). */
 export async function POST(req: NextRequest) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;

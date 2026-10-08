@@ -8,12 +8,12 @@ import { getSequence } from "@/modules/outreach/sequences";
 const idOk = (id: string) => z.uuid().safeParse(id).success;
 const ids = z.object({ ids: z.array(z.uuid()).min(1).max(500) });
 
-/** Kampanyadaki kişiler. Sorgu: ?status=hepsi|aktif|bitti|duraklatildi|hata&page= */
+/** Otomasyondaki kişiler. Sorgu: ?status=hepsi|aktif|bitti|duraklatildi|hata&page= */
 export async function GET(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]/contacts">) {
   const g = await guard(req);
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!idOk(id)) return fail("Kampanya bulunamadı.", 404);
+  if (!idOk(id)) return fail("Otomasyon bulunamadı.", 404);
   const q = z
     .object({ status: z.enum(["hepsi", "aktif", "bitti", "duraklatildi", "hata"]).default("hepsi"), page: z.coerce.number().int().min(1).max(1000).default(1) })
     .safeParse(Object.fromEntries(req.nextUrl.searchParams));
@@ -28,20 +28,20 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/outreach/seq
 const enrollSchema = z.object({ contactIds: z.array(z.uuid()).max(500).optional(), listId: z.uuid().optional() }).refine((v) => v.contactIds?.length || v.listId, { message: "Kişi ya da liste seçin." });
 
 /**
- * Kişileri kampanyaya ekler: seçili kişiler ve/veya bir listenin tüm kişileri. Uygun olmayanlar (e-postası yok/geçersiz,
+ * Kişileri otomasyona ekler: seçili kişiler ve/veya bir listenin tüm kişileri. Uygun olmayanlar (e-postası yok/geçersiz,
  * kişisel adres, kara liste, zaten ekli) atlanır; nedenleri sayılarak döner.
  */
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]/contacts">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!idOk(id)) return fail("Kampanya bulunamadı.", 404);
+  if (!idOk(id)) return fail("Otomasyon bulunamadı.", 404);
   const body = enrollSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return fail(body.error.issues[0]?.message ?? "Geçersiz istek.", 400);
 
   try {
     const seq = await getSequence(g.user.uid, id);
-    if (!seq) return fail("Kampanya bulunamadı.", 404);
+    if (!seq) return fail("Otomasyon bulunamadı.", 404);
     const all = new Set(body.data.contactIds ?? []);
     if (body.data.listId) {
       for (const id of await listMemberIds(g.user.uid, body.data.listId)) all.add(id);
@@ -53,12 +53,12 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/se
   }
 }
 
-/** Kişileri kampanyadan çıkarır (kişi kaydı silinmez). */
+/** Kişileri otomasyondan çıkarır (kişi kaydı silinmez). */
 export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]/contacts">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!idOk(id)) return fail("Kampanya bulunamadı.", 404);
+  if (!idOk(id)) return fail("Otomasyon bulunamadı.", 404);
   const body = ids.safeParse(await req.json().catch(() => null));
   if (!body.success) return fail("Geçersiz istek.", 400);
   try {
@@ -74,7 +74,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/outreach/s
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!idOk(id)) return fail("Kampanya bulunamadı.", 404);
+  if (!idOk(id)) return fail("Otomasyon bulunamadı.", 404);
   const body = ids.extend({ paused: z.boolean() }).safeParse(await req.json().catch(() => null));
   if (!body.success) return fail("Geçersiz istek.", 400);
   try {

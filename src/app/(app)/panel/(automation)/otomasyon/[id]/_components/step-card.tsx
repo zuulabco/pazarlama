@@ -58,7 +58,7 @@ function DelayField({ minutes, onChange, first }: { minutes: number; onChange: (
   );
 }
 
-/** Bir kampanya adımı: gecikme, (e-postada) A/B varyantları, yazma modu, şablon, önizleme ve test. */
+/** Bir otomasyon adımı: gecikme, (e-postada) A/B varyantları, yazma modu, şablon, önizleme ve test. */
 export function StepCard({
   step,
   index,
@@ -210,7 +210,7 @@ export function StepCard({
         {!isEmail ? (
           <div className="grid gap-4 rounded-row bg-sunken/60 p-4">
             <p className="text-sm text-muted">
-              Zamanı gelince bu adım Plan&apos;a <span className="font-medium text-ink">{stepLabel(step.kind)}</span> görevi olarak düşer; kampanya sonraki adıma geçer. Kişinin e-posta ve telefonu göreve eklenir.
+              Zamanı gelince bu adım Plan&apos;a <span className="font-medium text-ink">{stepLabel(step.kind)}</span> görevi olarak düşer; otomasyon sonraki adıma geçer. Kişinin e-posta ve telefonu göreve eklenir.
             </p>
             <Field label="Görev başlığı">
               <input value={step.task.title} onChange={(e) => onChange({ ...step, task: { ...step.task, title: e.target.value } })} maxLength={120} placeholder={taskHints[step.kind]?.title} className={inputClass} />

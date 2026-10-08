@@ -287,7 +287,7 @@ export async function insertLeads(uid: string, batch: Record<string, unknown>[],
       const l = await db().from("outreach_lists").select("name").eq("user_uid", uid).eq("id", opts.listId).maybeSingle<{ name: string }>();
       return { added: batch.length, listName: l.data?.name ?? null };
     }
-    // Sonuçlar kendi listesine konur: tek tıkla kampanyaya eklenebilsin.
+    // Sonuçlar kendi listesine konur: tek tıkla otomasyona eklenebilsin.
     const base = listLabel();
     const list = await createList(uid, base).catch(async (e) => {
       if (e instanceof DuplicateContactError) return createList(uid, `${base} (${opts.tag.slice(0, 4)})`);

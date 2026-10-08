@@ -25,7 +25,7 @@ const check = (e: { code?: string; message: string } | null) => {
   throw new Error(e.message);
 };
 
-/** Ana sayfa verisi: otomasyon hattı (kişi → kampanya → yanıt → toplantı), dikkat gerektirenler ve yerel müşteri özeti. */
+/** Ana sayfa verisi: otomasyon hattı (kişi → otomasyon → yanıt → toplantı), dikkat gerektirenler ve yerel müşteri özeti. */
 export async function loadHome(uid: string): Promise<HomeData> {
   const [reports, account, contacts, boxes, seqs, active, replied, tracked, plan, today, recent, activeSeqs] = await Promise.all([
     loadReports(uid, 30),

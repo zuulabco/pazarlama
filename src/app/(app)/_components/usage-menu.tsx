@@ -25,8 +25,8 @@ function Meter({ label, value, max, text, hint, warn }: { label: string; value: 
 }
 
 /**
- * Plan ve kullanım: sol çubuğun altındaki göstergeden açılır. Paket adı, kalan kredi, gönderici adresi ve kampanya hakları,
- * günlük gönderim ve ücretsiz listeleme hakkı. Simgenin çevresindeki halka kalan krediyi gösterir.
+ * Plan ve kullanım: sol çubuğun altındaki göstergeden açılır. Paket adı, kalan kredi, gönderici adresi ve otomasyon hakları,
+ * günlük gönderim ve listeleme hakkı. Simgenin çevresindeki halka kalan krediyi gösterir.
  */
 export function UsageMenu() {
   const id = useId();
@@ -95,8 +95,8 @@ export function UsageMenu() {
             <Meter label="Kalan kredi" value={data.credits} max={data.plan.monthlyCredits} text={`${num(data.credits)} / ${num(data.plan.monthlyCredits)}`} hint="1 kredi = e-postası bulunan 1 kişi. Her ay başında yenilenir." warn={data.credits / Math.max(data.plan.monthlyCredits, 1) < 0.15} />
             <Meter label="Bugünkü gönderim" value={sending.today} max={sending.capacity} text={sending.capacity ? `${num(sending.today)} / ${num(sending.capacity)}` : "Adres yok"} hint="Son 24 saat; bağlı gönderici adreslerinizin toplam günlük limiti." />
             <Meter label="Gönderici adresi" value={data.senders.used} max={data.senders.limit} text={`${data.senders.used} / ${data.senders.limit}`} />
-            <Meter label="Kampanya" value={data.campaigns.used} max={data.campaigns.limit} text={`${data.campaigns.used} / ${data.campaigns.limit}`} />
-            <Meter label="Ücretsiz listeleme (bugün)" value={data.browse.used} max={data.browse.limit} text={`${num(data.browse.used)} / ${num(data.browse.limit)}`} hint="Kişi bul'da listelemek kredi harcamaz; yalnızca eklerken kredi düşer." />
+            <Meter label="Otomasyon" value={data.campaigns.used} max={data.campaigns.limit} text={`${data.campaigns.used} / ${data.campaigns.limit}`} />
+            <Meter label="Günlük listeleme" value={data.browse.used} max={data.browse.limit} text={`${num(data.browse.used)} / ${num(data.browse.limit)}`} />
             <p className="text-xs text-muted">
               Yaklaşık aylık gönderim kapasiteniz {num(data.monthlyCapacity)} e-posta.{" "}
               <Link href="/panel/posta-kutulari" onClick={() => setOpen(false)} className="text-accent underline underline-offset-4 hover:no-underline">

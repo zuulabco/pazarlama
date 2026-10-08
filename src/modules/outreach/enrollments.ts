@@ -106,7 +106,7 @@ export const isSuppressedIn = (sets: { emails: Set<string>; domains: Set<string>
 };
 
 /**
- * Kişileri kampanyaya ekler. Uygun olmayanlar (e-postası yok/geçersiz, kişisel adres ve izin yok, kara listede, zaten ekli)
+ * Kişileri otomasyona ekler. Uygun olmayanlar (e-postası yok/geçersiz, kişisel adres ve izin yok, kara listede, zaten ekli)
  * atlanır ve nedenleri sayılarak döndürülür. İlk gönderim, ilk açık adımın gecikmesi kadar sonraya planlanır.
  */
 export async function enrollContacts(uid: string, seq: Sequence, contactIds: string[]): Promise<EnrollResult> {
@@ -139,7 +139,7 @@ export async function enrollContacts(uid: string, seq: Sequence, contactIds: str
   }
   if (rows.length > 0) {
     const { error } = await db().from("outreach_enrollments").insert(rows);
-    check("Kişiler kampanyaya eklenemedi", error);
+    check("Kişiler otomasyona eklenemedi", error);
   }
   result.added = rows.length;
   return result;

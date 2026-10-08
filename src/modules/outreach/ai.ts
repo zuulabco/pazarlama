@@ -6,7 +6,7 @@ import { fetchPublicHtml } from "@/modules/profile/site/safe-fetch";
 import { openerMessages, openerSchema, sequenceMessages, sequenceSchema, stepFromTemplate, cleanSubject, stripClosing, templateMessages, templateSchema, type SenderContext } from "./ai-prompts";
 import type { AiSettings, EmailType, Step } from "./sequence-schema";
 
-/** Model çağrıları: şablon yazma, kampanya üretme, kişisel açılış cümlesi. Hepsi doğrulanır; geçersiz çıktı hata verir. */
+/** Model çağrıları: şablon yazma, otomasyon üretme, kişisel açılış cümlesi. Hepsi doğrulanır; geçersiz çıktı hata verir. */
 
 export async function writeTemplate(input: { settings: AiSettings; mode: "asistan" | "istem"; prompt?: string; service?: string | null; previousSubject?: string; sender: SenderContext }) {
   const raw = await chatJson(templateMessages(input), { maxTokens: 1500, timeoutMs: 40_000, thinking: false, temperature: 0.4 });

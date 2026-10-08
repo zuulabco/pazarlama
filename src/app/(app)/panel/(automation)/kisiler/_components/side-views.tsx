@@ -66,7 +66,7 @@ export function ListsView({
 
       {lists.length === 0 ? (
         <p className="rounded-row bg-sunken/60 px-4 py-6 text-center text-muted">
-          Henüz listeniz yok. Listeler, kişileri kampanyalara göre gruplamanızı sağlar (örn. &ldquo;Kadıköy diş klinikleri&rdquo;).
+          Henüz listeniz yok. Listeler, kişileri otomasyonlara göre gruplamanızı sağlar (örn. &ldquo;Kadıköy diş klinikleri&rdquo;).
         </p>
       ) : (
         <ul className="grid gap-2">
@@ -92,7 +92,7 @@ export function ListsView({
   );
 }
 
-/** Kara liste: bu adreslere hiçbir kampanya e-posta göndermez. */
+/** Kara liste: bu adreslere hiçbir otomasyon e-posta göndermez. */
 export function SuppressionsView({ items, onChanged }: { items: Suppression[]; onChanged: () => void }) {
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -121,7 +121,7 @@ export function SuppressionsView({ items, onChanged }: { items: Suppression[]; o
   return (
     <div className="grid gap-5">
       <p className="max-w-[44rem] text-muted">
-        Kara listedeki adreslere hiçbir kampanya e-posta göndermez. Abonelikten çıkanlar ve geçersiz çıkan adresler buraya otomatik eklenir; bir firmanın tüm
+        Kara listedeki adreslere hiçbir otomasyon e-posta göndermez. Abonelikten çıkanlar ve geçersiz çıkan adresler buraya otomatik eklenir; bir firmanın tüm
         adreslerini engellemek için alan adını (örn. <span className="font-medium text-ink">firma.com</span>) yazın.
       </p>
       <form

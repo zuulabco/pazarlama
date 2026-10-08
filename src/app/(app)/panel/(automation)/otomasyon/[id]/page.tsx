@@ -9,9 +9,9 @@ import { getProfile } from "@/modules/profile/repository";
 import { ListSkeleton } from "../../../../_components/skeletons";
 import { CampaignWorkspace } from "./_components/campaign-workspace";
 
-export const metadata: Metadata = { title: "Kampanya" };
+export const metadata: Metadata = { title: "Otomasyon" };
 
-async function Content({ params }: { params: PageProps<"/panel/kampanyalar/[id]">["params"] }) {
+async function Content({ params }: { params: PageProps<"/panel/otomasyon/[id]">["params"] }) {
   const { id } = await params;
   const user = await requireUser();
   const profile = await getProfile(user.uid);
@@ -28,7 +28,7 @@ async function Content({ params }: { params: PageProps<"/panel/kampanyalar/[id]"
   return <CampaignWorkspace initial={data.seq} mailboxes={data.boxes} sender={{ name: user.name ?? null, company: profile.businessName }} />;
 }
 
-export default function CampaignPage(props: PageProps<"/panel/kampanyalar/[id]">) {
+export default function CampaignPage(props: PageProps<"/panel/otomasyon/[id]">) {
   return (
     <Suspense fallback={<ListSkeleton />}>
       <Content params={props.params} />

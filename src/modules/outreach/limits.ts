@@ -1,4 +1,4 @@
-/** Gönderim limitleri (saf): gönderici adresi ve kampanya için bir tick'te en çok kaç e-posta gönderilebileceği. */
+/** Gönderim limitleri (saf): gönderici adresi ve otomasyon için bir tick'te en çok kaç e-posta gönderilebileceği. */
 
 export type Counts = { lastHour: number; last24h: number };
 
@@ -10,7 +10,7 @@ export function mailboxCapacity(limits: { dailyLimit: number; hourlyLimit: numbe
   return Math.max(0, Math.min(limits.hourlyLimit - sent.lastHour, limits.dailyLimit - sent.last24h));
 }
 
-/** Kampanyanın kendi 24 saatlik üst sınırı (boşsa sınırsız) dikkate alınarak kalan kapasite. */
+/** Otomasyonun kendi 24 saatlik üst sınırı (boşsa sınırsız) dikkate alınarak kalan kapasite. */
 export function campaignCapacity(max24h: number | null, sentLast24h: number): number {
   return max24h === null ? Number.POSITIVE_INFINITY : Math.max(0, max24h - sentLast24h);
 }

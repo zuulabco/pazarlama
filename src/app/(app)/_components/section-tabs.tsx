@@ -70,7 +70,7 @@ export const leadsTabs = [
 export function AutomationBar() {
   const path = usePathname();
   if (path.startsWith("/panel/kisi-bul") || path.startsWith("/panel/kisiler")) return <SectionTabs title="Kişiler" tabs={leadsTabs} />;
-  if (path.startsWith("/panel/kampanyalar")) return <SectionTabs title="Kampanyalar" />;
+  if (path.startsWith("/panel/otomasyon")) return <SectionTabs title="Otomasyon" />;
   if (path.startsWith("/panel/raporlar")) return <SectionTabs title="Raporlar" />;
   if (path.startsWith("/panel/gelen-kutusu")) return <SectionTabs title="Gelen kutusu" />;
   if (path.startsWith("/panel/posta-kutulari")) return <SectionTabs title="Gönderici adresleri" />;

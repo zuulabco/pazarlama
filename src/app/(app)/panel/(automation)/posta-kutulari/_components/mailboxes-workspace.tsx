@@ -2,7 +2,8 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, CopyIcon, MailIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
+import { CheckIcon, CopyIcon, MailIcon, PenIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
+import { RowMenu } from "@/components/ui/row-menu";
 import { Modal } from "@/components/ui/modal";
 import { fold } from "@/lib/text";
 import { toast, Toaster } from "@/components/ui/toast";
@@ -200,14 +201,15 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
             <MailIcon size={22} />
           </span>
           <p className="text-lg font-semibold tracking-tight">Henüz gönderici adresi bağlamadınız</p>
-          <p className="max-w-[30rem] text-muted">E-posta kampanyası göndermek için en az bir gönderici adresi bağlayın. Gmail, Google Workspace, Outlook ve her SMTP/IMAP kutusu desteklenir.</p>
+          <p className="max-w-[30rem] text-muted">E-posta göndermek için en az bir gönderici adresi bağlayın. Gmail, Google Workspace, Outlook ve her SMTP/IMAP kutusu desteklenir.</p>
           <Button onClick={() => setPanel({ mode: "new" })} disabled={!encryptionReady}>
             <PlusIcon size={16} />
             Gönderici adresi bağla
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-panel bg-surface ring-1 ring-line">
+        <>
+        <div className="hidden overflow-x-auto rounded-panel bg-surface ring-1 ring-line md:block">
           <table className="w-full min-w-[56rem] text-left text-sm">
             <thead className="border-b border-line text-xs text-muted">
               <tr>
@@ -312,6 +314,50 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
             </tbody>
           </table>
         </div>
+
+        <ul className="grid gap-3 md:hidden" aria-label="Gönderici adresleri">
+          {shown.map((m) => {
+            const score = healthScore(m.dnsCheck);
+            return (
+              <li key={m.id} className="grid gap-3 rounded-panel bg-surface p-4 ring-1 ring-line">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{m.email}</p>
+                    <p className="text-xs text-muted">{[m.fromName, providerLabels[m.provider]].filter(Boolean).join(" · ")}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[m.status]}`}>{statusLabel[m.status]}</span>
+                    <RowMenu
+                      label={`${m.email} için işlemler`}
+                      items={[
+                        { label: "Ayarlar", icon: <PenIcon size={16} />, onClick: () => setPanel({ mode: "edit", id: m.id }) },
+                        { label: busy === `test-${m.id}` ? "Gönderiliyor…" : "Test e-postası", icon: <MailIcon size={16} />, onClick: () => void test(m) },
+                        { label: m.status === "duraklatildi" ? "Sürdür" : "Duraklat", onClick: () => void togglePause(m) },
+                        { label: "Bağlantıyı kaldır", icon: <TrashIcon size={16} />, danger: true, separatorBefore: true, onClick: () => void remove(m) },
+                      ]}
+                    />
+                  </div>
+                </div>
+                {m.status === "hata" && m.lastError && <p className="text-xs text-danger">{m.lastError}</p>}
+                <dl className="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <dt className="text-xs text-muted">Sağlık</dt>
+                    <dd className="tabular-nums">{score === null ? <span className="text-muted">—</span> : `%${score}`}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">Isınma</dt>
+                    <dd className="tabular-nums">{m.warmupEnabled ? (m.warmupScore !== null ? `%${m.warmupScore}` : "Başladı") : <span className="text-muted">Kapalı</span>}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">Limit</dt>
+                    <dd className="tabular-nums">{m.dailyLimit} / gün</dd>
+                  </div>
+                </dl>
+              </li>
+            );
+          })}
+        </ul>
+        </>
       )}
 
       <Modal open={panel?.mode === "new"} onClose={() => setPanel(null)} title="Gönderici adresi bağla" width="36rem">

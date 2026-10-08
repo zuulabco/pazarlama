@@ -1,7 +1,7 @@
 import { warmupDailyCap } from "./limits";
 
 /**
- * Isındırma kuralları (saf): günlük ısınma e-postası kotası, ısınma skoru ve ısınırken kampanya limiti.
+ * Isındırma kuralları (saf): günlük ısınma e-postası kotası, ısınma skoru ve ısınırken otomasyon limiti.
  */
 
 export type WarmupStatus = "gonderildi" | "gelen_kutusu" | "spam" | "yanitlandi" | "kayip";
@@ -27,7 +27,7 @@ export function warmupQuota(days: number): number {
   return 20;
 }
 
-/** Isınma açıkken kampanya e-postaları için günlük üst sınır (kademeli); kapalıyken kullanıcının kendi limiti. */
+/** Isınma açıkken otomasyon e-postaları için günlük üst sınır (kademeli); kapalıyken kullanıcının kendi limiti. */
 export function effectiveDailyLimit(m: { dailyLimit: number; warmupEnabled: boolean; warmupStartedAt: string | null }, now = Date.now()): number {
   return m.warmupEnabled && m.warmupStartedAt ? warmupDailyCap(daysSince(m.warmupStartedAt, now) + 1, m.dailyLimit) : m.dailyLimit;
 }

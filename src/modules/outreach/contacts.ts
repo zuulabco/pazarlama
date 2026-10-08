@@ -395,7 +395,7 @@ export async function removeSuppression(uid: string, id: string) {
   check("Kara listeden çıkarılamadı", error);
 }
 
-/** Bir adres kara listede mi (adresin kendisi ya da alan adı)? Kampanya göndericisi bunu kullanır. */
+/** Bir adres kara listede mi (adresin kendisi ya da alan adı)? Otomasyon göndericisi bunu kullanır. */
 export async function isSuppressed(uid: string, email: string): Promise<boolean> {
   const e = email.toLowerCase();
   const domain = e.slice(e.lastIndexOf("@") + 1);

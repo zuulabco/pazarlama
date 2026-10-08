@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 const bodySchema = z.object({ value: z.string().trim().min(3, "Bir e-posta ya da alan adı yazın.").max(254) });
 const domainPattern = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/;
 
-/** Kara listeye bir e-posta ("ali@firma.com") ya da alan adı ("firma.com") ekler: bir daha o adrese hiçbir kampanya göndermez. */
+/** Kara listeye bir e-posta ("ali@firma.com") ya da alan adı ("firma.com") ekler: bir daha o adrese hiçbir otomasyon göndermez. */
 export async function POST(req: NextRequest) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;

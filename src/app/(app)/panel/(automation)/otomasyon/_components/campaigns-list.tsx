@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, CopyIcon, PenIcon, PlusIcon, SearchIcon, SendIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
+import { RowMenu, type RowMenuItem } from "@/components/ui/row-menu";
 import { Select } from "@/components/ui/select";
 import { fold } from "@/lib/text";
 import { RotatingTips } from "@/components/ui/rotating-tips";
@@ -48,7 +49,7 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
     const r = await api<{ sequence: { id: string } }>("/api/outreach/sequences", { method: "POST", body: JSON.stringify({ name: name.trim(), from }) });
     setBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });
-    toast("Kampanya oluşturuldu");
+    toast("Otomasyon oluşturuldu");
     onCreated(r.data.sequence.id);
   }
 
@@ -81,11 +82,11 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
       />
 
       <label className="grid gap-1.5 text-sm font-medium">
-        Kampanya adı
+        Otomasyon adı
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Örn. Kadıköy diş klinikleri" aria-invalid={touched && !nameOk ? true : undefined} className={inputClass} autoFocus />
         {touched && !nameOk && (
           <span role="alert" className="text-sm font-normal text-danger">
-            Kampanyaya bir ad verin.
+            Otomasyona bir ad verin.
           </span>
         )}
       </label>
@@ -146,12 +147,12 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
         </ul>
       )}
 
-      {method === "bos" && <p className="text-sm text-muted">Boş bir kampanya açılır; adımları kendiniz eklersiniz.</p>}
+      {method === "bos" && <p className="text-sm text-muted">Boş bir otomasyon açılır; adımları kendiniz eklersiniz.</p>}
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={busy}>
           {method === "ai" && <SparkleIcon size={16} />}
-          {busy ? "Oluşturuluyor…" : method === "ai" ? "Adspine AI ile yaz" : "Kampanyayı oluştur"}
+          {busy ? "Oluşturuluyor…" : method === "ai" ? "Adspine AI ile yaz" : "Otomasyonu oluştur"}
         </Button>
         <Button variant="quiet" onClick={onCancel} disabled={busy}>
           Vazgeç
@@ -168,48 +169,72 @@ export function CampaignsList({ initial, unavailable }: { initial: SequenceSumma
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("hepsi");
+  const [renaming, setRenaming] = useState<{ s: SequenceSummary; name: string } | null>(null);
+  const [deleting, setDeleting] = useState<SequenceSummary | null>(null);
+  const [renameBusy, setRenameBusy] = useState(false);
 
   async function toggle(s: SequenceSummary) {
     const next = s.status === "aktif" ? "duraklatildi" : "aktif";
     const r = await api<{ sequence: SequenceSummary; problems?: { message: string }[] }>(`/api/outreach/sequences/${s.id}/status`, { method: "POST", body: JSON.stringify({ status: next }) });
     if (!r.ok) return toast(r.error, { kind: "error" });
     setItems((prev) => prev.map((x) => (x.id === s.id ? { ...x, status: r.data.sequence.status, pausedReason: r.data.sequence.pausedReason } : x)));
-    toast(next === "aktif" ? "Kampanya başlatıldı" : "Kampanya duraklatıldı");
+    toast(next === "aktif" ? "Otomasyon başlatıldı" : "Otomasyon duraklatıldı");
   }
 
   async function duplicate(s: SequenceSummary) {
     const r = await api<{ sequence: { id: string } }>(`/api/outreach/sequences/${s.id}/duplicate`, { method: "POST" });
     if (!r.ok) return toast(r.error, { kind: "error" });
-    toast("Kampanya çoğaltıldı");
-    router.push(`/panel/kampanyalar/${r.data.sequence.id}`);
+    toast("Otomasyon çoğaltıldı");
+    router.push(`/panel/otomasyon/${r.data.sequence.id}`);
   }
+
+  async function rename() {
+    if (!renaming || renameBusy) return;
+    const name = renaming.name.trim();
+    if (!name) return;
+    setRenameBusy(true);
+    const r = await api<{ sequence: SequenceSummary }>(`/api/outreach/sequences/${renaming.s.id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+    setRenameBusy(false);
+    if (!r.ok) return toast(r.error, { kind: "error" });
+    setItems((prev) => prev.map((x) => (x.id === renaming.s.id ? { ...x, name } : x)));
+    setRenaming(null);
+    toast("Ad güncellendi");
+  }
+
+  /** Satırın üç nokta menüsü: düzenle, yeniden adlandır, çoğalt, başlat/duraklat, sil. */
+  const menuFor = (s: SequenceSummary): RowMenuItem[] => [
+    { label: "Düzenle", icon: <ArrowRightIcon size={16} />, href: `/panel/otomasyon/${s.id}` },
+    { label: "Yeniden adlandır", icon: <PenIcon size={16} />, onClick: () => setRenaming({ s, name: s.name }) },
+    { label: "Çoğalt", icon: <CopyIcon size={16} />, onClick: () => void duplicate(s) },
+    ...(s.status !== "taslak" ? [{ label: s.status === "aktif" ? "Duraklat" : "Başlat", icon: <SendIcon size={16} />, onClick: () => void toggle(s) }] : []),
+    { label: "Sil", icon: <TrashIcon size={16} />, danger: true, separatorBefore: true, onClick: () => setDeleting(s) },
+  ];
 
   async function remove(s: SequenceSummary) {
     const r = await api<{ ok: true }>(`/api/outreach/sequences/${s.id}`, { method: "DELETE" });
     if (!r.ok) return toast(r.error, { kind: "error" });
     setItems((prev) => prev.filter((x) => x.id !== s.id));
-    toast("Kampanya silindi");
+    toast("Otomasyon silindi");
   }
 
   if (unavailable) {
     return (
       <div role="status" className="grid justify-items-center gap-3 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
         <Toaster />
-        <p className="text-lg font-semibold tracking-tight">Kampanyalar henüz etkinleştirilmedi</p>
+        <p className="text-lg font-semibold tracking-tight">Otomasyonlar henüz etkinleştirilmedi</p>
         <p className="max-w-[30rem] text-muted">Bu bölüm için veritabanı güncellemesi gerekiyor. Kısa süre sonra tekrar deneyin.</p>
       </div>
     );
   }
 
   const shown = items.filter((s) => (filter === "hepsi" || s.status === filter) && (!query.trim() || fold(s.name).includes(fold(query.trim()))));
-  const iconBtn = "grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-ink";
 
   return (
     <div className="grid gap-4">
       <Toaster />
       <div className="flex flex-wrap items-center gap-2">
         <label className="relative min-w-[14rem] flex-1 sm:max-w-xs">
-          <span className="sr-only">Kampanya ara</span>
+          <span className="sr-only">Otomasyon ara</span>
           <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
             <SearchIcon size={15} />
           </span>
@@ -229,18 +254,19 @@ export function CampaignsList({ initial, unavailable }: { initial: SequenceSumma
         />
         <Button className="ml-auto" onClick={() => setCreating(true)}>
           <PlusIcon size={16} />
-          Kampanya oluştur
+          Otomasyon oluştur
         </Button>
       </div>
 
       {items.length === 0 ? (
         <div className="grid justify-items-center gap-3 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
-          <p className="text-lg font-semibold tracking-tight">Henüz kampanyanız yok</p>
+          <p className="text-lg font-semibold tracking-tight">Henüz otomasyonunuz yok</p>
           <p className="max-w-[30rem] text-muted">Hedef kitlenizi ve amacınızı yazın, Adspine AI ilk e-posta dizinizi yazsın; ya da hazır bir şablonla başlayın.</p>
-          <Button onClick={() => setCreating(true)}>Kampanya oluştur</Button>
+          <Button onClick={() => setCreating(true)}>Otomasyon oluştur</Button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-panel bg-surface ring-1 ring-line">
+        <>
+        <div className="hidden overflow-x-auto rounded-panel bg-surface ring-1 ring-line md:block">
           <table className="w-full min-w-[52rem] text-left text-sm">
             <thead className="border-b border-line text-xs text-muted">
               <tr>
@@ -255,7 +281,7 @@ export function CampaignsList({ initial, unavailable }: { initial: SequenceSumma
               {shown.map((s) => (
                 <tr key={s.id} className="border-t border-line transition-colors first:border-t-0 hover:bg-sunken/40">
                   <td className="max-w-[20rem] px-4 py-3">
-                    <Link href={`/panel/kampanyalar/${s.id}`} className="block truncate font-medium underline-offset-4 hover:underline">
+                    <Link href={`/panel/otomasyon/${s.id}`} className="block truncate font-medium underline-offset-4 hover:underline">
                       {s.name}
                     </Link>
                     <span className="block truncate text-xs text-muted">
@@ -287,19 +313,9 @@ export function CampaignsList({ initial, unavailable }: { initial: SequenceSumma
                   <td className="px-4 py-3 tabular-nums">
                     {s.bounced} <span className="text-muted">· {pct(s.bounced, s.sent)}</span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-0.5">
-                      {s.status !== "taslak" && (
-                        <button type="button" onClick={() => void toggle(s)} className={`${iconBtn} w-auto px-3 text-xs font-medium`}>
-                          {s.status === "aktif" ? "Duraklat" : "Başlat"}
-                        </button>
-                      )}
-                      <button type="button" onClick={() => void duplicate(s)} className={`${iconBtn} w-auto px-3 text-xs font-medium`}>
-                        Çoğalt
-                      </button>
-                      <button type="button" onClick={() => void remove(s)} className={`${iconBtn} hover:text-danger`} aria-label={`${s.name} kampanyasını sil`}>
-                        <TrashIcon size={15} />
-                      </button>
+                  <td className="w-12 px-3 py-3">
+                    <div className="flex justify-end">
+                      <RowMenu label={`${s.name} için işlemler`} items={menuFor(s)} />
                     </div>
                   </td>
                 </tr>
@@ -307,17 +323,112 @@ export function CampaignsList({ initial, unavailable }: { initial: SequenceSumma
               {shown.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-muted">
-                    Aramaya uyan kampanya yok.
+                    Aramaya uyan otomasyon yok.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        <ul className="grid gap-3 md:hidden" aria-label="Otomasyonlar">
+          {shown.map((x) => (
+            <li key={x.id} className="grid gap-3 rounded-panel bg-surface p-4 ring-1 ring-line">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <Link href={`/panel/otomasyon/${x.id}`} className="block truncate font-medium underline-offset-4 hover:underline">
+                    {x.name}
+                  </Link>
+                  <p className="text-xs text-muted">
+                    {x.stepCount} adım · {x.enrolled} kişi{x.active ? ` (${x.active} sırada)` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[x.status]}`}>{statusLabel[x.status]}</span>
+                  <RowMenu label={`${x.name} için işlemler`} items={menuFor(x)} />
+                </div>
+              </div>
+              {x.status === "duraklatildi" && x.pausedReason && <p className="text-xs text-danger">{x.pausedReason}</p>}
+              <dl className="grid grid-cols-3 gap-2 text-sm">
+                <div>
+                  <dt className="text-xs text-muted">Gönderilen</dt>
+                  <dd className="tabular-nums">{x.sent}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">Yanıt</dt>
+                  <dd className="tabular-nums">
+                    {x.replied} <span className="text-muted">· {pct(x.replied, x.sent)}</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">Geri dönen</dt>
+                  <dd className="tabular-nums">
+                    {x.bounced} <span className="text-muted">· {pct(x.bounced, x.sent)}</span>
+                  </dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+          {shown.length === 0 && <li className="rounded-panel bg-surface px-4 py-10 text-center text-sm text-muted ring-1 ring-line">Aramaya uyan otomasyon yok.</li>}
+        </ul>
+        </>
       )}
 
-      <Modal open={creating} onClose={() => setCreating(false)} title="Kampanya oluştur">
-        <CreatePanel onCancel={() => setCreating(false)} onCreated={(id) => router.push(`/panel/kampanyalar/${id}`)} />
+      <Modal open={renaming !== null} onClose={() => setRenaming(null)} title="Yeniden adlandır" width="26rem">
+        {renaming && (
+          <form
+            className="grid gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void rename();
+            }}
+          >
+            <label className="grid gap-1.5 text-sm font-medium">
+              Otomasyon adı
+              <input autoFocus value={renaming.name} onChange={(e) => setRenaming({ ...renaming, name: e.target.value })} maxLength={80} className="h-11 w-full min-w-0 rounded-control bg-surface px-3.5 font-normal ring-1 ring-line-strong ring-inset outline-none focus:ring-2 focus:ring-forest" />
+            </label>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={renameBusy || !renaming.name.trim()}>
+                {renameBusy ? "Kaydediliyor…" : "Kaydet"}
+              </Button>
+              <Button variant="quiet" onClick={() => setRenaming(null)}>
+                Vazgeç
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      <Modal open={deleting !== null} onClose={() => setDeleting(null)} title="Otomasyon silinsin mi?" width="26rem">
+        {deleting && (
+          <div className="grid gap-4">
+            <p className="text-sm text-muted">
+              <span className="font-medium text-ink">{deleting.name}</span> ve içindeki adımlar kalıcı olarak silinir; bu işlem geri alınamaz. Gönderilmiş e-postalar etkilenmez.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                className="bg-danger hover:bg-danger"
+                onClick={() => {
+                  const target = deleting;
+                  setDeleting(null);
+                  void remove(target);
+                }}
+              >
+                Sil
+              </Button>
+              <Button variant="quiet" onClick={() => setDeleting(null)}>
+                Vazgeç
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={creating} onClose={() => setCreating(false)} title="Otomasyon oluştur">
+        <CreatePanel onCancel={() => setCreating(false)} onCreated={(id) => {
+            setCreating(false);
+            router.push(`/panel/otomasyon/${id}`);
+          }} />
       </Modal>
     </div>
   );

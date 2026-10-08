@@ -8,20 +8,20 @@ import { getSequence, setSequenceStatus } from "@/modules/outreach/sequences";
 const bodySchema = z.object({ status: z.enum(["aktif", "duraklatildi", "taslak"]), ignoreDns: z.boolean().optional() });
 
 /**
- * Kampanyayı başlatır/duraklatır. Başlatmadan önce eksikler denetlenir (etkin adım, dolu mesaj, bağlı gönderici adresi, alan adı ayarları);
+ * Otomasyonu başlatır/duraklatır. Başlatmadan önce eksikler denetlenir (etkin adım, dolu mesaj, bağlı gönderici adresi, alan adı ayarları);
  * alan adı ayarları dışındaki eksikler aşılamaz. Alan adı uyarısı `ignoreDns: true` ile bilerek geçilebilir.
  */
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]/status">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!z.uuid().safeParse(id).success) return fail("Kampanya bulunamadı.", 404);
+  if (!z.uuid().safeParse(id).success) return fail("Otomasyon bulunamadı.", 404);
   const body = bodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return fail("Geçersiz istek.", 400);
 
   try {
     const seq = await getSequence(g.user.uid, id);
-    if (!seq) return fail("Kampanya bulunamadı.", 404);
+    if (!seq) return fail("Otomasyon bulunamadı.", 404);
 
     if (body.data.status === "aktif") {
       const problems = activationProblems(seq, await listMailboxes(g.user.uid)).filter((p) => !(p.overridable && body.data.ignoreDns));
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/se
       }
     }
     const updated = await setSequenceStatus(g.user.uid, id, body.data.status, null);
-    return updated ? NextResponse.json({ sequence: updated }) : fail("Kampanya bulunamadı.", 404);
+    return updated ? NextResponse.json({ sequence: updated }) : fail("Otomasyon bulunamadı.", 404);
   } catch (e) {
     return outreachFailure(e);
   }

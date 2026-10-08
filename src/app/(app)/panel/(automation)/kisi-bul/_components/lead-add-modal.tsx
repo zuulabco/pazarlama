@@ -17,7 +17,7 @@ type Result = { added: number; skipped: Record<string, number>; listName: string
 
 /**
  * "Kişileri ekle ve e-posta bul" penceresi (Instantly'nin "Find Emails & Enrich" penceresinin karşılığı):
- * ne alınacağı, sonuçların hangi listeye gideceği, kredi özeti ve onay. Başarıdan sonra kampanyaya ekleme önerilir.
+ * ne alınacağı, sonuçların hangi listeye gideceği, kredi özeti ve onay. Başarıdan sonra otomasyona ekleme önerilir.
  */
 export function LeadAddModal({
   open,
@@ -63,7 +63,7 @@ export function LeadAddModal({
     setBusy(false);
     if (!r.ok) return setError(r.error);
     onDone(r.data.credits);
-    // Kampanyaya eklemek için eklenen listenin kimliğini bul (otomatik oluşturulan listeler adıyla bulunur).
+    // Otomasyona eklemek için eklenen listenin kimliğini bul (otomatik oluşturulan listeler adıyla bulunur).
     const all = await api<{ lists: ContactList[] }>("/api/outreach/lists");
     const list = all.ok ? (listId === "yeni" ? all.data.lists.find((l) => l.name === r.data.listName) : all.data.lists.find((l) => l.id === listId)) : undefined;
     setResult({ ...r.data, listId: list?.id ?? null });
@@ -82,7 +82,7 @@ export function LeadAddModal({
     setBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });
     setEnrolled(r.data.added);
-    toast(`${r.data.added} kişi kampanyaya eklendi`);
+    toast(`${r.data.added} kişi otomasyona eklendi`);
   }
 
   function close() {
@@ -174,21 +174,21 @@ export function LeadAddModal({
 
           {result.added > 0 && result.listId && (
             <div className="grid gap-3 rounded-row bg-forest-soft/50 p-4">
-              <h3 className="font-medium">Sıradaki adım: kampanyaya ekleyin</h3>
+              <h3 className="font-medium">Sıradaki adım: otomasyona ekleyin</h3>
               {campaigns === null ? (
-                <p className="text-sm text-muted">Kampanyalar yükleniyor…</p>
+                <p className="text-sm text-muted">Otomasyonlar yükleniyor…</p>
               ) : campaigns.length === 0 ? (
-                <p className="text-sm text-muted">Henüz kampanyanız yok. Kampanyalar sayfasında Adspine AI ile bir e-posta dizisi oluşturup bu listeyi ekleyebilirsiniz.</p>
+                <p className="text-sm text-muted">Henüz otomasyonunuz yok. Otomasyonlar sayfasında Adspine AI ile bir e-posta dizisi oluşturup bu listeyi ekleyebilirsiniz.</p>
               ) : enrolled !== null ? (
-                <p className="text-sm font-medium text-accent">{num(enrolled)} kişi kampanyaya eklendi.</p>
+                <p className="text-sm font-medium text-accent">{num(enrolled)} kişi otomasyona eklendi.</p>
               ) : (
                 <div className="flex flex-wrap items-end gap-3">
                   <div className="grid min-w-[12rem] flex-1 gap-1.5 text-sm font-medium">
-                    Kampanya
-                    <Select<string> label="Kampanya" value={campaignId} options={campaigns.map((c) => ({ value: c.id, label: c.name }))} onChange={setCampaignId} />
+                    Otomasyon
+                    <Select<string> label="Otomasyon" value={campaignId} options={campaigns.map((c) => ({ value: c.id, label: c.name }))} onChange={setCampaignId} />
                   </div>
                   <Button onClick={() => void enroll()} disabled={busy || !campaignId}>
-                    Kampanyaya ekle
+                    Otomasyona ekle
                   </Button>
                 </div>
               )}

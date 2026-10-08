@@ -100,7 +100,7 @@ export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; 
         <input value={fromName} onChange={(e) => setFromName(e.target.value)} maxLength={80} className={inputClass} />
       </label>
 
-      <TextArea label="İmza" hint="Her e-postanın sonuna eklenir (kampanyada “imzayı ekle” açıksa)." value={signature} onChange={(e) => setSignature(e.target.value)} maxLength={1000} placeholder={"Elif Yıldız\nYıldız Mali Müşavirlik\n0216 000 00 00"} />
+      <TextArea label="İmza" hint="Her e-postanın sonuna eklenir (otomasyonda “imzayı ekle” açıksa)." value={signature} onChange={(e) => setSignature(e.target.value)} maxLength={1000} placeholder={"Elif Yıldız\nYıldız Mali Müşavirlik\n0216 000 00 00"} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <NumberField label="Günlük limit" hint="Yeni kutuda 20 ile başlayın; 50'yi aşmayın." value={daily} onChange={setDaily} error={dailyError} />
@@ -123,7 +123,7 @@ export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; 
         )}
         {warm && (
           <p className="text-sm text-muted">
-            Isınırken kampanya limitiniz de kademeli artar (ilk günler 5, sonra 10, 20…). Havuzda en az iki adres olmalı; yalnızca sizin adresiniz varsa başka kullanıcılar katıldıkça başlar. Google ile bağlı adreslerde spam&apos;e düşen
+            Isınırken otomasyon limitiniz de kademeli artar (ilk günler 5, sonra 10, 20…). Havuzda en az iki adres olmalı; yalnızca sizin adresiniz varsa başka kullanıcılar katıldıkça başlar. Google ile bağlı adreslerde spam&apos;e düşen
             iletiler ölçülür ama gelen kutusuna taşınamaz.
           </p>
         )}

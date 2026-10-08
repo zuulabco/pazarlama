@@ -17,7 +17,7 @@ const unavailable = (e: { code?: string; message: string } | null) => {
 
 export const rangeOptions = [7, 30, 90] as const;
 
-/** Genel raporlar: yalnızca kampanya e-postaları sayılır (yanıtlar, ısındırma ve test e-postaları hariç). */
+/** Genel raporlar: yalnızca otomasyon e-postaları sayılır (yanıtlar, ısındırma ve test e-postaları hariç). */
 export async function loadReports(uid: string, days: number): Promise<ReportsData> {
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   const [msgs, enrolls, unsub, seqs, boxes] = await Promise.all([

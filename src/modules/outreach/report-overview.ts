@@ -1,6 +1,6 @@
 /**
  * Genel raporlar (saf toplama): seçilen gün aralığında gönderim, yanıt, geri dönen, olumlu yanıt ve toplantı sayıları;
- * günlük seri; kampanya ve gönderici adresi kırılımı. Saat dilimi İstanbul'dur.
+ * günlük seri; otomasyon ve gönderici adresi kırılımı. Saat dilimi İstanbul'dur.
  */
 
 export type RMsg = { sent_at: string; status: string; replied_at: string | null; sequence_id: string | null; mailbox_id: string | null };
@@ -61,7 +61,7 @@ export function buildOverview(msgs: RMsg[], enrolls: REnroll[], unsubscribed: nu
   };
 }
 
-/** Kampanya ya da gönderici adresi bazında kırılım (kimliği olmayan kayıtlar atlanır). */
+/** Otomasyon ya da gönderici adresi bazında kırılım (kimliği olmayan kayıtlar atlanır). */
 export function groupBy(msgs: RMsg[], enrolls: REnroll[], key: "sequence_id" | "mailbox_id", days: number, now = Date.now()): GroupRow[] {
   const since = now - days * DAY;
   const rows = new Map<string, GroupRow>();

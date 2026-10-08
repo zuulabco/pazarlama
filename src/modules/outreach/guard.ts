@@ -3,7 +3,7 @@ import { db } from "@/lib/supabase/server";
 import { addEvent } from "./enrollments";
 import { bounceRate, guardDefaults, pauseMessage, shouldPause } from "./bounce-guard";
 
-/** Etkin kampanyaların son 7 günlük geri dönme oranına bakar; eşiği aşanları otomatik duraklatır. Duraklatılan kampanya sayısını döndürür. */
+/** Etkin otomasyonların son 7 günlük geri dönme oranına bakar; eşiği aşanları otomatik duraklatır. Duraklatılan otomasyon sayısını döndürür. */
 export async function runBounceGuard(): Promise<number> {
   const { data: seqs } = await db().from("outreach_sequences").select("id, user_uid").eq("status", "aktif").returns<{ id: string; user_uid: string }[]>();
   if (!seqs?.length) return 0;

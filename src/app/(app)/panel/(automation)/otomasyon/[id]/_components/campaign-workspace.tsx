@@ -35,7 +35,7 @@ function newStep(kind: StepKind, position: number, afterEmail: boolean): Step {
   };
 }
 
-/** Kampanya ayrıntı ekranı: adım editörü, kişiler, rapor, ayarlar ve başlat/duraklat. */
+/** Otomasyon ayrıntı ekranı: adım editörü, kişiler, rapor, ayarlar ve başlat/duraklat. */
 export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Sequence; mailboxes: Mailbox[]; sender: Sender }) {
   const router = useRouter();
   const [seq, setSeq] = useState(initial);
@@ -91,7 +91,7 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
     const r = { data: { sequence: body.sequence } };
     setProblems([]);
     setSeq((s) => ({ ...s, status: r.data.sequence.status, pausedReason: r.data.sequence.pausedReason }));
-    toast(status === "aktif" ? "Kampanya başlatıldı" : "Kampanya duraklatıldı");
+    toast(status === "aktif" ? "Otomasyon başlatıldı" : "Otomasyon duraklatıldı");
     router.refresh();
   }
 
@@ -110,12 +110,12 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
       <Toaster />
       <header className="sticky top-0 z-20 -mx-4 flex min-h-12 flex-wrap items-center gap-x-5 gap-y-1 border-b border-line bg-paper/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 md:-ml-6">
         <div className="flex min-w-0 items-center gap-2 py-2">
-          <Link href="/panel/kampanyalar" aria-label="Kampanyalara dön" className="grid size-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-ink">
+          <Link href="/panel/otomasyon" aria-label="Otomasyonlara dön" className="grid size-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-ink">
             <ArrowLeftIcon size={16} />
           </Link>
           <h1 className="max-w-[16rem] truncate text-sm font-semibold tracking-tight">{seq.name}</h1>
         </div>
-        <div role="tablist" aria-label="Kampanya bölümleri" className="flex h-12 min-w-0 gap-1 overflow-x-auto [scrollbar-width:none]">
+        <div role="tablist" aria-label="Otomasyon bölümleri" className="flex h-12 min-w-0 gap-1 overflow-x-auto [scrollbar-width:none]">
           {tabs.map((t) => (
             <button
               key={t.key}

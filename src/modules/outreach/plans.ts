@@ -9,7 +9,7 @@ export type Plan = {
   senders: number;
   /** Her ay yenilenen kredi. 1 kredi = e-posta adresi bulunan 1 kişi. */
   monthlyCredits: number;
-  /** Açılabilecek en çok kampanya (arşivlenenler hariç). */
+  /** Açılabilecek en çok otomasyon (arşivlenenler hariç). */
   campaigns: number;
   /** Günde en çok kaç kişi aranabilir (kötüye kullanıma ve maliyete karşı). */
   dailyLeadCap: number;

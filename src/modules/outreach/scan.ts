@@ -12,8 +12,8 @@ import { withImap, type ImapConfig } from "./imap";
 import { classifyInbound, messageIds, parseBounce } from "./inbound";
 
 /**
- * Gönderici adresinin gelen kutusunu tarar: kampanya e-postalarımıza gelen yanıtları, ofis dışı otomatik yanıtları ve geri dönen
- * (bounce) e-postaları bulur; kampanyayı durdurur, kara listeyi ve kişi durumunu günceller. Sunucusuz ortamda kalıcı
+ * Gönderici adresinin gelen kutusunu tarar: otomasyon e-postalarımıza gelen yanıtları, ofis dışı otomatik yanıtları ve geri dönen
+ * (bounce) e-postaları bulur; otomasyonu durdurur, kara listeyi ve kişi durumunu günceller. Sunucusuz ortamda kalıcı
  * bağlantı yoktur: her çağrı bağlan → yeni iletileri oku → kapat. Okunan son UID gönderici adresinde saklanır.
  */
 
@@ -81,8 +81,8 @@ async function onReply(uid: string, sent: SentRow, info: { subject: string; from
 }
 
 /**
- * Aynı şirketten (aynı kişisel olmayan alan adı) biri yanıt verdiyse, o şirketin aynı kampanyadaki diğer kişilerinin dizisini durdurur:
- * iş arkadaşına aynı konuda tekrar yazmak yanıt vereni rahatsız eder. Kampanya ayarından kapatılabilir.
+ * Aynı şirketten (aynı kişisel olmayan alan adı) biri yanıt verdiyse, o şirketin aynı otomasyondaki diğer kişilerinin dizisini durdurur:
+ * iş arkadaşına aynı konuda tekrar yazmak yanıt vereni rahatsız eder. Otomasyon ayarından kapatılabilir.
  */
 async function stopSameCompany(uid: string, sent: SentRow) {
   if (!sent.sequence_id || !sent.contact_id) return;
@@ -151,7 +151,7 @@ async function onBounce(uid: string, mailboxId: string, raw: string) {
 
 type InboundItem = { from: string; fromName: string; subject: string; h: Record<string, string>; source: () => Promise<Buffer | null> };
 
-/** Tek bir gelen iletiyi sınıflandırıp (yanıt / ofis dışı / bounce) kampanya kayıtlarına işler. IMAP ve Gmail API taramaları ortak kullanır. */
+/** Tek bir gelen iletiyi sınıflandırıp (yanıt / ofis dışı / bounce) otomasyon kayıtlarına işler. IMAP ve Gmail API taramaları ortak kullanır. */
 type Parsed = { text: string; messageId: string | null; inReplyTo: string | null };
 
 async function parseSource(item: InboundItem): Promise<Parsed> {
@@ -161,7 +161,7 @@ async function parseSource(item: InboundItem): Promise<Parsed> {
   return { text: m.text ?? "", messageId: m.messageId ?? null, inReplyTo: typeof m.inReplyTo === "string" ? m.inReplyTo : null };
 }
 
-/** Yanıtı Gelen kutusu için saklar (en iyi çaba: saklanamazsa kampanya işleme etkilenmez). */
+/** Yanıtı Gelen kutusu için saklar (en iyi çaba: saklanamazsa otomasyon işleme etkilenmez). */
 async function keepReply(row: Pick<MailboxRow, "id" | "user_uid">, sent: SentRow, item: InboundItem, kind: "yanit" | "ooo", parsed?: Parsed) {
   if (!sent.enrollment_id) return;
   try {
@@ -188,7 +188,7 @@ async function keepReply(row: Pick<MailboxRow, "id" | "user_uid">, sent: SentRow
 async function handleInbound(row: Pick<MailboxRow, "id" | "user_uid">, item: InboundItem, ours: Set<string>, sentMap: Map<string, SentRow>, res: ScanResult) {
   const { h } = item;
   try {
-    // Isındırma e-postası: kampanya yanıtı sayılmaz; ulaştığı kaydedilir ve (çoğunlukla) yanıtlanır.
+    // Isındırma e-postası: otomasyon yanıtı sayılmaz; ulaştığı kaydedilir ve (çoğunlukla) yanıtlanır.
     const warm = h["x-adspine-warmup"]?.trim();
     if (warm) return void (await onWarmupArrival(row, warm));
     if (h["x-adspine-warmup-reply"]) return;

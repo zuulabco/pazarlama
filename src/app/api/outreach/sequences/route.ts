@@ -28,7 +28,7 @@ const bodySchema = sequenceCreateSchema.extend({
       z.object({ kind: z.literal("starter"), id: z.string().max(40) }),
       z.object({
         kind: z.literal("ai"),
-        goal: z.string().trim().min(5, "Kampanyanın amacını yazın.").max(300),
+        goal: z.string().trim().min(5, "Otomasyonun amacını yazın.").max(300),
         audience: z.string().trim().min(3, "Hedef kitleyi yazın.").max(300),
         steps: z.number().int().min(2).max(5).default(3),
         tone: z.enum(["samimi", "profesyonel", "net"]).default("samimi"),
@@ -37,7 +37,7 @@ const bodySchema = sequenceCreateSchema.extend({
     .optional(),
 });
 
-/** Kampanya oluşturur: boş, hazır şablondan ya da yapay zekâyla (hedef kitle + amaçtan 2-5 adımlı dizi). */
+/** Otomasyon oluşturur: boş, hazır şablondan ya da yapay zekâyla (hedef kitle + amaçtan 2-5 adımlı dizi). */
 export async function POST(req: NextRequest) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
@@ -53,13 +53,13 @@ export async function POST(req: NextRequest) {
       if (!starter) return fail("Şablon bulunamadı.", 404);
       steps = starter.steps;
     } else if (from?.kind === "ai") {
-      if (aiLimiter(g.user.uid)) return fail("Çok hızlı kampanya üretiyorsunuz. Bir dakika bekleyin.", 429);
+      if (aiLimiter(g.user.uid)) return fail("Çok hızlı otomasyon üretiyorsunuz. Bir dakika bekleyin.", 429);
       const sender = await senderContextFor(g.user.uid, g.user.name);
       if (!sender) return fail("Önce hesap kurulumunu tamamlayın.", 409);
       try {
         steps = await writeSequence({ goal: from.goal, audience: from.audience, steps: from.steps, tone: from.tone, sender });
       } catch (e) {
-        if (e instanceof LlmUnavailableError || e instanceof z.ZodError || e instanceof SyntaxError) return fail("Kampanya şu an yazılamadı. Biraz sonra tekrar deneyin ya da hazır şablondan başlayın.", 503);
+        if (e instanceof LlmUnavailableError || e instanceof z.ZodError || e instanceof SyntaxError) return fail("Otomasyon şu an yazılamadı. Biraz sonra tekrar deneyin ya da hazır şablondan başlayın.", 503);
         throw e;
       }
     }

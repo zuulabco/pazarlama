@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { AutomationBar } from "../../_components/section-tabs";
 
-/** Otomasyon sayfaları (Kişi bul, Kişiler, Kampanyalar, Gönderici adresleri): üst çubuk sayfa geçişlerinde sabit kalır. */
+/** Otomasyon sayfaları (Kişi bul, Kişiler, Otomasyonlar, Gönderici adresleri): üst çubuk sayfa geçişlerinde sabit kalır. */
 export default function AutomationLayout({ children }: LayoutProps<"/panel">) {
   return (
     <>

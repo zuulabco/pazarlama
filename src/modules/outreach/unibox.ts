@@ -10,7 +10,7 @@ import { friendlySmtpError } from "./smtp";
 import { leadStatusValues, type Conversation, type InboxCounts, type LeadStatus, type ThreadMessage } from "./unibox-options";
 
 /**
- * Gelen kutusu (Unibox): kampanya e-postalarına gelen yanıtlar kişi (kayıt) başına bir konuşmada toplanır. Yanıt gelince
+ * Gelen kutusu (Unibox): otomasyon e-postalarına gelen yanıtlar kişi (kayıt) başına bir konuşmada toplanır. Yanıt gelince
  * saklanır, durum etiketi otomatik atanır (kurallar, olmazsa yapay zekâ); kullanıcı etiketi değiştirebilir ve yanıt yazabilir.
  */
 
@@ -235,7 +235,7 @@ export class ReplyError extends Error {
 /** Yanıtın konusu: "Re: ..." (zaten varsa tekrarlanmaz). */
 export const replySubject = (subject: string) => (/^(re|yanıt):/i.test(subject.trim()) ? subject.trim() : `Re: ${subject.trim() || "(konu yok)"}`);
 
-/** Konuşmaya, kampanyanın gönderici adresinden yanıt yazar. Aynı konuşmada görünmesi için başlıklar zincirlenir. */
+/** Konuşmaya, otomasyonun gönderici adresinden yanıt yazar. Aynı konuşmada görünmesi için başlıklar zincirlenir. */
 export async function sendReply(uid: string, enrollmentId: string, body: string): Promise<ThreadMessage> {
   const e = await ownEnrollment(uid, enrollmentId);
   if (!e) throw new ReplyError("Konuşma bulunamadı.", 404);

@@ -1,4 +1,4 @@
-import { ChartIcon, InboxIcon, MapPinIcon, PenIcon, SearchIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
+import { BoltIcon, ChartIcon, InboxIcon, MapPinIcon, PenIcon, SearchIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
 
 type Icon = typeof SearchIcon;
 
@@ -26,9 +26,9 @@ export const sections: readonly Section[] = [
     label: "Ulaş",
     hint: "Onlara ulaşın ve sonuçları izleyin",
     icon: SendIcon,
-    href: "/panel/kampanyalar",
+    href: "/panel/otomasyon",
     links: [
-      { label: "Kampanyalar", href: "/panel/kampanyalar", icon: SendIcon, prefixes: ["/panel/kampanyalar", "/panel/otomasyon"] },
+      { label: "Otomasyon", href: "/panel/otomasyon", icon: BoltIcon, prefixes: ["/panel/otomasyon"] },
       { label: "Gelen kutusu", href: "/panel/gelen-kutusu", icon: InboxIcon, prefixes: ["/panel/gelen-kutusu"] },
       { label: "Mesaj hazırla", href: "/panel/calis", icon: PenIcon, prefixes: ["/panel/calis"] },
       { label: "Raporlar", href: "/panel/raporlar", icon: ChartIcon, prefixes: ["/panel/raporlar"] },

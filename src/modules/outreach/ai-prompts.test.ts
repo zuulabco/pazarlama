@@ -36,7 +36,7 @@ describe("sequenceMessages / openerMessages", () => {
 });
 
 describe("çıktı doğrulama", () => {
-  it("geçerli şablon ve kampanya çıktısını alır, geçersizi reddeder", () => {
+  it("geçerli şablon ve otomasyon çıktısını alır, geçersizi reddeder", () => {
     expect(templateSchema.parse({ konu: "Kısa bir soru", metin: "Merhaba {{first_name|}}, kısa bir sorum var; uygun musunuz?" }).konu).toBe("Kısa bir soru");
     expect(() => templateSchema.parse({ konu: "x", metin: "kısa" })).toThrow();
     expect(openerSchema.parse({ acilis: "" }).acilis).toBe("");

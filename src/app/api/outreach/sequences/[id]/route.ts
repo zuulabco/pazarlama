@@ -10,27 +10,27 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/outreach/seq
   const g = await guard(req);
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!idOk(id)) return fail("Kampanya bulunamadı.", 404);
+  if (!idOk(id)) return fail("Otomasyon bulunamadı.", 404);
   try {
     const sequence = await getSequence(g.user.uid, id);
-    return sequence ? NextResponse.json({ sequence }) : fail("Kampanya bulunamadı.", 404);
+    return sequence ? NextResponse.json({ sequence }) : fail("Otomasyon bulunamadı.", 404);
   } catch (e) {
     return outreachFailure(e);
   }
 }
 
-/** Kampanyayı kaydeder (ad, açıklama, gönderim saatleri, ayarlar, adımların tamamı). Yalnızca verilen alanlar değişir. */
+/** Otomasyonu kaydeder (ad, açıklama, gönderim saatleri, ayarlar, adımların tamamı). Yalnızca verilen alanlar değişir. */
 export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!idOk(id)) return fail("Kampanya bulunamadı.", 404);
+  if (!idOk(id)) return fail("Otomasyon bulunamadı.", 404);
 
   const body = sequenceUpdateSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return fail(body.error.issues[0]?.message ?? "Geçersiz istek.", 400);
   try {
     const sequence = await updateSequence(g.user.uid, id, body.data);
-    return sequence ? NextResponse.json({ sequence }) : fail("Kampanya bulunamadı.", 404);
+    return sequence ? NextResponse.json({ sequence }) : fail("Otomasyon bulunamadı.", 404);
   } catch (e) {
     return outreachFailure(e);
   }
@@ -40,7 +40,7 @@ export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/outreach/
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!idOk(id)) return fail("Kampanya bulunamadı.", 404);
+  if (!idOk(id)) return fail("Otomasyon bulunamadı.", 404);
   try {
     await deleteSequence(g.user.uid, id);
     return NextResponse.json({ ok: true });

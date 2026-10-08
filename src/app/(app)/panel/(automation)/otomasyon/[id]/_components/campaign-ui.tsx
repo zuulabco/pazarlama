@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-/** Kampanya ekranlarının ortak küçük parçaları. */
+/** Otomasyon ekranlarının ortak küçük parçaları. */
 
 export const inputClass =
   "h-11 w-full min-w-0 rounded-control bg-surface px-3.5 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger";
@@ -12,7 +12,7 @@ export const textareaClass =
 
 export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: ReactNode }) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium">
+    <label className="grid min-w-0 gap-1.5 text-sm font-medium">
       {label}
       {hint && <span className="-mt-1 text-sm font-normal text-muted">{hint}</span>}
       {children}
@@ -34,6 +34,19 @@ export function Toggle({ checked, onChange, label, hint, disabled }: { checked: 
         {hint && <span className="text-muted">{hint}</span>}
       </span>
     </label>
+  );
+}
+
+/** Ayarlar sekmesindeki bölüm kartı: başlık, tek cümlelik açıklama ve içerik. */
+export function SettingsCard({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  return (
+    <section className="grid min-w-0 gap-5 rounded-panel bg-surface p-5 ring-1 ring-line sm:p-6">
+      <div className="grid gap-1">
+        <h3 className="font-semibold tracking-tight">{title}</h3>
+        {description && <p className="text-sm text-muted">{description}</p>}
+      </div>
+      {children}
+    </section>
   );
 }
 

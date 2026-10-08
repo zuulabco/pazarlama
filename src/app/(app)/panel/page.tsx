@@ -120,7 +120,7 @@ function Stat({ label, value, sub, href }: { label: string; value: string; sub?:
   );
 }
 
-/** Bul ve Ulaş: sol çubuktaki iki iş akışı bölümünün özeti. Aralarındaki ok, kişilerin bulunup kampanyaya aktığını gösterir. */
+/** Bul ve Ulaş: sol çubuktaki iki iş akışı bölümünün özeti. Aralarındaki ok, kişilerin bulunup otomasyona aktığını gösterir. */
 function Lanes({ data }: { data: HomeData }) {
   const { account, pipeline: p } = data;
   return (
@@ -138,7 +138,7 @@ function Lanes({ data }: { data: HomeData }) {
           <Stat label="Kalan kredi" value={num(account.credits)} sub={account.plan.label} href="/panel/kisi-bul" />
         </div>
         <p className="mt-2 text-xs text-muted">
-          Bugünkü ücretsiz listeleme: {num(Math.max(account.browse.limit - account.browse.used, 0))} / {num(account.browse.limit)} kişi
+          Bugünkü listeleme hakkı: {num(Math.max(account.browse.limit - account.browse.used, 0))} / {num(account.browse.limit)} kişi
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <ButtonLink href="/panel/kisi-bul" className="h-9">
@@ -159,10 +159,10 @@ function Lanes({ data }: { data: HomeData }) {
           <h2 id="lane-ulas" className="font-semibold tracking-tight">
             Ulaş
           </h2>
-          <span className="text-xs text-muted">Kampanyalar ve yanıtlar</span>
+          <span className="text-xs text-muted">Otomasyonlar ve yanıtlar</span>
         </div>
         <div className="-mx-3 grid grid-cols-3 gap-1">
-          <Stat label="Aktif kampanya" value={num(data.activeCampaigns)} sub={`${num(p.inCampaign)} kişi sırada`} href="/panel/kampanyalar" />
+          <Stat label="Aktif kampanya" value={num(data.activeCampaigns)} sub={`${num(p.inCampaign)} kişi sırada`} href="/panel/otomasyon" />
           <Stat label="Okunmamış yanıt" value={num(data.facts.unread)} href="/panel/gelen-kutusu" />
           <Stat label="Toplantı (30 gün)" value={num(p.meetings)} href="/panel/raporlar" />
         </div>
@@ -170,8 +170,8 @@ function Lanes({ data }: { data: HomeData }) {
           Son 30 günde {num(data.reports.overview.totals.sent)} e-posta gönderildi, {num(p.replies)} yanıt alındı.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <ButtonLink href="/panel/kampanyalar" className="h-9">
-            Yeni kampanya
+          <ButtonLink href="/panel/otomasyon" className="h-9">
+            Yeni otomasyon
           </ButtonLink>
           <ButtonLink href="/panel/gelen-kutusu" className="h-9" variant="secondary">
             Gelen kutusu
@@ -219,7 +219,7 @@ function Performance({ data }: { data: HomeData }) {
           ))}
         </div>
       ) : (
-        <p className="mt-5 rounded-control bg-sunken/60 px-4 py-6 text-center text-sm text-muted">İlk kampanyanızı başlattığınızda günlük gönderim ve yanıtlar burada görünür.</p>
+        <p className="mt-5 rounded-control bg-sunken/60 px-4 py-6 text-center text-sm text-muted">İlk otomasyonunuzu başlattığınızda günlük gönderim ve yanıtlar burada görünür.</p>
       )}
     </Section>
   );
@@ -236,7 +236,7 @@ function Replies({ data }: { data: HomeData }) {
       }
     >
       {data.recentReplies.length === 0 ? (
-        <p className="text-sm text-muted">Henüz yanıt yok. Kampanyalarınıza gelen yanıtlar burada görünür ve otomatik etiketlenir.</p>
+        <p className="text-sm text-muted">Henüz yanıt yok. Otomasyonlarınıza gelen yanıtlar burada görünür ve otomatik etiketlenir.</p>
       ) : (
         <ul className="-mx-2 grid">
           {data.recentReplies.map((r) => (

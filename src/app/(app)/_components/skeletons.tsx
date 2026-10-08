@@ -46,7 +46,7 @@ export function LeadsSkeleton() {
   );
 }
 
-/** Arama kutusu, filtre seçenekleri ve satır listesi (Kayıtlı kişiler/firmalar, Kampanyalar, Gönderici adresleri). */
+/** Arama kutusu, filtre seçenekleri ve satır listesi (Kayıtlı kişiler/firmalar, Otomasyonlar, Gönderici adresleri). */
 export function ListSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <SkeletonRegion>

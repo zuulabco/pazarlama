@@ -2,7 +2,7 @@ import { bounceBand, bounceRate, guardDefaults, type Band } from "./bounce-guard
 import type { Step } from "./sequence-schema";
 import { stepLabel } from "./sequence-schema";
 
-/** Kampanya raporu (saf toplama): gönderim günlüğü ve kişi kayıtlarından toplamlar, adım/varyant kırılımı ve sağlık bandı. */
+/** Otomasyon raporu (saf toplama): gönderim günlüğü ve kişi kayıtlarından toplamlar, adım/varyant kırılımı ve sağlık bandı. */
 
 export type MsgLite = { step_id: string | null; variant_key: string; status: string; replied_at: string | null; open_count: number; click_count: number; sent_at: string };
 export type EnrollLite = { status: string; finish_reason: string | null };

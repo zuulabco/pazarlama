@@ -8,7 +8,7 @@ export const maxDuration = 60;
 const tooFast = rateLimiter(15);
 const bodySchema = z.object({ body: z.string().trim().min(1, "Yanıt boş.").max(10000, "Yanıt çok uzun.") });
 
-/** Konuşmaya yanıt gönderir (kampanyanın gönderici adresinden, aynı konuşmada görünecek şekilde). */
+/** Konuşmaya yanıt gönderir (otomasyonun gönderici adresinden, aynı konuşmada görünecek şekilde). */
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/inbox/[id]/reply">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;

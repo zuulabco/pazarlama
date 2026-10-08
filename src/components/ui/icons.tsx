@@ -171,6 +171,12 @@ export const GaugeIcon = ({ size }: P) => (
   </Svg>
 );
 
+export const BoltIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M11 2.5 4.5 11h4.2L8 17.5 15.5 8.6h-4.3L11 2.5Z" />
+  </Svg>
+);
+
 export const HomeIcon = ({ size }: P) => (
   <Svg size={size}>
     <path d="M3.5 9.2 10 3.8l6.5 5.4V16a.8.8 0 0 1-.8.8H4.3a.8.8 0 0 1-.8-.8V9.2Z" />

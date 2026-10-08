@@ -22,21 +22,21 @@ const bodySchema = z.object({
 });
 
 /**
- * "Bana test e-postası gönder": adımın metnini örnek verilerle (Ayşe, Lale Diş Kliniği…) doldurup kampanyanın gönderici adresinden
- * gönderir; gerçek e-postayla aynı imza ve abonelik alt bilgisini taşır. Kampanya kayıtlarına dokunmaz.
+ * "Bana test e-postası gönder": adımın metnini örnek verilerle (Ayşe, Lale Diş Kliniği…) doldurup otomasyonun gönderici adresinden
+ * gönderir; gerçek e-postayla aynı imza ve abonelik alt bilgisini taşır. Otomasyon kayıtlarına dokunmaz.
  */
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]/test">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   if (tooFast(g.user.uid)) return fail("Çok fazla test e-postası gönderdiniz. Biraz bekleyin.", 429);
   const { id } = await ctx.params;
-  if (!z.uuid().safeParse(id).success) return fail("Kampanya bulunamadı.", 404);
+  if (!z.uuid().safeParse(id).success) return fail("Otomasyon bulunamadı.", 404);
   const body = bodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return fail(body.error.issues[0]?.message ?? "Geçersiz istek.", 400);
 
   try {
     const seq = await getSequence(g.user.uid, id);
-    if (!seq) return fail("Kampanya bulunamadı.", 404);
+    if (!seq) return fail("Otomasyon bulunamadı.", 404);
     const boxes = (await listMailboxes(g.user.uid)).filter((m) => m.status === "bagli" && (seq.settings.mailboxIds.length === 0 || seq.settings.mailboxIds.includes(m.id)));
     const chosen = boxes.find((m) => m.id === body.data.mailboxId) ?? boxes[0];
     if (!chosen) return fail("Test için bağlı bir gönderici adresi yok. Gönderici adresleri sayfasından bağlayın.", 409);
