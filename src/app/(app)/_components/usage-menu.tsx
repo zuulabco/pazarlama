@@ -96,7 +96,7 @@ export function UsageMenu() {
             <Meter label="Bugünkü gönderim" value={sending.today} max={sending.capacity} text={sending.capacity ? `${num(sending.today)} / ${num(sending.capacity)}` : "Adres yok"} hint="Son 24 saat; bağlı gönderici adreslerinizin toplam günlük limiti." />
             <Meter label="Gönderici adresi" value={data.senders.used} max={data.senders.limit} text={`${data.senders.used} / ${data.senders.limit}`} />
             <Meter label="Otomasyon" value={data.campaigns.used} max={data.campaigns.limit} text={`${data.campaigns.used} / ${data.campaigns.limit}`} />
-            <Meter label="Günlük listeleme" value={data.browse.used} max={data.browse.limit} text={`${num(data.browse.used)} / ${num(data.browse.limit)}`} />
+            <Meter label="Aylık listeleme" value={data.browse.used} max={data.browse.limit} text={`${num(data.browse.used)} / ${num(data.browse.limit)}`} hint={`Her ay başında yenilenir. Günlük tavan: ${num(data.browse.dailyLimit)} kişi.`} />
             <p className="text-xs text-muted">
               Yaklaşık aylık gönderim kapasiteniz {num(data.monthlyCapacity)} e-posta.{" "}
               <Link href="/panel/posta-kutulari" onClick={() => setOpen(false)} className="text-accent underline underline-offset-4 hover:no-underline">

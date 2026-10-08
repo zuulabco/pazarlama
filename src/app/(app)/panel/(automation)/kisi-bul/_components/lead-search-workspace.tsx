@@ -55,7 +55,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
 
   const set = (patch: Partial<LeadSearchInput>) => setQ((cur) => ({ ...cur, ...patch }));
   const ready = q.roles.length + q.titles.length + q.industries.length + q.keywords.length > 0;
-  const left = Math.max(account.browse.limit - account.browse.used, 0);
+  const left = account.browse.left;
   const sizes = browseSizes.filter((s) => s <= left);
   const size = sizes.includes(q.count as (typeof browseSizes)[number]) ? q.count : (sizes.at(-1) ?? browseSizes[0]);
   const activeCount =
@@ -181,7 +181,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
             </Button>
           </div>
           <p className="text-sm text-muted">
-            Bugün <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan kredi:{" "}
+            Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan kredi:{" "}
             <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} paketi).
           </p>
           {!ready && stage.kind === "idle" && <p className="text-sm text-muted">Aramak için soldan bir unvan, kişi türü, sektör ya da anahtar kelime seçin.</p>}

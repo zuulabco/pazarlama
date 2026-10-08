@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/supabase/server";
 import { getAccount, InsufficientCreditsError, refundCredits, spendCredits } from "./account";
+import { blockedMessage, browseAllowance, monthStartIso } from "./browse-pool";
 import { limitPerCompany } from "./company";
 import { shortName, type BrowseRow, type LeadBrowse, type LeadSearchInput, type SavedSearch } from "./lead-options";
 import {
@@ -58,17 +59,22 @@ export async function browseUsedToday(uid: string): Promise<number> {
   return (data ?? []).reduce((n, r) => n + r.size, 0);
 }
 
+/** Bu ay (İstanbul takvimi) listelenen kişi sayısı. */
+export async function browseUsedThisMonth(uid: string): Promise<number> {
+  const { data, error } = await db().from("outreach_lead_searches").select("size").eq("user_uid", uid).eq("saved", false).neq("status", "hata").gte("created_at", monthStartIso()).returns<{ size: number }[]>();
+  unavailable(error);
+  return (data ?? []).reduce((n, r) => n + r.size, 0);
+}
+
 function view(row: Row, rows: BrowseRow[], hidden = { owned: 0, sameCompany: 0 }): LeadBrowse {
   return { id: row.id, status: row.status, size: row.size, found: row.found, rows, hidden, error: row.error, query: row.query, createdAt: row.created_at };
 }
 
 export async function startLeadBrowse(uid: string, q: LeadSearchInput): Promise<LeadBrowse> {
   const { plan } = await getAccount(uid);
-  const used = await browseUsedToday(uid);
-  if (used + q.count > plan.browsePerDay) {
-    const left = Math.max(plan.browsePerDay - used, 0);
-    throw new LeadSearchError(left > 0 ? `Bugün ${left} kişi daha listeleyebilirsiniz (${plan.label} paketi). Kişi sayısını azaltın.` : `Bugünkü listeleme hakkınız (${plan.browsePerDay} kişi) doldu. Yarın yenilenir.`, 429);
-  }
+  const [usedToday, usedMonth] = await Promise.all([browseUsedToday(uid), browseUsedThisMonth(uid)]);
+  const allowance = browseAllowance({ usedToday, usedMonth, perDay: plan.browsePerDay, perMonth: plan.browsePerMonth });
+  if (q.count > allowance.left) throw new LeadSearchError(blockedMessage(allowance, plan.label, plan.browsePerMonth, plan.browsePerDay, q.count), 429);
   const open = await db().from("outreach_lead_searches").select("id", { count: "exact", head: true }).eq("user_uid", uid).eq("status", "calisiyor");
   unavailable(open.error);
   if ((open.count ?? 0) >= 3) throw new LeadSearchError("Devam eden aramalarınız bitsin, sonra yenisini başlatın.", 429);

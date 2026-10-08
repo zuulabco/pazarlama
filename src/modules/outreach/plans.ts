@@ -13,15 +13,17 @@ export type Plan = {
   campaigns: number;
   /** Günde en çok kaç kişi aranabilir (kötüye kullanıma ve maliyete karşı). */
   dailyLeadCap: number;
-  /** Kredi harcamadan günde en çok kaç kişi listelenebilir (Kişi bul'da "önce göz at"; maliyeti bize aittir). */
+  /** Günde en çok kaç kişi listelenebilir (günlük güvenlik tavanı; asıl sınır aylık havuzdur). */
   browsePerDay: number;
+  /** Ayda en çok kaç kişi listelenebilir (kredinin 3 katı; her ay başında yenilenir). */
+  browsePerMonth: number;
 };
 
 export const plans: Record<PlanKey, Plan> = {
-  ucretsiz: { key: "ucretsiz", label: "Ücretsiz", senders: 1, monthlyCredits: 25, campaigns: 1, dailyLeadCap: 25, browsePerDay: 25 },
-  baslangic: { key: "baslangic", label: "Başlangıç", senders: 3, monthlyCredits: 750, campaigns: 5, dailyLeadCap: 150, browsePerDay: 200 },
-  buyume: { key: "buyume", label: "Büyüme", senders: 5, monthlyCredits: 2500, campaigns: 20, dailyLeadCap: 500, browsePerDay: 500 },
-  ajans: { key: "ajans", label: "Ajans", senders: 15, monthlyCredits: 8000, campaigns: 100, dailyLeadCap: 1000, browsePerDay: 1500 },
+  ucretsiz: { key: "ucretsiz", label: "Ücretsiz", senders: 1, monthlyCredits: 25, campaigns: 1, dailyLeadCap: 25, browsePerDay: 50, browsePerMonth: 75 },
+  baslangic: { key: "baslangic", label: "Başlangıç", senders: 3, monthlyCredits: 750, campaigns: 5, dailyLeadCap: 150, browsePerDay: 400, browsePerMonth: 2250 },
+  buyume: { key: "buyume", label: "Büyüme", senders: 5, monthlyCredits: 2500, campaigns: 20, dailyLeadCap: 500, browsePerDay: 1000, browsePerMonth: 7500 },
+  ajans: { key: "ajans", label: "Ajans", senders: 15, monthlyCredits: 8000, campaigns: 100, dailyLeadCap: 1000, browsePerDay: 3000, browsePerMonth: 24000 },
 };
 
 export const planList = Object.values(plans);
