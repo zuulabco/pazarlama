@@ -6,7 +6,7 @@ import { useState } from "react";
 import { ActionLink } from "@/components/ui/action-link";
 import { Collapse } from "@/components/ui/collapse";
 import { Disclosure } from "@/components/ui/disclosure";
-import { ArrowLeftIcon, ArrowRightIcon, GlobeIcon, MailIcon, MapPinIcon, NoteIcon, PenIcon, PhoneIcon, SearchIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon, GlobeIcon, MailIcon, MapPinIcon, NoteIcon, PenIcon, PhoneIcon, SearchIcon, CalendarIcon } from "@/components/ui/icons";
 import { toast, Toaster } from "@/components/ui/toast";
 import { fold } from "@/lib/text";
 import { safeUrl, telHref } from "@/lib/url";
@@ -159,6 +159,13 @@ function FavoriteCard({
             >
               <PenIcon size={16} />
               İletişim kur
+            </Link>
+            <Link
+              href={`/panel/plan?firma=${fav.id}&yeni=1`}
+              className="inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest"
+            >
+              <CalendarIcon size={16} />
+              Plan yap
             </Link>
             <div className="ml-auto flex items-center gap-2">
               {tel && <ActionLink iconOnly href={tel} icon={<PhoneIcon />} label={`Ara: ${fav.phone}`} />}

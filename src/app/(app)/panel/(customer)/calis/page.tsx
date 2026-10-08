@@ -19,16 +19,12 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/calis
   const profile = await getProfile(user.uid);
   if (!profile) redirect("/onboarding");
 
+  // Takip listesi isteğe bağlıdır: ulaşılamazsa ya da boşsa genel mesaj yazılabilir.
   let favorites: FavoriteWithNotes[] = [];
   try {
     favorites = await listFavorites(user.uid);
   } catch (e) {
     if (!(e instanceof FavoritesUnavailableError)) throw e;
-    return (
-      <p role="status" className="rounded-panel bg-surface px-6 py-10 text-center text-muted ring-1 ring-line">
-        Takip listesi henüz etkinleştirilmedi. Kısa süre sonra tekrar deneyin.
-      </p>
-    );
   }
 
   const sp = await searchParams;
@@ -39,19 +35,17 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/calis
     <WorkWorkspace
       favorites={favorites.map((f) => ({ id: f.id, name: f.name, district: f.city, category: f.category }))}
       firm={firm}
-      tool={one(sp.arac) === "email" && firm?.email ? "email" : "message"}
+      initialKind={one(sp.arac) === "email" ? "email" : "message"}
       services={profile.services.map((value) => ({ value, label: serviceLabel(value) }))}
-      suggestedService={firm ? suggestService(profile.services, firm.hasWebsite) : null}
+      suggestedService={firm ? suggestService(profile.services, firm.hasWebsite) : (profile.services[0] ?? null)}
     />
   );
 }
 
 export default function WorkPage(props: PageProps<"/panel/calis">) {
   return (
-    <>
-      <Suspense fallback={<PageSkeleton />}>
-        <Content searchParams={props.searchParams} />
-      </Suspense>
-    </>
+    <Suspense fallback={<PageSkeleton />}>
+      <Content searchParams={props.searchParams} />
+    </Suspense>
   );
 }

@@ -33,4 +33,5 @@ export const customerTabs = [
   { href: "/panel/musteri-bul", label: "Müşteri bul" },
   { href: "/panel/firmalar", label: "Takip et" },
   { href: "/panel/calis", label: "İletişim kur" },
+  { href: "/panel/plan", label: "Plan" },
 ] as const;

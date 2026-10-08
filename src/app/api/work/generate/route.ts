@@ -3,7 +3,18 @@ import { z } from "zod";
 import { isSameOrigin } from "@/lib/auth/origin";
 import { getSessionUser } from "@/lib/auth/session";
 import { chatJson, LlmUnavailableError } from "@/lib/llm/nvidia";
-import { buildMessages, goalValues, parseDraft, toneValues } from "@/modules/work/context";
+import {
+  applyToneGreeting,
+  buildMessages,
+  goalValues,
+  lengthValues,
+  parseDraft,
+  refinements,
+  refinementValues,
+  refineMessages,
+  toneValues,
+  type WorkFirm,
+} from "@/modules/work/context";
 import { loadSender, loadWorkFirm } from "@/modules/work/load";
 import { proofread } from "@/modules/work/proofread";
 
@@ -11,15 +22,31 @@ export const maxDuration = 60;
 
 const error = (message: string, status: number) => NextResponse.json({ error: message }, { status });
 
+const text = (max: number) => z.string().trim().max(max).nullish();
+
 const bodySchema = z.object({
-  favoriteId: z.uuid(),
   kind: z.enum(["message", "email"]),
   goal: z.enum(goalValues),
   tone: z.enum(toneValues),
-  service: z.string().trim().max(80).nullish(),
+  length: z.enum(lengthValues).default("standart"),
+  service: text(80),
+  /** Mesajda olmasını istedikleri. */
+  extra: text(300),
+  /** Takipteki bir firma seçildiyse; yoksa genel mesaj yazılır. */
+  favoriteId: z.uuid().nullish(),
+  /** Genel mesaj için alıcı hakkında kullanıcının verdiği bilgiler. */
+  recipient: z.object({ name: text(80), category: text(80), about: text(500) }).nullish(),
+  /** Hazır taslağı yeniden yazdırma. */
+  refine: z
+    .object({
+      action: z.enum(refinementValues).nullish(),
+      custom: text(200),
+      draft: z.object({ subject: z.string().max(200).nullish(), body: z.string().min(1).max(4000) }),
+    })
+    .nullish(),
 });
 
-/** Kullanıcı başına dakikada en çok 6 taslak (sunucu örneği başına ilk savunma; bkz. api/leads/ask). */
+/** Kullanıcı başına dakikada en çok 10 istek (sunucu örneği başına ilk savunma; bkz. api/leads/ask). */
 const recent = new Map<string, number[]>();
 function tooFast(uid: string) {
   const now = Date.now();
@@ -27,27 +54,69 @@ function tooFast(uid: string) {
   hits.push(now);
   recent.set(uid, hits);
   if (recent.size > 500) for (const [k, v] of recent) if (v.every((t) => now - t >= 60_000)) recent.delete(k);
-  return hits.length > 6;
+  return hits.length > 10;
 }
 
-/** Takipteki bir firma için kişiselleştirilmiş mesaj ya da e-posta taslağı üretir. */
+/** Takipte olmayan, kullanıcının anlattığı bir alıcı için bağlam. Gözlem üretilmez; yalnızca verilenler kullanılır. */
+function genericFirm(r: z.infer<typeof bodySchema>["recipient"]): WorkFirm {
+  return {
+    known: false,
+    id: "",
+    name: r?.name?.trim() ?? "",
+    category: r?.category?.trim() || null,
+    district: null,
+    phone: null,
+    email: null,
+    hasWebsite: false,
+    closed: false,
+    rating: null,
+    reviews: null,
+    score: 0,
+    digital: 0,
+    reach: 0,
+    status: "",
+    signals: [],
+    notes: r?.about?.trim() ? [r.about.trim()] : [],
+  };
+}
+
+/** İletişim mesajı ya da e-posta taslağı üretir (takipteki firmaya özel ya da genel); hazır taslağı yeniden yazar. */
 export async function POST(req: NextRequest) {
   if (!isSameOrigin(req)) return error("Geçersiz istek kaynağı.", 403);
   const user = await getSessionUser();
   if (!user) return error("Oturumunuz sona erdi. Tekrar giriş yapın.", 401);
-  if (tooFast(user.uid)) return error("Çok hızlı taslak istiyorsunuz. Birkaç saniye bekleyip tekrar deneyin.", 429);
+  if (tooFast(user.uid)) return error("Çok hızlı istek gönderiyorsunuz. Birkaç saniye bekleyip tekrar deneyin.", 429);
 
   const body = bodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return error("Geçersiz istek.", 400);
-  const { favoriteId, kind, goal, tone, service } = body.data;
+  const { favoriteId, kind, goal, tone, length, service, extra, recipient, refine } = body.data;
 
-  const [firm, sender] = await Promise.all([loadWorkFirm(user.uid, favoriteId), loadSender(user.uid, user.name)]);
-  if (!firm) return error("Müşteri bulunamadı.", 404);
+  const sender = await loadSender(user.uid, user.name);
   if (!sender) return error("Önce hesap kurulumunu tamamlayın.", 409);
 
+  let messages;
+  if (refine) {
+    const preset = refine.action ? refinements.find((r) => r.value === refine.action)?.text : null;
+    const instruction = [preset, refine.custom?.trim()].filter(Boolean).join("; ");
+    if (!instruction) return error("Bir düzeltme seçin ya da isteğinizi yazın.", 400);
+    messages = refineMessages({ kind, draft: { subject: refine.draft.subject ?? null, body: refine.draft.body }, instruction, sender });
+  } else {
+    const firm = favoriteId ? await loadWorkFirm(user.uid, favoriteId) : genericFirm(recipient);
+    if (!firm) return error("Müşteri bulunamadı.", 404);
+    messages = buildMessages({ kind, goal, tone, length, service: service || null, extra: extra || null, firm, sender });
+  }
+
   try {
-    const raw = await chatJson(buildMessages({ kind, goal, tone, service: service || null, firm, sender }), { maxTokens: 1500, timeoutMs: 40_000, thinking: false, temperature: 0.1 });
-    return NextResponse.json(await proofread(kind, parseDraft(kind, raw)));
+    const ask = (temperature: number) => chatJson(messages, { maxTokens: 1800, timeoutMs: 40_000, thinking: false, temperature });
+    let draft = parseDraft(kind, await ask(refine ? 0.3 : 0.15));
+    if (refine) {
+      // Model bazen isteği yok sayıp metni aynen döndürür: bir kez daha, daha yaratıcı denenir.
+      const squash = (t: string) => t.replace(/\s+/g, " ").trim();
+      const same = (a: string, b: string) => squash(a) === squash(b);
+      if (same(draft.body, refine.draft.body) && !refine.custom) draft = parseDraft(kind, await ask(0.7));
+      draft = { ...draft, body: applyToneGreeting(draft.body, refine.action) };
+    }
+    return NextResponse.json(await proofread(kind, draft));
   } catch (e) {
     if (e instanceof LlmUnavailableError || e instanceof z.ZodError || e instanceof SyntaxError) {
       console.error("Taslak üretilemedi:", e instanceof Error ? e.message : e);

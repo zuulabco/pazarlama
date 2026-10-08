@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { RotatingTips } from "@/components/ui/rotating-tips";
-import styles from "./wizard.module.css";
+import frame from "@/components/ui/flow-frame.module.css";
 
 /** Analiz sürerken dönen ifadeler (sabit "yükleniyor" yerine). */
 export const analysisTips = [
@@ -33,7 +33,7 @@ export function SiteField({
       <label htmlFor={id} className="text-base font-medium">
         Site adresi
       </label>
-      <div className={styles.siteFrame} data-busy={busy} data-invalid={error ? "" : undefined}>
+      <div className={frame.frame} data-busy={busy} data-invalid={error ? "" : undefined}>
         <input
           id={id}
           type="text"

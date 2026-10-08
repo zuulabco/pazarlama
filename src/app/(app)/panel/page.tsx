@@ -19,14 +19,14 @@ const features = [
     href: "/panel/musteri",
     preview: "musteri-bul",
     description: "Bölgenizdeki firmaları bulun, hedef profilinize göre puanlayın ve ilgilendiklerinizi takip edin.",
-    parts: ["Müşteri bul", "Takip et", "İletişim kur"],
+    parts: ["Müşteri bul", "Takip et", "İletişim kur", "Plan"],
   },
   {
     id: "calis",
     name: "İletişim kur",
     href: "/panel/calis",
     preview: "calis",
-    description: "Seçtiğiniz müşteri için, bildiklerimizden yola çıkarak kişiselleştirilmiş mesaj ve e-posta taslakları hazırlayın.",
+    description: "Yapay zekâ ile saniyeler içinde, işletmenize ve alıcıya özel mesaj ve e-posta yazın; WhatsApp ya da e-postadan tek tıkla gönderin. İsterseniz takibinizdeki bir firmayı seçin.",
     parts: ["Mesaj", "E-posta"],
   },
 ] as const;

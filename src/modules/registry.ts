@@ -20,7 +20,7 @@ export const appModules: readonly AppModule[] = [
   {
     id: "calis",
     name: "İletişim kur",
-    description: "Seçtiğiniz müşteri için, elimizdeki verilerle kişiselleştirilmiş mesaj ve e-posta taslakları hazırlayın.",
+    description: "Yapay zekâ ile saniyeler içinde, işletmenize ve alıcıya özel mesaj ve e-posta yazın; WhatsApp ya da e-postadan tek tıkla gönderin.",
     href: "/panel/calis",
     status: "ready",
   },

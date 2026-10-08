@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { acceptProofread, buildMessages, deriveSignals, observations, parseDraft, suggestService, whatsappHref, whatsappNumber, withOptOut, type WorkFirm, type WorkSender } from "./context";
+import { acceptProofread, buildMessages, deriveSignals, gmailHref, mailtoHref, observations, parseDraft, parseRecipient, refineMessages, suggestService, whatsappHref, whatsappNumber, withOptOut, type WorkFirm, type WorkSender } from "./context";
 
 const firm: WorkFirm = {
   id: "f1",
@@ -127,5 +127,59 @@ describe("parseDraft", () => {
   it("çıkış satırı zaten varsa tekrar eklemez", () => {
     const body = "Merhaba.\n\nİstemezseniz yanıtlamanız yeterli.";
     expect(withOptOut(body)).toBe(body);
+  });
+});
+
+describe("parseRecipient", () => {
+  it("e-posta ve telefonu ayırt eder", () => {
+    expect(parseRecipient("ali@firma.com")).toEqual({ type: "email", email: "ali@firma.com" });
+    expect(parseRecipient(" 0532 215 10 55 ")).toEqual({ type: "phone", phone: "905322151055" });
+    expect(parseRecipient("+90 (216) 388 90 90")).toEqual({ type: "phone", phone: "902163889090" });
+  });
+  it("boş girdide null, geçersizde invalid döner", () => {
+    expect(parseRecipient("  ")).toBeNull();
+    for (const bad of ["ali@firma", "ali@", "123", "firma adı", "0532 abc 10 55"]) expect(parseRecipient(bad), bad).toEqual({ type: "invalid" });
+  });
+});
+
+describe("e-posta bağlantıları", () => {
+  it("Gmail yazma penceresini alıcı, konu ve metinle açar", () => {
+    const url = new URL(gmailHref("ali@firma.com", "Merhaba & selam", "Satır 1\nSatır 2"));
+    expect(url.origin + url.pathname).toBe("https://mail.google.com/mail/");
+    expect(url.searchParams.get("to")).toBe("ali@firma.com");
+    expect(url.searchParams.get("su")).toBe("Merhaba & selam");
+    expect(url.searchParams.get("body")).toBe("Satır 1\nSatır 2");
+  });
+  it("mailto bağlantısını kodlar", () => {
+    expect(mailtoHref("ali@firma.com", null, "Merhaba ş")).toBe("mailto:ali%40firma.com?subject=&body=Merhaba%20%C5%9F");
+  });
+});
+
+describe("genel mesaj (takipsiz alıcı)", () => {
+  const generic: WorkFirm = { ...firm, known: false, id: "", name: "", category: null, hasWebsite: false, rating: null, reviews: null, signals: [], notes: ["Yeni şube açıyorlar"] };
+
+  it("gözlem üretmez, kullanıcının bilgisini ayrı alanda taşır", () => {
+    expect(observations(generic)).toEqual([]);
+    const [system, user] = buildMessages({ kind: "message", goal: "ilk-temas", tone: "samimi", service: null, firm: generic, sender });
+    expect(user.content).toContain('"gonderenin_bildikleri":["Yeni şube açıyorlar"]');
+    expect(user.content).toContain('"gozlemler":[]');
+    expect(user.content).not.toContain("web sitesi bağlantısı göremedim");
+    expect(system.content).toContain("takipteki bir firma değil");
+  });
+
+  it("uzunluk, net ton ve kullanıcının isteğini isteme uygular", () => {
+    const [system] = buildMessages({ kind: "message", goal: "toplanti", tone: "net", length: "kisa", extra: "Cuma uygun olduğumu yaz", service: null, firm: generic, sender });
+    expect(system.content).toContain("en çok 40 kelime");
+    expect(system.content).toContain("<istek>Cuma uygun olduğumu yaz</istek>");
+    expect(system.content).toContain("görüşme ya da toplantı");
+  });
+});
+
+describe("refineMessages", () => {
+  it("yeni bilgi eklemeyi yasaklar ve e-postada imzayı korur", () => {
+    const [system, user] = refineMessages({ kind: "email", draft: { subject: "Konu", body: "Merhaba, ben Deniz." }, instruction: "daha kısa yap", sender });
+    expect(system.content).toContain("hiçbir bilgi, rakam");
+    expect(system.content).toContain("Deniz\nPikselatölye");
+    expect(user.content).toBe('<taslak>{"konu":"Konu","metin":"Merhaba, ben Deniz."}</taslak>');
   });
 });

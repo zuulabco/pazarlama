@@ -102,3 +102,40 @@ export const PenIcon = ({ size }: P) => (
     <path d="m11.8 5.6 2.6 2.6" />
   </Svg>
 );
+
+export const PlusIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M10 4.5v11M4.5 10h11" />
+  </Svg>
+);
+
+export const CalendarIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <rect x="3.5" y="4.5" width="13" height="12" rx="2" />
+    <path d="M3.5 8.5h13M7 3v3M13 3v3" />
+  </Svg>
+);
+
+export const TrashIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M4.5 6h11M8 6V4.5h4V6M6 6l.6 9a1.5 1.5 0 0 0 1.5 1.4h3.8a1.5 1.5 0 0 0 1.5-1.4L14 6" />
+  </Svg>
+);
+
+export const DownloadIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M10 4v8m-3-3 3 3 3-3M4.5 15.5h11" />
+  </Svg>
+);
+
+export const ChevronLeftIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="m12 5-5 5 5 5" />
+  </Svg>
+);
+
+export const ChevronRightIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="m8 5 5 5-5 5" />
+  </Svg>
+);
