@@ -6,6 +6,11 @@ import { usePathname } from "next/navigation";
 /** Ana özellik sekmeleri. Her sekme, kendi alt sayfalarını (bölüm sekmeleri) kapsar. */
 const sections = [
   { label: "Müşteri", href: "/panel/musteri", prefixes: ["/panel/musteri", "/panel/musteri-bul", "/panel/firmalar", "/panel/calis", "/panel/plan"] },
+  {
+    label: "Otomasyon",
+    href: "/panel/otomasyon",
+    prefixes: ["/panel/otomasyon", "/panel/kisiler", "/panel/kampanyalar", "/panel/posta-kutulari", "/panel/gelen-kutusu", "/panel/sablonlar", "/panel/analiz"],
+  },
 ] as const;
 
 export function AppNav() {

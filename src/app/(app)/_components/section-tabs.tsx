@@ -11,7 +11,7 @@ export function SectionTabs({ title, tabs }: { title: string; tabs: readonly { h
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
       <nav aria-label={`${title} bölümleri`} className="flex gap-1 overflow-x-auto border-b border-line [scrollbar-width:none]">
         {tabs.map((t) => {
-          const active = path === t.href;
+          const active = path === t.href || path.startsWith(`${t.href}/`);
           return (
             <Link
               key={t.href}
@@ -34,4 +34,11 @@ export const customerTabs = [
   { href: "/panel/firmalar", label: "Takip et" },
   { href: "/panel/calis", label: "İletişim kur" },
   { href: "/panel/plan", label: "Plan" },
+] as const;
+
+/** Otomasyon bölümünün sekmeleri. */
+export const automationTabs = [
+  { href: "/panel/kampanyalar", label: "Kampanyalar" },
+  { href: "/panel/kisiler", label: "Kişiler" },
+  { href: "/panel/posta-kutulari", label: "Posta kutuları" },
 ] as const;

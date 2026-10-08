@@ -20,7 +20,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             <Link href="/panel" aria-label="Panel" className="rounded-control">
               <Wordmark textClassName="hidden sm:inline" />
             </Link>
-            <AppNav />
+            <Suspense fallback={null}>
+              <AppNav />
+            </Suspense>
           </div>
           <Suspense fallback={<span className="size-10 rounded-full bg-sunken" />}>
             <UserMenu />

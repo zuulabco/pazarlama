@@ -34,7 +34,17 @@ const publicLookup = ((hostname: string, options: dns.LookupOptions, callback: L
 
 type Raw = { status: number; headers: http.IncomingHttpHeaders; body: Buffer };
 
-function request(url: URL): Promise<Raw> {
+/** Sertifika zinciri doğrulanamadığında (Türkiye'deki birçok sitede ara sertifika eksiktir) görülen hata kodları. */
+const CERT_ERRORS = new Set([
+  "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+  "SELF_SIGNED_CERT_IN_CHAIN",
+  "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "CERT_HAS_EXPIRED",
+  "ERR_TLS_CERT_ALTNAME_INVALID",
+]);
+
+function request(url: URL, insecure = false): Promise<Raw> {
   return new Promise((resolve, reject) => {
     const client = url.protocol === "https:" ? https : http;
     const req = client.request(
@@ -42,6 +52,9 @@ function request(url: URL): Promise<Raw> {
       {
         method: "GET",
         lookup: publicLookup,
+        // Yalnızca herkese açık sayfa okunur (kimlik bilgisi gönderilmez); bu yüzden sertifika zinciri eksik siteler için
+        // ikinci denemede doğrulama kapatılır. Adres kısıtları (genel IP, 80/443) bu durumda da geçerlidir.
+        ...(insecure ? { rejectUnauthorized: false } : {}),
         signal: AbortSignal.timeout(TIMEOUT_MS),
         headers: {
           "user-agent": "Mozilla/5.0 (compatible; AdspineBot/1.0; +https://adspine.app)",
@@ -107,7 +120,12 @@ export async function fetchPublicHtml(start: string): Promise<{ url: string; htm
     assertAllowed(url);
     let res: Raw;
     try {
-      res = await request(url);
+      try {
+        res = await request(url);
+      } catch (e) {
+        if (url.protocol === "https:" && CERT_ERRORS.has((e as NodeJS.ErrnoException).code ?? "")) res = await request(url, true);
+        else throw e;
+      }
     } catch (e) {
       throw e instanceof UnreachableSiteError ? e : new UnreachableSiteError("Siteye ulaşılamadı.");
     }

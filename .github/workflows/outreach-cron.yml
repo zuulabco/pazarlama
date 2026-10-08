@@ -1,0 +1,30 @@
+# Otomasyon zamanlayıcısı: kampanya e-postalarını gönderir, gelen kutularını yanıt/bounce için tarar.
+# Vercel Hobby'de cron günde bir çalıştığı için dakikalık iş burada (ücretsiz). GitHub en sık 5 dakikada bir tetikler ve zaman zaman geciktirebilir.
+# Vercel Pro kullanıyorsanız bunun yerine vercel.json'a şunu ekleyebilirsiniz: { "crons": [{ "path": "/api/cron/outreach", "schedule": "* * * * *" }] }
+#
+# Kurulum: depo → Settings → Secrets and variables → Actions → şu iki gizli değeri ekleyin:
+#   APP_URL      örn. https://adspine.app
+#   CRON_SECRET  Vercel'deki CRON_SECRET ile aynı değer
+name: Otomasyon zamanlayıcı
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: outreach-cron
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Uç noktayı çağır
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then echo "APP_URL ve CRON_SECRET gizli değerleri tanımlı değil"; exit 1; fi
+          curl -fsS -X POST "$APP_URL/api/cron/outreach" -H "Authorization: Bearer $CRON_SECRET" --max-time 290
