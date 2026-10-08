@@ -4,6 +4,7 @@ import { db } from "@/lib/supabase/server";
 import { addSuppression } from "./contacts";
 import { decryptSecret } from "./crypto";
 import { addEvent, finishContactEnrollments } from "./enrollments";
+import { getProfile, getRaw, newInboxMessageIds } from "./gmail";
 import { withImap, type ImapConfig } from "./imap";
 import { classifyInbound, messageIds, parseBounce } from "./inbound";
 
@@ -52,6 +53,7 @@ type MailboxRow = {
   secret_enc: string;
   imap_uidvalidity: number | null;
   imap_last_uid: number;
+  gmail_history_id: string | null;
 };
 
 type SentRow = { id: string; message_id: string; enrollment_id: string | null; sequence_id: string | null; contact_id: string | null; to_email: string };
@@ -112,7 +114,89 @@ async function onBounce(uid: string, mailboxId: string, raw: string) {
   return true;
 }
 
+type InboundItem = { from: string; fromName: string; subject: string; h: Record<string, string>; source: () => Promise<Buffer | null> };
+
+/** Tek bir gelen iletiyi sınıflandırıp (yanıt / ofis dışı / bounce) kampanya kayıtlarına işler. IMAP ve Gmail API taramaları ortak kullanır. */
+async function handleInbound(row: Pick<MailboxRow, "id" | "user_uid">, item: InboundItem, ours: Set<string>, sentMap: Map<string, SentRow>, res: ScanResult) {
+  const { h } = item;
+  try {
+    const kind = classifyInbound(
+      { from: `${item.fromName} <${item.from}>`, subject: item.subject, contentType: h["content-type"], autoSubmitted: h["auto-submitted"], precedence: h["precedence"], xAutoreply: h["x-autoreply"] ?? h["x-auto-response-suppress"], inReplyTo: h["in-reply-to"], references: h["references"] },
+      ours,
+    );
+    if (kind === "diger") return;
+    const refs = [...messageIds(h["in-reply-to"]), ...messageIds(h["references"])];
+    const sent = refs.map((id) => sentMap.get(id)).find(Boolean);
+
+    if (kind === "bounce") {
+      const src = await item.source();
+      if (src && (await onBounce(row.user_uid, row.id, src.toString("utf8")))) res.bounces++;
+    } else if (kind === "ooo" && sent) {
+      await onAutoReply(row.user_uid, sent, item.subject);
+      res.ooo++;
+    } else if (kind === "yanit" && sent) {
+      const src = await item.source();
+      const text = src ? ((await simpleParser(src)).text ?? "") : "";
+      await onReply(row.user_uid, sent, { subject: item.subject, from: item.from, snippet: replySnippet(text) });
+      res.replies++;
+    }
+  } catch (e) {
+    console.error("Gelen ileti işlenemedi:", e instanceof Error ? e.message : e);
+  }
+}
+
+/** Google OAuth ile bağlı posta kutusunun gelen kutusunu Gmail API ile tarar (geçmiş kimliğinden itibaren yeni iletiler). */
+export async function scanGoogleMailbox(row: MailboxRow): Promise<ScanResult> {
+  const res: ScanResult = { scanned: 0, replies: 0, ooo: 0, bounces: 0 };
+  const refresh = decryptSecret(row.secret_enc);
+  const touch = (patch: Record<string, unknown>) => db().from("outreach_mailboxes").update({ imap_checked_at: new Date().toISOString(), last_error: null, ...patch }).eq("id", row.id);
+
+  // İlk tarama ya da geçmiş kaydı süresi dolmuş (Gmail ~1 hafta saklar): bugünden itibaren izlenir.
+  if (!row.gmail_history_id) {
+    await touch({ gmail_history_id: (await getProfile(refresh)).historyId });
+    return res;
+  }
+  const found = await newInboxMessageIds(refresh, row.gmail_history_id);
+  if (!found) {
+    await touch({ gmail_history_id: (await getProfile(refresh)).historyId });
+    return res;
+  }
+
+  const msgs: { id: string; raw: Buffer; h: Record<string, string> }[] = [];
+  for (const id of found.ids.slice(0, MAX_PER_SCAN)) {
+    const m = await getRaw(refresh, id);
+    if (!m || m.raw.length > MAX_SOURCE_BYTES) continue;
+    const end = m.raw.indexOf("\r\n\r\n");
+    msgs.push({ id, raw: m.raw, h: parseHeaders(m.raw.subarray(0, end > 0 ? end : Math.min(m.raw.length, 20_000))) });
+  }
+  res.scanned = msgs.length;
+
+  const refIds = [...new Set(msgs.flatMap(({ h }) => [...messageIds(h["in-reply-to"]), ...messageIds(h["references"])]))];
+  const sentMap = await findSent(row.user_uid, row.id, refIds);
+  const ours = new Set(sentMap.keys());
+
+  for (const m of msgs) {
+    const from = /^(?:"?([^"<]*)"?\s*)?<?([^<>\s]+@[^<>\s]+)>?$/.exec(m.h["from"] ?? "");
+    await handleInbound(row, { from: from?.[2] ?? "", fromName: (from?.[1] ?? "").trim(), subject: decodeSubject(m.h["subject"] ?? ""), h: m.h, source: async () => m.raw }, ours, sentMap, res);
+  }
+  await touch({ gmail_history_id: found.historyId });
+  return res;
+}
+
+/** RFC 2047 kodlu ("=?UTF-8?B?...?=") konu başlığını çözer; çözülemezse olduğu gibi bırakır. */
+function decodeSubject(v: string): string {
+  return v.replace(/=\?([\w-]+)\?([bq])\?([^?]*)\?=/gi, (whole, cs: string, enc: string, text: string) => {
+    try {
+      const buf = enc.toLowerCase() === "b" ? Buffer.from(text, "base64") : Buffer.from(text.replace(/_/g, " ").replace(/=([0-9a-f]{2})/gi, (_m, x: string) => String.fromCharCode(parseInt(x, 16))), "latin1");
+      return new TextDecoder(cs).decode(buf);
+    } catch {
+      return whole;
+    }
+  });
+}
+
 export async function scanMailbox(row: MailboxRow): Promise<ScanResult> {
+  if (row.provider === "google") return scanGoogleMailbox(row);
   const res: ScanResult = { scanned: 0, replies: 0, ooo: 0, bounces: 0 };
   const cfg: ImapConfig = { host: row.imap_host, port: row.imap_port, secure: row.imap_secure, user: row.username, pass: decryptSecret(row.secret_enc) };
 
@@ -157,30 +241,7 @@ export async function scanMailbox(row: MailboxRow): Promise<ScanResult> {
       };
 
       for (const { m, h } of heads) {
-        try {
-          const kind = classifyInbound(
-            { from: `${m.envelope?.from?.[0]?.name ?? ""} <${m.envelope?.from?.[0]?.address ?? ""}>`, subject: m.envelope?.subject ?? "", contentType: h["content-type"], autoSubmitted: h["auto-submitted"], precedence: h["precedence"], xAutoreply: h["x-autoreply"] ?? h["x-auto-response-suppress"], inReplyTo: h["in-reply-to"], references: h["references"] },
-            ours,
-          );
-          if (kind === "diger") continue;
-          const refs = [...messageIds(h["in-reply-to"]), ...messageIds(h["references"])];
-          const sent = refs.map((id) => sentMap.get(id)).find(Boolean);
-
-          if (kind === "bounce") {
-            const src = await source(m.uid);
-            if (src && (await onBounce(row.user_uid, row.id, src.toString("utf8")))) res.bounces++;
-          } else if (kind === "ooo" && sent) {
-            await onAutoReply(row.user_uid, sent, m.envelope?.subject ?? "");
-            res.ooo++;
-          } else if (kind === "yanit" && sent) {
-            const src = await source(m.uid);
-            const text = src ? ((await simpleParser(src)).text ?? "") : "";
-            await onReply(row.user_uid, sent, { subject: m.envelope?.subject ?? "", from: m.envelope?.from?.[0]?.address ?? "", snippet: replySnippet(text) });
-            res.replies++;
-          }
-        } catch (e) {
-          console.error("Gelen ileti işlenemedi:", e instanceof Error ? e.message : e);
-        }
+        await handleInbound(row, { from: m.envelope?.from?.[0]?.address ?? "", fromName: m.envelope?.from?.[0]?.name ?? "", subject: m.envelope?.subject ?? "", h, source: () => source(m.uid) }, ours, sentMap, res);
       }
 
       const lastUid = msgs.at(-1)?.uid ?? from - 1;
@@ -199,7 +260,7 @@ export async function scanDueMailboxes(limit = 3, deadlineMs = 120_000): Promise
   const since = new Date(Date.now() - 2 * 60_000).toISOString();
   const { data } = await db()
     .from("outreach_mailboxes")
-    .select("id, user_uid, email, provider, imap_host, imap_port, imap_secure, username, secret_enc, imap_uidvalidity, imap_last_uid")
+    .select("id, user_uid, email, provider, imap_host, imap_port, imap_secure, username, secret_enc, imap_uidvalidity, imap_last_uid, gmail_history_id")
     .eq("status", "bagli")
     .or(`imap_checked_at.is.null,imap_checked_at.lt.${since}`)
     .order("imap_checked_at", { ascending: true, nullsFirst: true })
@@ -216,7 +277,7 @@ export async function scanDueMailboxes(limit = 3, deadlineMs = 120_000): Promise
       total.mailboxes++;
     } catch (e) {
       // Bağlantı hatası: bir sonraki turda yeniden denenir; sürekli hata verirse kullanıcı Posta kutuları'nda görür.
-      await db().from("outreach_mailboxes").update({ imap_checked_at: new Date().toISOString(), last_error: e instanceof Error ? e.message.slice(0, 200) : "IMAP hatası" }).eq("id", row.id);
+      await db().from("outreach_mailboxes").update({ imap_checked_at: new Date().toISOString(), last_error: e instanceof Error ? e.message.slice(0, 200) : "Gelen kutusu okunamadı" }).eq("id", row.id);
     }
   }
   return total;

@@ -67,10 +67,16 @@ export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; 
       {mailbox.status === "hata" && (
         <div className="grid gap-2 rounded-row bg-danger-soft p-3.5 text-sm text-danger">
           <p role="alert">{mailbox.lastError ?? "Bağlantı hatası."}</p>
-          <label className="grid gap-1.5 font-medium">
-            Yeni şifre / uygulama şifresi
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={`${inputClass} text-ink`} />
-          </label>
+          {mailbox.provider === "google" ? (
+            <a href="/api/outreach/oauth/google/start" className="w-fit rounded-control bg-forest px-4 py-2.5 font-medium text-white">
+              Google ile yeniden bağlan
+            </a>
+          ) : (
+            <label className="grid gap-1.5 font-medium">
+              Yeni şifre / uygulama şifresi
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={`${inputClass} text-ink`} />
+            </label>
+          )}
         </div>
       )}
 

@@ -12,7 +12,8 @@ import { buildVars, renderTemplate, type RenderVars } from "./render";
 import { isWithinWindow, jitter, nextRunAt, nextWindowStart } from "./schedule";
 import type { Sequence, Step, Variant } from "./sequence-schema";
 import { getSequence } from "./sequences";
-import { friendlySmtpError, sendMail, type SmtpConfig } from "./smtp";
+import { deliver } from "./mailer";
+import { friendlySmtpError } from "./smtp";
 import type { Mailbox } from "./mailbox-schema";
 import type { SenderContext } from "./ai-prompts";
 
@@ -258,9 +259,9 @@ async function runEmailStep(en: EnrollmentRow, seq: Sequence, active: Step[], st
     bcc: seq.settings.bcc,
   });
 
-  const cfg: SmtpConfig = { ...chosen.mailbox.smtp, user: chosen.mailbox.username, pass: chosen.password };
+  let delivered: { messageId: string };
   try {
-    await sendMail(cfg, mail);
+    delivered = await deliver(chosen.mailbox, chosen.password, mail);
   } catch (e) {
     const kind = classifySmtpFailure(e);
     if (kind === "alici_yok") {
@@ -294,7 +295,8 @@ async function runEmailStep(en: EnrollmentRow, seq: Sequence, active: Step[], st
   }
 
   // ── başarı: günlüğe yaz, sayaçları güncelle, sıradaki adımı planla
-  const bare = messageId.replace(/^<|>$/g, "");
+  // Gmail API iletinin Message-ID'sini değiştirebilir; yanıtlar gerçeğine bağlandığı için dönen değer kaydedilir.
+  const bare = (delivered.messageId || messageId).replace(/^<|>$/g, "");
   const row = await db().from("outreach_messages").insert({ user_uid: uid, sequence_id: seq.id, step_id: step.id, enrollment_id: en.id, contact_id: en.contact_id, mailbox_id: chosen.mailbox.id, variant_key: variant.key, message_id: bare, in_reply_to: en.last_message_id, to_email: contact.email, subject, body_text: body }).select("id").single();
   const c = ctx.counts.get(chosen.mailbox.id) ?? { lastHour: 0, last24h: 0 };
   ctx.counts.set(chosen.mailbox.id, { lastHour: c.lastHour + 1, last24h: c.last24h + 1 });

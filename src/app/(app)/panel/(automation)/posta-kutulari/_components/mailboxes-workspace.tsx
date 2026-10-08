@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Disclosure } from "@/components/ui/disclosure";
 import { CheckIcon, CopyIcon, MailIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
@@ -70,10 +70,28 @@ function DnsRow({ check }: { check: DnsCheck }) {
 }
 
 /** Posta kutuları: bağlı kutular, durum, alan adı sağlığı (SPF/DKIM/DMARC), test e-postası, ayarlar. */
-export function MailboxesWorkspace({ initial, unavailable, encryptionReady }: { initial: Mailbox[]; unavailable: boolean; encryptionReady: boolean }) {
+export function MailboxesWorkspace({ initial, unavailable, encryptionReady, googleReady }: { initial: Mailbox[]; unavailable: boolean; encryptionReady: boolean; googleReady: boolean }) {
   const [mailboxes, setMailboxes] = useState(initial);
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState<string | null>(null);
+
+  // "Google ile bağlan" dönüşünün sonucu adres çubuğunda gelir; bir kez bildirilip temizlenir.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const result = q.get("google");
+    if (!result) return;
+    const reasons: Record<string, string> = {
+      reddedildi: "Google bağlantısı iptal edildi.",
+      izin: "Gönderme ve okuma izinlerinin ikisini de vermeniz gerekiyor. Tekrar deneyip tüm kutuları işaretleyin.",
+      oturum: "Bağlantı oturumu zaman aşımına uğradı. Tekrar deneyin.",
+      limit: "En fazla 5 posta kutusu bağlayabilirsiniz.",
+      yapilandirma: "Google ile bağlanma henüz etkin değil.",
+    };
+    if (result === "ok") toast(`${q.get("email") ?? "Posta kutusu"} bağlandı`);
+    else toast(reasons[q.get("neden") ?? ""] ?? "Google ile bağlanılamadı. Tekrar deneyin.", { kind: "error" });
+    window.history.replaceState(null, "", window.location.pathname);
+    if (result === "ok") window.location.reload();
+  }, []);
 
   const put = (m: Mailbox) => setMailboxes((prev) => (prev.some((x) => x.id === m.id) ? prev.map((x) => (x.id === m.id ? m : x)) : [...prev, m]));
 
@@ -276,6 +294,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady }: { 
           <aside aria-label={panel.mode === "new" ? "Posta kutusu bağla" : "Posta kutusu ayarları"} className="rounded-panel bg-surface p-5 ring-1 ring-line lg:sticky lg:top-6">
             {panel.mode === "new" ? (
               <MailboxWizard
+                googleReady={googleReady}
                 onDone={(m) => {
                   put(m);
                   setPanel(null);

@@ -23,13 +23,18 @@ export function activationProblems(seq: Pick<Sequence, "steps" | "settings">, ma
     const usable = allowed.filter((m) => m.status === "bagli");
     if (usable.length === 0) {
       problems.push({ code: "posta_kutusu", message: "Gönderim için bağlı bir posta kutusu yok. Posta kutuları sayfasından bağlayın.", overridable: false });
-    } else if (!usable.some((m) => m.dnsCheck?.ready)) {
-      const bad = usable[0].dnsCheck?.checks.filter((c) => c.status !== "ok").map((c) => c.title).join(", ");
-      problems.push({
-        code: "alan_adi",
-        message: `Alan adı ayarları tamam değil${bad ? ` (${bad})` : ""}. Gmail ve Yahoo, SPF/DKIM/DMARC olmayan alan adlarından gelen toplu e-postaları sık sık reddeder.`,
-        overridable: true,
-      });
+    } else {
+      // DMARC tek başına engel değil (önerilir); SPF/DKIM/MX eksikse geçilebilir uyarı verilir.
+      const blocking = (m: Mailbox) => (m.dnsCheck?.checks ?? []).filter((c) => c.status !== "ok" && c.key !== "dmarc");
+      const needsFix = (m: Mailbox) => !m.dnsCheck || (!m.dnsCheck.ready && blocking(m).length > 0);
+      if (usable.every(needsFix)) {
+        const bad = blocking(usable[0]).map((c) => c.title).join(", ");
+        problems.push({
+          code: "alan_adi",
+          message: `Alan adı ayarları tamam değil${bad ? ` (${bad})` : ""}. Gmail ve Yahoo, SPF/DKIM olmayan alan adlarından gelen toplu e-postaları sık sık reddeder.`,
+          overridable: true,
+        });
+      }
     }
   }
   return problems;

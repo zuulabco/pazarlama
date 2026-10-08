@@ -1,10 +1,10 @@
 /** Posta sağlayıcı ön ayarları ve tahmini (saf). */
 
-export type Provider = "gmail" | "outlook" | "ozel";
+export type Provider = "gmail" | "outlook" | "ozel" | "google";
 
 export type ServerConfig = { host: string; port: number; secure: boolean };
 
-export const providerLabels: Record<Provider, string> = { gmail: "Google (Gmail / Workspace)", outlook: "Microsoft (Outlook / 365)", ozel: "Diğer (SMTP/IMAP)" };
+export const providerLabels: Record<Provider, string> = { google: "Google (Gmail / Workspace)", gmail: "Google (uygulama şifresiyle)", outlook: "Microsoft (Outlook / 365)", ozel: "Diğer (SMTP/IMAP)" };
 
 const PERSONAL_OUTLOOK = new Set(["outlook.com", "outlook.com.tr", "hotmail.com", "hotmail.com.tr", "live.com", "msn.com", "windowslive.com"]);
 const PERSONAL_GOOGLE = new Set(["gmail.com", "googlemail.com"]);
@@ -39,6 +39,7 @@ export function presetFor(provider: Provider, email: string): { smtp: ServerConf
 
 /** Sağlayıcıya göre "şifre" alanında ne istendiğini anlatan yönlendirme. */
 export const passwordHelp: Record<Provider, { label: string; steps: string[]; link?: { href: string; text: string } }> = {
+  google: { label: "Google ile bağlan", steps: [] },
   gmail: {
     label: "Uygulama şifresi",
     steps: [

@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { fail, guard, outreachFailure, rateLimiter } from "@/modules/outreach/http";
 import { getMailboxCredentials, updateMailbox } from "@/modules/outreach/mailboxes";
-import { friendlySmtpError, sendMail } from "@/modules/outreach/smtp";
+import { deliver } from "@/modules/outreach/mailer";
+import { friendlySmtpError } from "@/modules/outreach/smtp";
 
 export const maxDuration = 60;
 
@@ -23,8 +24,9 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/ma
     const { mailbox, password } = creds;
 
     try {
-      const sent = await sendMail(
-        { ...mailbox.smtp, user: mailbox.username, pass: password },
+      const sent = await deliver(
+        mailbox,
+        password,
         {
           from: mailbox.fromName ? { name: mailbox.fromName, address: mailbox.email } : mailbox.email,
           to: mailbox.email,

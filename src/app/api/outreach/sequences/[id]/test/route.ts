@@ -6,7 +6,8 @@ import { getMailboxCredentials, listMailboxes } from "@/modules/outreach/mailbox
 import { buildOutgoing, newMessageId } from "@/modules/outreach/mime";
 import { renderTemplate, sampleVars } from "@/modules/outreach/render";
 import { getSequence } from "@/modules/outreach/sequences";
-import { friendlySmtpError, sendMail } from "@/modules/outreach/smtp";
+import { deliver } from "@/modules/outreach/mailer";
+import { friendlySmtpError } from "@/modules/outreach/smtp";
 import { site } from "@/lib/site";
 
 export const maxDuration = 60;
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/se
       messageId: newMessageId(chosen.email.slice(chosen.email.lastIndexOf("@") + 1)),
     });
     try {
-      await sendMail({ ...chosen.smtp, user: chosen.username, pass: creds.password }, mail);
+      await deliver(chosen, creds.password, mail);
     } catch (e) {
       return fail(friendlySmtpError(e, chosen.provider), 422);
     }

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
 import { OutreachUnavailableError } from "@/modules/outreach/contacts";
 import type { Mailbox } from "@/modules/outreach/mailbox-schema";
+import { googleConfigured } from "@/modules/outreach/gmail";
 import { listMailboxes } from "@/modules/outreach/mailboxes";
 import { getProfile } from "@/modules/profile/repository";
 import { PageSkeleton } from "../../../_components/skeletons";
@@ -25,7 +26,7 @@ async function Content() {
   }
 
   const encryptionReady = Buffer.from((process.env.OUTREACH_ENC_KEY ?? "").replace(/^"|"$/g, ""), "base64").length === 32;
-  return <MailboxesWorkspace initial={mailboxes} unavailable={unavailable} encryptionReady={encryptionReady} />;
+  return <MailboxesWorkspace initial={mailboxes} unavailable={unavailable} encryptionReady={encryptionReady} googleReady={googleConfigured()} />;
 }
 
 export default function MailboxesPage() {

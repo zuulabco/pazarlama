@@ -24,6 +24,7 @@ async function transport(cfg: SmtpConfig) {
 /** Nodemailer hatalarını kullanıcıya anlaşılır Türkçe mesajlara çevirir. */
 export function friendlySmtpError(e: unknown, provider?: string): string {
   if (e instanceof HostBlockedError) return e.message;
+  if ((e as { name?: string })?.name === "GmailApiError") return (e as Error).message;
   const err = e as { code?: string; responseCode?: number; message?: string };
   if (err.code === "EAUTH" || err.responseCode === 535 || err.responseCode === 534) {
     return provider === "gmail"

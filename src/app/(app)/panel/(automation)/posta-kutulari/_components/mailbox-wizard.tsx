@@ -18,6 +18,7 @@ const inputClass =
   "h-11 w-full min-w-0 rounded-control bg-surface px-3.5 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger";
 
 const providerNote: Record<Provider, string> = {
+  google: "Google ile bağlan",
   gmail: "Gmail ve Google Workspace",
   outlook: "Outlook, Hotmail, Microsoft 365",
   ozel: "Herhangi bir sağlayıcı (SMTP/IMAP)",
@@ -59,7 +60,7 @@ function ServerFields({ legend, value, onChange, ports }: { legend: string; valu
  * Posta kutusu bağlama sihirbazı: sağlayıcı seç → bilgileri gir → bağla ve doğrula.
  * Kaydetmeden önce SMTP ve IMAP girişi sınanır; şifre sunucuda şifrelenir.
  */
-export function MailboxWizard({ onDone, onCancel }: { onDone: (m: Mailbox) => void; onCancel: () => void }) {
+export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: Mailbox) => void; onCancel: () => void; googleReady: boolean }) {
   const [provider, setProvider] = useState<Provider | null>(null);
   const [email, setEmail] = useState("");
   const [fromName, setFromName] = useState("");
@@ -70,6 +71,8 @@ export function MailboxWizard({ onDone, onCancel }: { onDone: (m: Mailbox) => vo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [googleConsent, setGoogleConsent] = useState(false);
+  const [googleTouched, setGoogleTouched] = useState(false);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
   const emailError = email.trim() && !emailValid ? "Geçerli bir e-posta adresi yazın." : undefined;
@@ -123,9 +126,36 @@ export function MailboxWizard({ onDone, onCancel }: { onDone: (m: Mailbox) => vo
     return (
       <div className="grid gap-4">
         <h3 className="text-lg font-semibold tracking-tight">Posta kutusu bağla</h3>
-        <p className="text-sm text-muted">E-postaları kendi adresinizden göndereceğiz. Önce sağlayıcınızı seçin.</p>
+        <p className="text-sm text-muted">E-postaları kendi adresinizden göndereceğiz. Gmail ve Google Workspace için tek tıkla bağlanabilirsiniz.</p>
+        {googleReady && (
+          <div className="grid gap-3 rounded-row bg-forest-soft/50 p-4 ring-1 ring-forest/30">
+            <div className="grid gap-0.5">
+              <span className="font-medium">Google ile bağlan (önerilen)</span>
+              <span className="text-sm text-muted">Şifre ya da 2 adımlı doğrulama gerekmez. Google ekranında Adspine&apos;a e-posta gönderme ve gelen yanıtları okuma izni verirsiniz; iletilerinizi silmez ya da değiştirmeyiz.</span>
+            </div>
+            <label className="flex items-start gap-3 text-sm">
+              <input type="checkbox" checked={googleConsent} onChange={(e) => setGoogleConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-[var(--color-forest)]" />
+              <span>Yalnızca izinli, işle ilgili alıcılara yazacağımı ve her e-postada abonelikten çıkma bağlantısı bulunacağını kabul ediyorum.</span>
+            </label>
+            {googleTouched && !googleConsent && (
+              <p role="alert" className="text-sm text-danger">
+                Devam etmek için onay kutusunu işaretleyin.
+              </p>
+            )}
+            <Button
+              onClick={() => {
+                setGoogleTouched(true);
+                if (googleConsent) window.location.assign(new URL("/api/outreach/oauth/google/start", window.location.origin));
+              }}
+              className="w-fit"
+            >
+              Google ile bağlan
+            </Button>
+          </div>
+        )}
+        <p className="text-sm font-medium">{googleReady ? "Ya da şifreyle bağlayın" : "Sağlayıcınızı seçin"}</p>
         <div className="grid gap-2.5">
-          {(["gmail", "outlook", "ozel"] as const).map((p) => (
+          {(googleReady ? (["outlook", "ozel", "gmail"] as const) : (["gmail", "outlook", "ozel"] as const)).map((p) => (
             <button
               key={p}
               type="button"

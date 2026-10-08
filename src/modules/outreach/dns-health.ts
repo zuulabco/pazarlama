@@ -30,12 +30,13 @@ export type DnsReport = { domain: string; checks: DnsCheck[]; ready: boolean; ma
 
 /** Sağlayıcıya göre yaygın DKIM seçicileri. */
 export const dkimSelectors: Record<Provider, string[]> = {
+  google: ["google"],
   gmail: ["google"],
   outlook: ["selector1", "selector2"],
   ozel: ["default", "mail", "k1", "s1", "dkim", "selector1", "google"],
 };
 
-const spfInclude: Record<Provider, string | null> = { gmail: "_spf.google.com", outlook: "spf.protection.outlook.com", ozel: null };
+const spfInclude: Record<Provider, string | null> = { google: "_spf.google.com", gmail: "_spf.google.com", outlook: "spf.protection.outlook.com", ozel: null };
 
 /** Ücretsiz posta alan adlarının DNS'i sağlayıcıya aittir; kullanıcı kayıt ekleyemez. */
 const MANAGED = new Set(["gmail.com", "googlemail.com", "outlook.com", "outlook.com.tr", "hotmail.com", "hotmail.com.tr", "live.com", "msn.com", "yahoo.com", "yandex.com", "icloud.com"]);
