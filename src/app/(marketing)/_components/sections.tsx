@@ -37,7 +37,7 @@ export function Hero() {
           Hizmetinize en çok ihtiyacı olan firmaları bulun.
         </h1>
         <p className="mt-7 max-w-[34rem] text-lg text-muted">
-          Bölge ve sektör seçin. Sinyal o bölgedeki işletmeleri toplar, her birini yedi kritere göre puanlar ve hangi
+          Bölge ve sektör seçin. Adspine o bölgedeki işletmeleri toplar, her birini yedi kritere göre puanlar ve hangi
           potansiyel müşteriye önce ulaşmanız gerektiğini sıralar.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
@@ -78,7 +78,7 @@ export function HowItWorks() {
     <Section id="nasil-calisir">
       <SectionIntro title="Aramadan ilk mesaja dört adım">
         Elle firma listesi çıkarmak, web sitelerine tek tek bakmak ve kime önce gideceğinize karar vermek saatler sürer.
-        Sinyal bu işi sizin yerinize yapar.
+        Adspine bu işi sizin yerinize yapar.
       </SectionIntro>
       <ol className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((step, i) => (

@@ -75,7 +75,7 @@ export default function SupportAutomationPage() {
           ))}
         </ol>
         <p className="mt-5 max-w-prose text-sm text-muted">
-          Otomasyon n8n adlı araçta, sizin hesabınızda çalışır. Sinyal sizin için doğru ayarlanmış hazır dosyayı üretir ve her adımda yol gösterir; kod yazmanız gerekmez.
+          Otomasyon n8n adlı araçta, sizin hesabınızda çalışır. Adspine sizin için doğru ayarlanmış hazır dosyayı üretir ve her adımda yol gösterir; kod yazmanız gerekmez.
         </p>
       </section>
 

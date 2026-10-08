@@ -27,7 +27,7 @@ export default function OpengraphImage() {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", width: 560 }}>
-          <div style={{ fontSize: 34, color: "#1d4a3c" }}>Sinyal</div>
+          <div style={{ fontSize: 34, color: "#1d4a3c" }}>Adspine</div>
           <div style={{ fontSize: 64, lineHeight: 1.05, letterSpacing: -2, marginTop: 28 }}>
             Hizmetinize en çok ihtiyacı olan firmaları bulun.
           </div>

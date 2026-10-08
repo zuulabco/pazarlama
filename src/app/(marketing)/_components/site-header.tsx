@@ -12,7 +12,7 @@ const nav = [
 export function SiteHeader() {
   return (
     <header className="mx-auto flex w-full max-w-page items-center justify-between gap-6 px-4 py-5 sm:px-6">
-      <Link href="/" aria-label="Sinyal ana sayfa" className="rounded-control">
+      <Link href="/" aria-label="Adspine ana sayfa" className="rounded-control">
         <Wordmark />
       </Link>
       <nav aria-label="Ana menü" className="hidden md:block">

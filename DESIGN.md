@@ -1,4 +1,4 @@
-# Sinyal arayüz kuralları
+# Adspine arayüz kuralları
 
 Bu kurallar sitenin tamamı için geçerlidir. Yeni bir ekran eklerken önce buradaki ortak bileşenleri kullanın.
 

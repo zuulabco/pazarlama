@@ -16,7 +16,7 @@ export function SiteFooter() {
           Gizlilik ve KVKK
         </Link>
       </div>
-      <p>© 2026 Sinyal</p>
+      <p>© 2026 Adspine</p>
     </footer>
   );
 }

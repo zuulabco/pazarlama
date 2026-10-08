@@ -197,7 +197,7 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                 {firstName ? `Hoş geldiniz, ${firstName}.` : "Hoş geldiniz."}
               </h1>
               <p style={{ "--i": 1 } as React.CSSProperties} className="max-w-[30rem] text-lg text-muted">
-                Sinyal&apos;i size göre kuralım. Dört kısa soruyla ne sattığınızı ve kime sattığınızı öğreneceğiz; listeniz
+                Adspine&apos;i size göre kuralım. Dört kısa soruyla ne sattığınızı ve kime sattığınızı öğreneceğiz; listeniz
                 buna göre puanlanacak. Bir dakika sürer.
               </p>
               <div style={{ "--i": 2 } as React.CSSProperties}>

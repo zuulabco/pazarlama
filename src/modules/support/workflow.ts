@@ -357,7 +357,7 @@ export function buildWorkflow(input: SupportConfig): N8nWorkflow {
     width: 620,
     height: 200,
     content:
-      "### Sinyal • Çok Dilli Müşteri Destek Otomasyonu\n" +
+      "### Adspine • Çok Dilli Müşteri Destek Otomasyonu\n" +
       `**${c.businessName.trim()}** için hazırlandı. Şifre ve erişim anahtarı içermez.\n\n` +
       "1. Kırmızı uyarılı her düğümü açıp kendi hesabınızı (credential) seçin.\n" +
       "2. Sağ üstten **Execute workflow** ile deneyin.\n" +
@@ -374,7 +374,7 @@ export function buildWorkflow(input: SupportConfig): N8nWorkflow {
   };
 }
 
-export const workflowFileName = "sinyal-destek-otomasyonu.json";
+export const workflowFileName = "adspine-destek-otomasyonu.json";
 
 /** n8n düğüm türü → kullanıcının n8n'de oluşturması gereken kimlik bilgisi (credential) türü. */
 const credentialTypes: Record<string, string> = {

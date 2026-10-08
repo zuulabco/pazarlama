@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Sinyal tasarım token'ları
+ * Adspine tasarım token'ları
  * ─────────────────────────
  * Ham değerler yalnızca burada tanımlanır; bileşenler sadece semantik
  * token'ları (bg-paper, text-ink, rounded-panel …) kullanır.

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Gizlilik ve KVKK Aydınlatma Metni",
-  description: "Sinyal'in kişisel verileri hangi amaçla, hangi hukuki sebeple işlediği ve haklarınız.",
+  description: "Adspine'in kişisel verileri hangi amaçla, hangi hukuki sebeple işlediği ve haklarınız.",
   alternates: { canonical: "/gizlilik" },
 };
 
@@ -18,7 +18,7 @@ const sections = [
   {
     title: "Veri sorumlusu",
     body: [
-      `Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında veri sorumlusu sıfatıyla ${controller.name} ("Sinyal") tarafından hazırlanmıştır. Adres: ${controller.address}.`,
+      `Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında veri sorumlusu sıfatıyla ${controller.name} ("Adspine") tarafından hazırlanmıştır. Adres: ${controller.address}.`,
     ],
   },
   {

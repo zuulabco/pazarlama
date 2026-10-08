@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1 flex-col px-4 py-6 sm:px-6">
-      <Link href="/" aria-label="Sinyal ana sayfa" className="self-start rounded-control">
+      <Link href="/" aria-label="Adspine ana sayfa" className="self-start rounded-control">
         <Wordmark />
       </Link>
       <main className="flex flex-1 items-center justify-center py-12">

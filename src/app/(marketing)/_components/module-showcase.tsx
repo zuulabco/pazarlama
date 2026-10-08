@@ -32,7 +32,7 @@ export function ModuleShowcase({ modules }: { modules: readonly AppModule[] }) {
     <div className="mt-12 grid gap-6 lg:grid-cols-[20rem_1fr] lg:gap-8">
       <div
         role="tablist"
-        aria-label="Sinyal özellikleri"
+        aria-label="Adspine özellikleri"
         aria-orientation="vertical"
         onKeyDown={onKey}
         className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:grid lg:content-start lg:gap-1.5 lg:overflow-visible lg:px-0 lg:pb-0"

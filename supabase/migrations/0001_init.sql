@@ -1,4 +1,4 @@
--- Sinyal: ilk şema
+-- Adspine: ilk şema
 -- Erişim modeli: tarayıcı Supabase'e DOĞRUDAN erişmez. Tüm okuma/yazma sunucudan,
 -- service_role anahtarıyla yapılır ve her sorgu oturumdaki kullanıcıya (user_uid) göre filtrelenir.
 -- Bu yüzden RLS açık, hiçbir politika yok ve anon/authenticated rollerinden tüm yetkiler alındı.

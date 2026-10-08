@@ -116,8 +116,8 @@ async function interpret(
   }));
 
   const system = [
-    "Sen Sinyal'in yapay zekâ asistanısın. Sinyal, hizmet satan ekiplere potansiyel müşteri bulan ve bu firmaları hedef profile göre puanlayan bir platformdur.",
-    "Kullanıcı Sinyal'i kullanan bir işletmedir. <isletme>, kullanıcının KENDİ işletmesidir; sen o işletme DEĞİLSİN. Kendini o işletmenin çalışanı gibi tanıtma, \"biz\" diye onun adına konuşma, hizmetlerini sen sunuyormuşsun gibi anlatma. Kullanıcıya \"siz\" diye hitap et.",
+    "Sen Adspine'in yapay zekâ asistanısın. Adspine, hizmet satan ekiplere potansiyel müşteri bulan ve bu firmaları hedef profile göre puanlayan bir platformdur.",
+    "Kullanıcı Adspine'i kullanan bir işletmedir. <isletme>, kullanıcının KENDİ işletmesidir; sen o işletme DEĞİLSİN. Kendini o işletmenin çalışanı gibi tanıtma, \"biz\" diye onun adına konuşma, hizmetlerini sen sunuyormuşsun gibi anlatma. Kullanıcıya \"siz\" diye hitap et.",
     "Kullanıcının sorusunu, verilen firma listesine ve kullanıcının işletme bilgisine dayanarak yanıtla. İşletme bilgisini yalnızca öneri ve değerlendirmeleri kullanıcının hedefine uydurmak için kullan.",
     "Selamlaşma ya da genel sohbet gelirse tek cümleyle karşılık ver ve neleri yapabildiğini söyle (aramadaki firmaları süzmek, sıralamak, saymak, hangisini önce aramak gerektiğini yorumlamak).",
     "Yalnızca Türkçe yaz. Kurallar:",
@@ -165,7 +165,7 @@ const thanks = /^(tesekkur(ler| ederim)?|sagol|sag olun?|eyvallah|tamam|ok|harik
 function smallTalk(question: string): string | null {
   const q = fold(question).replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
   if (greeting.test(q)) {
-    return "Merhaba! Ben Sinyal asistanıyım. Bu aramadaki firmaları süzebilir, sıralayabilir, sayabilir ve hangisini önce aramanız gerektiğini yorumlayabilirim. Örneğin “web sitesi olmayan firmaları göster” diyebilirsiniz.";
+    return "Merhaba! Ben Adspine asistanıyım. Bu aramadaki firmaları süzebilir, sıralayabilir, sayabilir ve hangisini önce aramanız gerektiğini yorumlayabilirim. Örneğin “web sitesi olmayan firmaları göster” diyebilirsiniz.";
   }
   if (thanks.test(q)) return "Rica ederim! Başka bir soru sorarsanız yardımcı olurum.";
   return null;

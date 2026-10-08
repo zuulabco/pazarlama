@@ -47,7 +47,7 @@ export const benefits = [
   },
   {
     title: "Verileriniz sizde kalır",
-    text: "Otomasyon sizin n8n hesabınızda çalışır. WhatsApp, e-posta ve Google hesaplarınızın şifrelerini Sinyal'e vermezsiniz.",
+    text: "Otomasyon sizin n8n hesabınızda çalışır. WhatsApp, e-posta ve Google hesaplarınızın şifrelerini Adspine'e vermezsiniz.",
   },
 ] as const;
 
@@ -206,7 +206,7 @@ export const faq = [
     a: "Otomasyon kendi hesaplarınızda çalıştığı için n8n, Meta WhatsApp Business ve Google Cloud kendi fiyatlandırmalarını uygular; bazılarında ücretsiz kota vardır. Güncel koşulları ilgili firmaların sitesinden kontrol edin.",
   },
   {
-    q: "Şifrelerimi Sinyal'e vermem gerekiyor mu?",
+    q: "Şifrelerimi Adspine'e vermem gerekiyor mu?",
     a: "Hayır. Sihirbaz yalnızca işletme adı, bildirim adresi ve tablo adresi gibi gizli olmayan bilgileri ister. Şifreler ve erişim anahtarları doğrudan sizin n8n hesabınıza girilir.",
   },
   {

@@ -86,11 +86,11 @@ describe("answerQuestion (LLM'siz yollar)", () => {
 });
 
 describe("sohbet cümleleri", () => {
-  it("selamlaşma modele gitmeden Sinyal asistanı olarak yanıtlanır", async () => {
+  it("selamlaşma modele gitmeden Adspine asistanı olarak yanıtlanır", async () => {
     for (const q of ["Merhaba", "selam!", "Günaydın", "merhaba nasılsın"]) {
       const r = await answerQuestion(q, leads, profile);
       expect(r.usedAi).toBe(false);
-      expect(r.answer).toContain("Sinyal asistanıyım");
+      expect(r.answer).toContain("Adspine asistanıyım");
     }
   });
 
