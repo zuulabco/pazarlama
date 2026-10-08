@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
-import { Wordmark } from "@/components/ui/wordmark";
-import { AppNav } from "./_components/app-nav";
+import { AppRail } from "./_components/app-rail";
 import { ThemeScope } from "./_components/theme-scope";
 import { UserMenu } from "./_components/user-menu";
 
@@ -10,26 +8,24 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/**
+ * Giriş yapılmış alanın kabuğu: solda simge çubuğu, sağda tam genişlikte içerik. Her sayfa kendi üst çubuğunu
+ * (başlık + sekmeler) çizer; ortak çerçeve burada yoktur.
+ */
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
-    <>
+    <div className="app-shell min-h-svh bg-paper text-ink">
       <ThemeScope />
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex h-16 w-full max-w-page items-center justify-between gap-3 px-4 sm:gap-6 sm:px-6">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-6">
-            <Link href="/panel" aria-label="Panel" className="rounded-control">
-              <Wordmark textClassName="hidden sm:inline" />
-            </Link>
-            <Suspense fallback={null}>
-              <AppNav />
+      <Suspense fallback={null}>
+        <AppRail
+          account={
+            <Suspense fallback={<span className="block size-10 rounded-full bg-sunken" />}>
+              <UserMenu />
             </Suspense>
-          </div>
-          <Suspense fallback={<span className="size-10 rounded-full bg-sunken" />}>
-            <UserMenu />
-          </Suspense>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-page flex-1 px-4 py-10 sm:px-6">{children}</main>
-    </>
+          }
+        />
+      </Suspense>
+      <main className="min-h-svh px-4 pb-20 sm:px-6 md:pb-8 md:pl-[calc(3.5rem+1.5rem)] md:pr-6">{children}</main>
+    </div>
   );
 }

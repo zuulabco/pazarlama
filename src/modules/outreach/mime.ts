@@ -8,7 +8,7 @@ export type BuildInput = {
   to: string;
   subject: string;
   body: string;
-  /** Posta kutusunun imzası; `includeSignature` açıksa eklenir. */
+  /** Gönderici adresinin imzası; `includeSignature` açıksa eklenir. */
   signature: string;
   includeSignature: boolean;
   /** Alt bilgide görünen gönderici kimliği: "Elif Yıldız · Yıldız Mali Müşavirlik · adres". Ticari iletide zorunludur. */

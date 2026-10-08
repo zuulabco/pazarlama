@@ -5,7 +5,7 @@ import type { EmailStatus } from "./discover/verify-rules";
 
 /** Kişi alanları ve kuralları (sunucu ve istemci ortak). */
 
-export type ContactSource = "elle" | "csv" | "takip" | "arama";
+export type ContactSource = "elle" | "csv" | "takip" | "arama" | "kisi_bul";
 
 export type Contact = {
   id: string;
@@ -17,6 +17,9 @@ export type Contact = {
   phone: string | null;
   website: string | null;
   city: string | null;
+  /** Kişinin unvanı ("Kişi bul" ile gelen kayıtlarda dolu). */
+  jobTitle: string | null;
+  linkedinUrl: string | null;
   source: ContactSource;
   sourceUrl: string | null;
   favoriteId: string | null;

@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { PlusIcon, SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
+import { fold } from "@/lib/text";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Segmented } from "@/components/ui/segmented";
 import { ShapeLoader } from "@/components/ui/shape-loader";
@@ -13,7 +16,7 @@ import { starters } from "@/modules/outreach/starters";
 import type { SequenceSummary } from "@/modules/outreach/sequence-schema";
 import { api } from "../../kisiler/_components/contact-ui";
 
-const statusStyle = { taslak: "bg-sunken text-muted", aktif: "bg-forest-soft text-forest", duraklatildi: "bg-pollen/60 text-ink", arsiv: "bg-sunken text-muted" } as const;
+const statusStyle = { taslak: "bg-sunken text-muted", aktif: "bg-forest-soft text-accent", duraklatildi: "bg-pollen/60 text-ink", arsiv: "bg-sunken text-muted" } as const;
 const statusLabel = { taslak: "Taslak", aktif: "Aktif", duraklatildi: "Duraklatıldı", arsiv: "Arşiv" } as const;
 
 const writingTips = ["Hedef kitlenize göre adımlar kurgulanıyor…", "İlk e-posta ve takipler yazılıyor…", "Bekleme süreleri ayarlanıyor…", "Son okuma yapılıyor…"];
@@ -68,8 +71,6 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
       }}
       className="grid gap-4"
     >
-      <h3 className="text-lg font-semibold tracking-tight">Kampanya oluştur</h3>
-
       <Segmented
         label="Yöntem"
         items={[
@@ -164,7 +165,9 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
 export function CampaignsList({ initial, unavailable }: { initial: SequenceSummary[]; unavailable: boolean }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
-  const [creating, setCreating] = useState(initial.length === 0 && !unavailable);
+  const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("hepsi");
 
   async function toggle(s: SequenceSummary) {
     const next = s.status === "aktif" ? "duraklatildi" : "aktif";
@@ -198,89 +201,124 @@ export function CampaignsList({ initial, unavailable }: { initial: SequenceSumma
     );
   }
 
+  const shown = items.filter((s) => (filter === "hepsi" || s.status === filter) && (!query.trim() || fold(s.name).includes(fold(query.trim()))));
+  const iconBtn = "grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-ink";
+
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Toaster />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Kampanyalar</h2>
-          <p className="max-w-[44rem] text-muted">Çok adımlı e-posta dizileri kurun; Adspine kişilere sizin posta kutunuzdan, belirlediğiniz saatlerde ve limitlerle gönderir.</p>
-        </div>
-        <Button onClick={() => setCreating(true)}>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative min-w-[14rem] flex-1 sm:max-w-xs">
+          <span className="sr-only">Kampanya ara</span>
+          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
+            <SearchIcon size={15} />
+          </span>
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ara" className="h-10 w-full rounded-control bg-surface pr-3 pl-9 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest" />
+        </label>
+        <Select<string>
+          label="Durum"
+          value={filter}
+          options={[
+            { value: "hepsi", label: "Tüm durumlar" },
+            { value: "taslak", label: "Taslak" },
+            { value: "aktif", label: "Aktif" },
+            { value: "duraklatildi", label: "Duraklatıldı" },
+          ]}
+          onChange={setFilter}
+          className="w-44"
+        />
+        <Button className="ml-auto" onClick={() => setCreating(true)}>
           <PlusIcon size={16} />
           Kampanya oluştur
         </Button>
       </div>
 
-      <div className={`grid items-start gap-6 ${creating ? "lg:grid-cols-[minmax(0,1fr)_26rem]" : ""}`}>
-        <section aria-label="Kampanyalar" className="grid gap-3">
-          {items.length === 0 ? (
-            <div className="grid justify-items-center gap-3 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
-              <p className="text-lg font-semibold tracking-tight">Henüz kampanyanız yok</p>
-              <p className="max-w-[30rem] text-muted">Hedef kitlenizi ve amacınızı yazın, yapay zekâ ilk e-posta dizinizi yazsın; ya da hazır bir şablonla başlayın.</p>
-            </div>
-          ) : (
-            items.map((s) => (
-              <article key={s.id} className="grid gap-3 rounded-panel bg-surface p-5 ring-1 ring-line">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="grid min-w-0 gap-1">
-                    <Link href={`/panel/kampanyalar/${s.id}`} className="truncate text-lg font-semibold tracking-tight underline-offset-4 hover:underline">
+      {items.length === 0 ? (
+        <div className="grid justify-items-center gap-3 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
+          <p className="text-lg font-semibold tracking-tight">Henüz kampanyanız yok</p>
+          <p className="max-w-[30rem] text-muted">Hedef kitlenizi ve amacınızı yazın, yapay zekâ ilk e-posta dizinizi yazsın; ya da hazır bir şablonla başlayın.</p>
+          <Button onClick={() => setCreating(true)}>Kampanya oluştur</Button>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-panel bg-surface ring-1 ring-line">
+          <table className="w-full min-w-[52rem] text-left text-sm">
+            <thead className="border-b border-line text-xs text-muted">
+              <tr>
+                {["Ad", "Durum", "İlerleme", "Gönderilen", "Yanıt", "Geri dönen", ""].map((h, i) => (
+                  <th key={i} scope="col" className="px-4 py-3 font-medium">
+                    {h || <span className="sr-only">Eylemler</span>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((s) => (
+                <tr key={s.id} className="border-t border-line transition-colors first:border-t-0 hover:bg-sunken/40">
+                  <td className="max-w-[20rem] px-4 py-3">
+                    <Link href={`/panel/kampanyalar/${s.id}`} className="block truncate font-medium underline-offset-4 hover:underline">
                       {s.name}
                     </Link>
-                    {s.description && <p className="text-sm text-muted">{s.description}</p>}
-                  </div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[s.status]}`}>{statusLabel[s.status]}</span>
-                </div>
-
-                {s.status === "duraklatildi" && s.pausedReason && (
-                  <p role="alert" className="rounded-control bg-pollen/50 px-3 py-2 text-sm">
-                    {s.pausedReason}
-                  </p>
-                )}
-
-                <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
-                  {[
-                    ["Adım", String(s.stepCount)],
-                    ["Kişi", `${s.enrolled}${s.active ? ` (${s.active} sırada)` : ""}`],
-                    ["Gönderilen", String(s.sent)],
-                    ["Yanıt", `${s.replied} · ${pct(s.replied, s.sent)}`],
-                    ["Geri dönen", `${s.bounced} · ${pct(s.bounced, s.sent)}`],
-                  ].map(([k, v]) => (
-                    <div key={k}>
-                      <dt className="text-muted">{k}</dt>
-                      <dd className="font-medium tabular-nums">{v}</dd>
+                    <span className="block truncate text-xs text-muted">
+                      {s.stepCount} adım · {s.enrolled} kişi{s.active ? ` (${s.active} sırada)` : ""}
+                    </span>
+                    {s.status === "duraklatildi" && s.pausedReason && <span className="block text-xs text-danger">{s.pausedReason}</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[s.status]}`}>{statusLabel[s.status]}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {s.enrolled > 0 ? (
+                      <div className="grid w-28 gap-1">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-sunken">
+                          <div className="h-full rounded-full bg-forest" style={{ width: `${Math.round(((s.enrolled - s.active) / s.enrolled) * 100)}%` }} />
+                        </div>
+                        <span className="text-xs text-muted tabular-nums">
+                          {s.enrolled - s.active} / {s.enrolled} tamamlandı
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 tabular-nums">{s.sent}</td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {s.replied} <span className="text-muted">· {pct(s.replied, s.sent)}</span>
+                  </td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {s.bounced} <span className="text-muted">· {pct(s.bounced, s.sent)}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-0.5">
+                      {s.status !== "taslak" && (
+                        <button type="button" onClick={() => void toggle(s)} className={`${iconBtn} w-auto px-3 text-xs font-medium`}>
+                          {s.status === "aktif" ? "Duraklat" : "Başlat"}
+                        </button>
+                      )}
+                      <button type="button" onClick={() => void duplicate(s)} className={`${iconBtn} w-auto px-3 text-xs font-medium`}>
+                        Çoğalt
+                      </button>
+                      <button type="button" onClick={() => void remove(s)} className={`${iconBtn} hover:text-danger`} aria-label={`${s.name} kampanyasını sil`}>
+                        <TrashIcon size={15} />
+                      </button>
                     </div>
-                  ))}
-                </dl>
+                  </td>
+                </tr>
+              ))}
+              {shown.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted">
+                    Aramaya uyan kampanya yok.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="secondary" onClick={() => router.push(`/panel/kampanyalar/${s.id}`)}>
-                    Aç
-                  </Button>
-                  {s.status !== "taslak" && (
-                    <Button variant="quiet" onClick={() => void toggle(s)}>
-                      {s.status === "aktif" ? "Duraklat" : "Başlat"}
-                    </Button>
-                  )}
-                  <Button variant="quiet" onClick={() => void duplicate(s)}>
-                    Çoğalt
-                  </Button>
-                  <Button variant="quiet" onClick={() => void remove(s)} className="ml-auto text-danger" aria-label={`${s.name} kampanyasını sil`}>
-                    <TrashIcon size={16} />
-                    Sil
-                  </Button>
-                </div>
-              </article>
-            ))
-          )}
-        </section>
-
-        {creating && (
-          <aside aria-label="Kampanya oluştur" className="rounded-panel bg-surface p-5 ring-1 ring-line lg:sticky lg:top-6">
-            <CreatePanel onCancel={() => setCreating(false)} onCreated={(id) => router.push(`/panel/kampanyalar/${id}`)} />
-          </aside>
-        )}
-      </div>
+      <Modal open={creating} onClose={() => setCreating(false)} title="Kampanya oluştur">
+        <CreatePanel onCancel={() => setCreating(false)} onCreated={(id) => router.push(`/panel/kampanyalar/${id}`)} />
+      </Modal>
     </div>
   );
 }

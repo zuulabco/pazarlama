@@ -21,7 +21,7 @@ export async function guard(req: NextRequest, opts: { write?: boolean } = {}): P
 export function outreachFailure(e: unknown) {
   if (e instanceof OutreachUnavailableError) return fail("Otomasyon henüz etkinleştirilmedi. Kısa süre sonra tekrar deneyin.", 503);
   if (e instanceof DuplicateContactError || e instanceof DuplicateMailboxError) return fail(e.message, 409);
-  if (e instanceof CryptoConfigError) return fail("Posta kutusu şifreleme anahtarı (OUTREACH_ENC_KEY) sunucuda tanımlı değil.", 503);
+  if (e instanceof CryptoConfigError) return fail("Gönderici adresi şifreleme anahtarı (OUTREACH_ENC_KEY) sunucuda tanımlı değil.", 503);
   if (e instanceof Error && e.message.startsWith("En fazla")) return fail(e.message, 409);
   console.error("Otomasyon işlemi başarısız:", e);
   return fail("İşlem tamamlanamadı. Tekrar deneyin.", 500);

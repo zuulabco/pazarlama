@@ -394,7 +394,7 @@ export function FiltersPanel({
           <button
             type="button"
             onClick={() => navigate((p) => filterKeys.forEach((k) => p.delete(k)))}
-            className="justify-self-start rounded-control px-1 text-sm font-medium text-forest underline underline-offset-4 hover:no-underline"
+            className="justify-self-start rounded-control px-1 text-sm font-medium text-accent underline underline-offset-4 hover:no-underline"
           >
             Filtreleri temizle
           </button>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon } from "@/components/ui/icons";
 import { Toaster, toast } from "@/components/ui/toast";
 import type { Mailbox } from "@/modules/outreach/mailbox-schema";
 import { blankVariant, maxSteps, stepKinds, type Sequence, type Step, type StepKind } from "@/modules/outreach/sequence-schema";
@@ -107,19 +108,30 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
   return (
     <div className="grid gap-5">
       <Toaster />
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid min-w-0 gap-1">
-          <Link href="/panel/kampanyalar" className="text-sm text-muted underline-offset-4 hover:underline">
-            ← Kampanyalar
+      <header className="sticky top-0 z-20 -mx-4 flex min-h-12 flex-wrap items-center gap-x-5 gap-y-1 border-b border-line bg-paper/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 md:-ml-6">
+        <div className="flex min-w-0 items-center gap-2 py-2">
+          <Link href="/panel/kampanyalar" aria-label="Kampanyalara dön" className="grid size-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-ink">
+            <ArrowLeftIcon size={16} />
           </Link>
-          <h2 className="truncate text-xl font-semibold tracking-tight">{seq.name}</h2>
-          <p className="text-sm text-muted">
-            <span className={`mr-2 rounded-full px-2.5 py-0.5 text-xs font-medium ${active ? "bg-forest-soft text-forest" : "bg-sunken"}`}>{statusLabel[seq.status]}</span>
-            {seq.pausedReason ?? ""}
-          </p>
+          <h1 className="max-w-[16rem] truncate text-sm font-semibold tracking-tight">{seq.name}</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {dirty && <span className="text-sm text-muted">Kaydedilmemiş değişiklikler var</span>}
+        <div role="tablist" aria-label="Kampanya bölümleri" className="flex h-12 min-w-0 gap-1 overflow-x-auto [scrollbar-width:none]">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              role="tab"
+              type="button"
+              aria-selected={tab === t.key}
+              onClick={() => setTab(t.key)}
+              className="flex h-full items-center border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap text-muted transition-colors hover:text-ink aria-selected:border-forest aria-selected:text-ink"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex flex-wrap items-center gap-2 py-2">
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${active ? "bg-forest-soft text-accent" : "bg-sunken text-muted"}`}>{statusLabel[seq.status]}</span>
+          {dirty && <span className="hidden text-xs text-muted sm:inline">Kaydedilmemiş değişiklikler var</span>}
           <Button variant="secondary" onClick={() => void save()} disabled={!dirty || saving}>
             {saving ? "Kaydediliyor…" : "Kaydet"}
           </Button>
@@ -127,7 +139,12 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
             {statusBusy ? "…" : active ? "Duraklat" : seq.status === "duraklatildi" ? "Sürdür" : "Başlat"}
           </Button>
         </div>
-      </div>
+      </header>
+      {seq.pausedReason && (
+        <p role="alert" className="rounded-row bg-pollen/50 px-4 py-3 text-sm">
+          {seq.pausedReason}
+        </p>
+      )}
 
       {problems.length > 0 && (
         <div role="alert" className="grid gap-2 rounded-panel bg-pollen/50 p-4 text-sm">
@@ -144,21 +161,6 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
           )}
         </div>
       )}
-
-      <div role="tablist" aria-label="Kampanya bölümleri" className="flex gap-1 overflow-x-auto border-b border-line">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            role="tab"
-            type="button"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
-            className="-mb-px border-b-2 border-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-muted transition-colors hover:text-ink aria-selected:border-forest aria-selected:text-ink"
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
 
       {tab === "editor" && (
         <div className="grid gap-3">
@@ -190,7 +192,7 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
                   key={k.value}
                   type="button"
                   onClick={() => setSteps([...seq.steps, newStep(k.value, seq.steps.length, emailIdx >= 0)])}
-                  className="h-9 rounded-full px-4 text-sm ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest"
+                  className="h-9 rounded-full px-4 text-sm ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent"
                 >
                   + {k.label}
                 </button>

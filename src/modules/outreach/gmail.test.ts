@@ -101,7 +101,7 @@ describe("Gmail API", () => {
 });
 
 describe("deliver", () => {
-  it("Google posta kutusunu Gmail API ile gönderir (SMTP'ye gitmez)", async () => {
+  it("Google gönderici adresini Gmail API ile gönderir (SMTP'ye gitmez)", async () => {
     handler = (url) => (url.endsWith("/messages/send") ? { body: { id: "m9" } } : { body: { payload: { headers: [{ name: "Message-ID", value: "<z@x>" }] } } });
     const r = await deliver({ provider: "google", smtp: { host: "smtp.gmail.com", port: 465, secure: true }, username: "a@b.com" }, `refresh-${token}`, mail);
     expect(r.messageId).toBe("<z@x>");

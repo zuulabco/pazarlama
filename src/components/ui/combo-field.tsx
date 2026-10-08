@@ -311,10 +311,10 @@ export function ComboField({
                           )}
                         </span>
                       ) : (
-                        <span className="font-medium text-forest">&ldquo;{item.text}&rdquo; ekle</span>
+                        <span className="font-medium text-accent">&ldquo;{item.text}&rdquo; ekle</span>
                       )}
                       {selected && (
-                        <svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" className="mt-1 shrink-0 text-forest">
+                        <svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" className="mt-1 shrink-0 text-accent">
                           <path d="m2.5 6.2 2.2 2.2 4.8-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}

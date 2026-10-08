@@ -61,7 +61,7 @@ export function ProfileMenu({ name, email }: { name: string | null; email: strin
         aria-controls={id}
         aria-label="Hesap menüsü"
         onClick={() => setOpen((o) => !o)}
-        className="grid size-10 place-items-center rounded-full bg-sunken text-ink ring-1 ring-line transition-[box-shadow,background-color] hover:ring-line-strong aria-expanded:ring-2 aria-expanded:ring-forest"
+        className="grid size-9 place-items-center rounded-full bg-sunken text-ink ring-1 ring-line transition-[box-shadow,background-color] hover:ring-line-strong aria-expanded:ring-2 aria-expanded:ring-forest"
       >
         <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
           <circle cx="10" cy="7.5" r="3.2" />
@@ -73,7 +73,7 @@ export function ProfileMenu({ name, email }: { name: string | null; email: strin
         id={id}
         data-open={open}
         inert={!open}
-        className={`${popover.popover} absolute top-full right-0 z-50 mt-2 w-72 origin-top-right rounded-panel bg-surface p-2 shadow-float ring-1 ring-line`}
+        className={`${popover.popover} absolute right-0 bottom-full z-50 mb-2 w-72 origin-bottom-right rounded-panel md:right-auto md:bottom-0 md:left-full md:mb-0 md:ml-3 md:origin-bottom-left bg-surface p-2 shadow-float ring-1 ring-line`}
       >
         <div className="px-3 py-2.5">
           <p className="truncate font-medium">{name ?? "Hesabım"}</p>

@@ -134,7 +134,7 @@ function SectionCard({ def, profile }: { def: SectionDef; profile: Draft }) {
         {!editing && (
           <div className="flex shrink-0 items-center gap-3">
             {saved && (
-              <span role="status" className="text-sm font-medium text-forest">
+              <span role="status" className="text-sm font-medium text-accent">
                 Kaydedildi
               </span>
             )}

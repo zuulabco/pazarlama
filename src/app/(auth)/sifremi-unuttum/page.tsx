@@ -11,7 +11,7 @@ export default function ResetPage() {
       <p className="mt-2 mb-8 text-muted">E-posta adresinizi girin, sıfırlama bağlantısını gönderelim.</p>
       <ResetForm />
       <p className="mt-8 text-sm text-muted">
-        <Link href="/giris" className="font-medium text-forest hover:underline">
+        <Link href="/giris" className="font-medium text-accent hover:underline">
           Giriş sayfasına dön
         </Link>
       </p>

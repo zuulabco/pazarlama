@@ -1,4 +1,5 @@
 import { PageSkeleton } from "../../_components/skeletons";
+import { SectionTabs } from "../../_components/section-tabs";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -15,11 +16,13 @@ async function Welcome() {
   if (!(await getProfile(user.uid))) redirect("/onboarding");
 
   return (
-    <section className="grid min-h-[calc(100svh-11rem)] items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+    <>
+    <SectionTabs title="Müşteri" />
+    <section className="grid min-h-[calc(100svh-9rem)] items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-display lg:tracking-display">
+        <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl lg:tracking-display">
           Doğru müşteriyi bulun, hiçbirini kaçırmayın
-        </h1>
+        </h2>
         <p className="mt-6 max-w-prose text-lg text-muted">
           Bölgenizdeki firmaları bulun, hedef profilinize göre puanlayın ve ilgilendiklerinizi takip edin.
         </p>
@@ -40,6 +43,7 @@ async function Welcome() {
         <ModulePreview id="musteri-bul" />
       </div>
     </section>
+    </>
   );
 }
 

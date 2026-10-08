@@ -57,7 +57,7 @@ function ServerFields({ legend, value, onChange, ports }: { legend: string; valu
 }
 
 /**
- * Posta kutusu bağlama sihirbazı: sağlayıcı seç → bilgileri gir → bağla ve doğrula.
+ * Gönderici adresi bağlama sihirbazı: sağlayıcı seç → bilgileri gir → bağla ve doğrula.
  * Kaydetmeden önce SMTP ve IMAP girişi sınanır; şifre sunucuda şifrelenir.
  */
 export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: Mailbox) => void; onCancel: () => void; googleReady: boolean }) {
@@ -109,7 +109,7 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
     });
     setBusy(false);
     if (!r.ok) return setError(r.error);
-    toast("Posta kutusu bağlandı");
+    toast("Gönderici adresi bağlandı");
     onDone(r.data.mailbox);
   }
 
@@ -125,7 +125,6 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
   if (!provider) {
     return (
       <div className="grid gap-4">
-        <h3 className="text-lg font-semibold tracking-tight">Posta kutusu bağla</h3>
         <p className="text-sm text-muted">E-postaları kendi adresinizden göndereceğiz. Gmail ve Google Workspace için tek tıkla bağlanabilirsiniz.</p>
         {googleReady && (
           <div className="grid gap-3 rounded-row bg-forest-soft/50 p-4 ring-1 ring-forest/30">
@@ -162,7 +161,7 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
               onClick={() => choose(p)}
               className="flex items-center gap-3.5 rounded-row p-4 text-left ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-sunken text-forest">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-sunken text-accent">
                 <MailIcon size={20} />
               </span>
               <span className="grid gap-0.5">
@@ -231,7 +230,7 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
             ))}
           </ol>
           {help.link && (
-            <a href={help.link.href} target="_blank" rel="noopener noreferrer" className="w-fit text-sm font-medium text-forest underline underline-offset-4 hover:no-underline">
+            <a href={help.link.href} target="_blank" rel="noopener noreferrer" className="w-fit text-sm font-medium text-accent underline underline-offset-4 hover:no-underline">
               {help.link.text}
             </a>
           )}
@@ -244,7 +243,7 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-[var(--color-forest)]" />
         <span>
           Spam ya da taciz amaçlı e-posta göndermeyeceğimi, alıcılara abonelikten çıkma imkânı sunulacağını ve ticari ileti mevzuatına uymanın benim sorumluluğumda olduğunu kabul
-          ediyorum. Adspine&apos;in, gönderim ve yanıt takibi için posta kutumun e-posta başlıklarını ve içeriğini işlemesine izin veriyorum.
+          ediyorum. Adspine&apos;in, gönderim ve yanıt takibi için gönderici adresimin e-posta başlıklarını ve içeriğini işlemesine izin veriyorum.
         </span>
       </label>
       {touched && !consent && (

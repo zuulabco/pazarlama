@@ -12,7 +12,7 @@ export default function LoginPage() {
       <AuthForm mode="giris" />
       <p className="mt-8 text-sm text-muted">
         Hesabınız yok mu?{" "}
-        <Link href="/kayit" className="font-medium text-forest hover:underline">
+        <Link href="/kayit" className="font-medium text-accent hover:underline">
           Hesap oluşturun
         </Link>
       </p>

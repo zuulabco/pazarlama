@@ -7,7 +7,7 @@ import type { EmailKind } from "@/modules/outreach/discover/emails";
 
 const statusStyle: Record<EmailStatus, string> = {
   yok: "bg-sunken text-muted",
-  bulundu: "bg-forest-soft text-forest",
+  bulundu: "bg-forest-soft text-accent",
   elle: "bg-sunken text-ink",
   riskli: "bg-pollen/60 text-ink",
   gecersiz: "bg-danger-soft text-danger",
@@ -26,7 +26,7 @@ export function KindChip({ kind }: { kind: EmailKind | null }) {
   );
 }
 
-export const sourceLabels = { elle: "Elle", csv: "CSV", takip: "Takip", arama: "Arama" } as const;
+export const sourceLabels = { elle: "Elle", csv: "CSV", takip: "Takip", arama: "Arama", kisi_bul: "Kişi bul" } as const;
 
 /** Tarayıcıda dosya indirir. */
 export function download(filename: string, content: string, type = "text/csv;charset=utf-8") {

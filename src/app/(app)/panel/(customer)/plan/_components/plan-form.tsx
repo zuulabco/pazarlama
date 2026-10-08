@@ -132,7 +132,7 @@ export function PlanForm({
         placeholder="Takipteki firmayı seçin ya da isim yazın"
       />
       {firm && (
-        <Link href={`/panel/calis?firma=${firm.id}`} className="-mt-2 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-forest underline underline-offset-4 hover:no-underline">
+        <Link href={`/panel/calis?firma=${firm.id}`} className="-mt-2 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-accent underline underline-offset-4 hover:no-underline">
           <PenIcon size={14} />
           Bu firmaya mesaj hazırla
         </Link>
@@ -198,14 +198,14 @@ export function PlanForm({
             href={googleCalendarUrl(preview)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest"
+            className="inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent"
           >
             Google Takvim
           </a>
           <button
             type="button"
             onClick={() => downloadIcs({ ...item, ...preview, details: preview.details })}
-            className="inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest"
+            className="inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent"
           >
             <DownloadIcon size={16} />
             .ics indir

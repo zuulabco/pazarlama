@@ -2,7 +2,7 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 /**
- * Posta kutusu şifreleri ve imzalı jetonlar için şifreleme yardımcıları.
+ * Gönderici adresi şifreleri ve imzalı jetonlar için şifreleme yardımcıları.
  * Anahtar: OUTREACH_ENC_KEY (base64, 32 bayt). Üretmek için: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
  */
 

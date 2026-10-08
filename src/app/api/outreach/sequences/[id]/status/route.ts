@@ -8,7 +8,7 @@ import { getSequence, setSequenceStatus } from "@/modules/outreach/sequences";
 const bodySchema = z.object({ status: z.enum(["aktif", "duraklatildi", "taslak"]), ignoreDns: z.boolean().optional() });
 
 /**
- * Kampanyayı başlatır/duraklatır. Başlatmadan önce eksikler denetlenir (etkin adım, dolu mesaj, bağlı posta kutusu, alan adı ayarları);
+ * Kampanyayı başlatır/duraklatır. Başlatmadan önce eksikler denetlenir (etkin adım, dolu mesaj, bağlı gönderici adresi, alan adı ayarları);
  * alan adı ayarları dışındaki eksikler aşılamaz. Alan adı uyarısı `ignoreDns: true` ile bilerek geçilebilir.
  */
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]/status">) {

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Disclosure } from "@/components/ui/disclosure";
-import { CheckIcon, CopyIcon, MailIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
+import { CheckIcon, CopyIcon, MailIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
+import { Modal } from "@/components/ui/modal";
+import { fold } from "@/lib/text";
 import { toast, Toaster } from "@/components/ui/toast";
 import type { DnsCheck, DnsReport } from "@/modules/outreach/dns-health";
 import type { Mailbox } from "@/modules/outreach/mailbox-schema";
@@ -14,9 +15,9 @@ import { MailboxWizard } from "./mailbox-wizard";
 
 type Panel = { mode: "new" } | { mode: "edit"; id: string } | null;
 
-const statusStyle = { bagli: "bg-forest-soft text-forest", hata: "bg-danger-soft text-danger", duraklatildi: "bg-sunken text-muted" } as const;
+const statusStyle = { bagli: "bg-forest-soft text-accent", hata: "bg-danger-soft text-danger", duraklatildi: "bg-sunken text-muted" } as const;
 const statusLabel = { bagli: "Bağlı", hata: "Hata", duraklatildi: "Duraklatıldı" } as const;
-const dnsStyle = { ok: "text-forest", uyari: "text-ink", eksik: "text-danger" } as const;
+const dnsStyle = { ok: "text-accent", uyari: "text-ink", eksik: "text-danger" } as const;
 const dnsMark = { ok: "✓", uyari: "!", eksik: "✕" } as const;
 
 function dnsSummary(report: DnsReport | null): { label: string; tone: "ok" | "uyari" | "eksik" } {
@@ -24,6 +25,12 @@ function dnsSummary(report: DnsReport | null): { label: string; tone: "ok" | "uy
   if (report.ready) return { label: "Hazır", tone: "ok" };
   const bad = report.checks.filter((c) => c.status !== "ok").length;
   return { label: `${bad} eksik`, tone: "eksik" };
+}
+
+/** Alan adı kurulum puanı (0-100): SPF, DKIM, DMARC ve MX denetimlerinin kaçı tamam. Denetlenmediyse null. */
+export function healthScore(report: DnsReport | null): number | null {
+  if (!report || report.checks.length === 0) return null;
+  return Math.round((report.checks.filter((c) => c.status === "ok").length / report.checks.length) * 100);
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -69,11 +76,13 @@ function DnsRow({ check }: { check: DnsCheck }) {
   );
 }
 
-/** Posta kutuları: bağlı kutular, durum, alan adı sağlığı (SPF/DKIM/DMARC), test e-postası, ayarlar. */
-export function MailboxesWorkspace({ initial, unavailable, encryptionReady, googleReady }: { initial: Mailbox[]; unavailable: boolean; encryptionReady: boolean; googleReady: boolean }) {
+/** Gönderici adresleri: bağlı kutular, durum, alan adı sağlığı (SPF/DKIM/DMARC), test e-postası, ayarlar. */
+export function MailboxesWorkspace({ initial, unavailable, encryptionReady, googleReady, plan }: { initial: Mailbox[]; unavailable: boolean; encryptionReady: boolean; googleReady: boolean; plan: { label: string; senders: number } | null }) {
   const [mailboxes, setMailboxes] = useState(initial);
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
 
   // "Google ile bağlan" dönüşünün sonucu adres çubuğunda gelir; bir kez bildirilip temizlenir.
   useEffect(() => {
@@ -84,10 +93,10 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
       reddedildi: "Google bağlantısı iptal edildi.",
       izin: "Gönderme ve okuma izinlerinin ikisini de vermeniz gerekiyor. Tekrar deneyip tüm kutuları işaretleyin.",
       oturum: "Bağlantı oturumu zaman aşımına uğradı. Tekrar deneyin.",
-      limit: "En fazla 5 posta kutusu bağlayabilirsiniz.",
+      limit: "Paketinizin gönderici adresi sınırına ulaştınız.",
       yapilandirma: "Google ile bağlanma henüz etkin değil.",
     };
-    if (result === "ok") toast(`${q.get("email") ?? "Posta kutusu"} bağlandı`);
+    if (result === "ok") toast(`${q.get("email") ?? "Gönderici adresi"} bağlandı`);
     else toast(reasons[q.get("neden") ?? ""] ?? "Google ile bağlanılamadı. Tekrar deneyin.", { kind: "error" });
     window.history.replaceState(null, "", window.location.pathname);
     if (result === "ok") window.location.reload();
@@ -121,7 +130,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
     const r = await api<{ mailbox: Mailbox }>(`/api/outreach/mailboxes/${m.id}`, { method: "PATCH", body: JSON.stringify({ status: next }) });
     if (!r.ok) return toast(r.error, { kind: "error" });
     put(r.data.mailbox);
-    toast(next === "bagli" ? "Posta kutusu sürdürüldü" : "Posta kutusu duraklatıldı");
+    toast(next === "bagli" ? "Gönderici adresi sürdürüldü" : "Gönderici adresi duraklatıldı");
   }
 
   async function remove(m: Mailbox) {
@@ -129,20 +138,20 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
     if (!r.ok) return toast(r.error, { kind: "error" });
     setMailboxes((prev) => prev.filter((x) => x.id !== m.id));
     setPanel(null);
-    toast("Posta kutusu bağlantıdan çıkarıldı");
+    toast("Gönderici adresi bağlantıdan çıkarıldı");
   }
 
   if (unavailable) {
     return (
       <div role="status" className="grid justify-items-center gap-3 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
         <Toaster />
-        <p className="text-lg font-semibold tracking-tight">Posta kutuları henüz etkinleştirilmedi</p>
+        <p className="text-lg font-semibold tracking-tight">Gönderici adresleri henüz etkinleştirilmedi</p>
         <p className="max-w-[30rem] text-muted">Bu bölüm için veritabanı güncellemesi gerekiyor. Kısa süre sonra tekrar deneyin.</p>
       </div>
     );
   }
 
-  const ready = mailboxes.filter((m) => m.status === "bagli" && m.dnsCheck?.ready).length;
+  const shown = mailboxes.filter((m) => !query.trim() || fold(m.email).includes(fold(query.trim())));
   const editing = panel?.mode === "edit" ? mailboxes.find((m) => m.id === panel.id) : undefined;
 
   return (
@@ -150,171 +159,182 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
       <Toaster />
       {!encryptionReady && (
         <p role="alert" className="rounded-row bg-danger-soft px-4 py-3 text-sm text-danger">
-          Sunucuda posta kutusu şifreleme anahtarı (OUTREACH_ENC_KEY) tanımlı değil; posta kutusu bağlanamaz.
+          Sunucuda gönderici adresi şifreleme anahtarı (OUTREACH_ENC_KEY) tanımlı değil; gönderici adresi bağlanamaz.
         </p>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Posta kutularınız</h2>
-          <p className="max-w-[44rem] text-muted">
-            Kampanyalar bu adreslerden gönderilir. Alan adınızın SPF, DKIM ve DMARC ayarları tamamsa e-postalarınız daha çok gelen kutusuna düşer.
-          </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative min-w-[14rem] flex-1 sm:max-w-xs">
+          <span className="sr-only">Gönderici adresi ara</span>
+          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted">
+            <SearchIcon size={15} />
+          </span>
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ara" className="h-10 w-full rounded-control bg-surface pr-3 pl-9 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest" />
+        </label>
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          {plan && (
+            <span className="rounded-full bg-sunken px-3 py-1.5 text-sm" title={`${plan.label} paketi`}>
+              <span className="font-medium tabular-nums">
+                {mailboxes.length} / {plan.senders}
+              </span>{" "}
+              gönderici adresi
+            </span>
+          )}
+          <Button onClick={() => setPanel({ mode: "new" })} disabled={!encryptionReady || (plan !== null && mailboxes.length >= plan.senders)}>
+            <PlusIcon size={16} />
+            Gönderici adresi bağla
+          </Button>
         </div>
-        <Button onClick={() => setPanel({ mode: "new" })} disabled={!encryptionReady}>
-          <PlusIcon size={16} />
-          Posta kutusu bağla
-        </Button>
       </div>
+      {plan && mailboxes.length >= plan.senders && (
+        <p role="status" className="rounded-row bg-pollen/50 px-4 py-3 text-sm">
+          {plan.label} paketinde en fazla {plan.senders} gönderici adresi bağlayabilirsiniz. Daha fazlası için paketinizi yükseltin.
+        </p>
+      )}
 
-      <div className={`grid items-start gap-6 ${panel ? "lg:grid-cols-[minmax(0,1fr)_26rem]" : ""}`}>
-        <section aria-label="Posta kutuları" className="grid gap-3">
-          {mailboxes.length > 0 && (
-            <p className="text-sm text-muted">
-              {mailboxes.length} posta kutusu · {ready} tanesi gönderime hazır
-            </p>
-          )}
-
-          {mailboxes.length === 0 ? (
-            <div className="grid justify-items-center gap-4 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
-              <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-forest">
-                <MailIcon size={22} />
-              </span>
-              <p className="text-lg font-semibold tracking-tight">Henüz posta kutusu bağlamadınız</p>
-              <p className="max-w-[30rem] text-muted">E-posta kampanyası göndermek için en az bir posta kutusu bağlayın. Gmail, Google Workspace, Outlook ve her SMTP/IMAP kutusu desteklenir.</p>
-              <Button onClick={() => setPanel({ mode: "new" })} disabled={!encryptionReady}>
-                <PlusIcon size={16} />
-                Posta kutusu bağla
-              </Button>
-            </div>
-          ) : (
-            mailboxes.map((m) => {
-              const dns = dnsSummary(m.dnsCheck);
-              return (
-                <article key={m.id} className="rounded-panel bg-surface ring-1 ring-line">
-                  <div className="grid gap-3 p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="grid min-w-0 gap-1">
-                        <h3 className="truncate text-lg font-semibold tracking-tight">{m.email}</h3>
-                        <p className="text-sm text-muted">
-                          {providerLabels[m.provider]}
-                          {m.fromName ? ` · ${m.fromName}` : ""}
-                        </p>
-                      </div>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[m.status]}`}>{statusLabel[m.status]}</span>
-                    </div>
-
-                    {m.status === "hata" && m.lastError && (
-                      <p role="alert" className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger">
-                        {m.lastError}
-                      </p>
-                    )}
-
-                    <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-                      <div>
-                        <dt className="text-muted">Alan adı kurulumu</dt>
-                        <dd className={`font-medium ${dnsStyle[dns.tone]}`}>{dns.label}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted">Isınma</dt>
-                        <dd className="font-medium">{m.warmupEnabled ? (m.warmupScore !== null ? `%${m.warmupScore}` : "Başladı") : "Kapalı"}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted">Günlük limit</dt>
-                        <dd className="font-medium tabular-nums">{m.dailyLimit} e-posta</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted">Saatlik limit</dt>
-                        <dd className="font-medium tabular-nums">{m.hourlyLimit} e-posta</dd>
-                      </div>
-                    </dl>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="secondary" onClick={() => void test(m)} disabled={busy === `test-${m.id}` || m.status === "duraklatildi"}>
-                        {busy === `test-${m.id}` ? "Gönderiliyor…" : "Test e-postası gönder"}
-                      </Button>
-                      <Button variant="quiet" onClick={() => setPanel({ mode: "edit", id: m.id })}>
-                        Ayarlar
-                      </Button>
-                      <Button variant="quiet" onClick={() => void togglePause(m)}>
-                        {m.status === "duraklatildi" ? "Sürdür" : "Duraklat"}
-                      </Button>
-                      <Button variant="quiet" onClick={() => void remove(m)} className="ml-auto text-danger" aria-label={`${m.email} bağlantısını kaldır`}>
-                        <TrashIcon size={16} />
-                        Kaldır
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Disclosure
-                    className="border-t border-line"
-                    buttonClassName="px-5 py-3.5"
-                    panelClassName="px-5 pb-5"
-                    summary={
-                      <span className="flex items-center gap-2 text-sm font-medium">
-                        {dns.tone === "ok" && (
-                          <span className="text-forest">
-                            <CheckIcon size={16} />
+      {mailboxes.length === 0 ? (
+        <div className="grid justify-items-center gap-4 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
+          <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-accent">
+            <MailIcon size={22} />
+          </span>
+          <p className="text-lg font-semibold tracking-tight">Henüz gönderici adresi bağlamadınız</p>
+          <p className="max-w-[30rem] text-muted">E-posta kampanyası göndermek için en az bir gönderici adresi bağlayın. Gmail, Google Workspace, Outlook ve her SMTP/IMAP kutusu desteklenir.</p>
+          <Button onClick={() => setPanel({ mode: "new" })} disabled={!encryptionReady}>
+            <PlusIcon size={16} />
+            Gönderici adresi bağla
+          </Button>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-panel bg-surface ring-1 ring-line">
+          <table className="w-full min-w-[56rem] text-left text-sm">
+            <thead className="border-b border-line text-xs text-muted">
+              <tr>
+                {["E-posta", "Tür", "Durum", "Sağlık skoru", "Isınma", "Günlük limit", ""].map((h, i) => (
+                  <th key={i} scope="col" className="px-4 py-3 font-medium">
+                    {h || <span className="sr-only">Eylemler</span>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((m) => {
+                const dns = dnsSummary(m.dnsCheck);
+                const score = healthScore(m.dnsCheck);
+                const open = openId === m.id;
+                return (
+                  <Fragment key={m.id}>
+                    <tr className="border-t border-line transition-colors first:border-t-0 hover:bg-sunken/40">
+                      <td className="max-w-[18rem] px-4 py-3">
+                        <span className="block truncate font-medium">{m.email}</span>
+                        {m.fromName && <span className="block truncate text-xs text-muted">{m.fromName}</span>}
+                        {m.status === "hata" && m.lastError && <span className="block text-xs text-danger">{m.lastError}</span>}
+                      </td>
+                      <td className="px-4 py-3 text-muted">{providerLabels[m.provider]}</td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[m.status]}`}>{statusLabel[m.status]}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button type="button" onClick={() => setOpenId(open ? null : m.id)} aria-expanded={open} className="grid w-32 gap-1 text-left" title="Alan adı sağlığını göster">
+                          <span className="h-1.5 overflow-hidden rounded-full bg-sunken">
+                            <span className={`block h-full rounded-full ${score === null ? "" : score >= 100 ? "bg-forest" : score >= 75 ? "bg-pollen ring-1 ring-line-strong" : "bg-danger"}`} style={{ width: `${score ?? 0}%` }} />
                           </span>
-                        )}
-                        Alan adı sağlığı (SPF · DKIM · DMARC)
-                      </span>
-                    }
-                  >
-                    {m.dnsCheck ? (
-                      <div className="grid gap-2">
-                        <ul className="divide-y divide-line">
-                          {m.dnsCheck.checks.map((c) => (
-                            <DnsRow key={c.key} check={c} />
-                          ))}
-                        </ul>
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-xs text-muted">
-                            Son denetim: {m.dnsCheckedAt ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(m.dnsCheckedAt)) : "—"}. Kayıtların yayılması
-                            birkaç saat sürebilir.
-                          </p>
-                          <Button variant="secondary" onClick={() => void recheckDns(m)} disabled={busy === `dns-${m.id}`}>
-                            {busy === `dns-${m.id}` ? "Denetleniyor…" : "Yeniden denetle"}
-                          </Button>
+                          <span className={`text-xs ${dnsStyle[dns.tone]}`}>{score === null ? "Denetlenmedi" : `%${score} · ${dns.label}`}</span>
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">{m.warmupEnabled ? (m.warmupScore !== null ? `%${m.warmupScore}` : "Başladı") : <span className="text-muted">Kapalı</span>}</td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {m.dailyLimit} <span className="text-muted">/ gün · {m.hourlyLimit} / saat</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-0.5">
+                          <button type="button" onClick={() => void test(m)} disabled={busy === `test-${m.id}` || m.status === "duraklatildi"} className="h-8 rounded-full px-3 text-xs font-medium text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-50">
+                            {busy === `test-${m.id}` ? "Gönderiliyor…" : "Test"}
+                          </button>
+                          <button type="button" onClick={() => setPanel({ mode: "edit", id: m.id })} className="h-8 rounded-full px-3 text-xs font-medium text-muted transition-colors hover:bg-sunken hover:text-ink">
+                            Ayarlar
+                          </button>
+                          <button type="button" onClick={() => void togglePause(m)} className="h-8 rounded-full px-3 text-xs font-medium text-muted transition-colors hover:bg-sunken hover:text-ink">
+                            {m.status === "duraklatildi" ? "Sürdür" : "Duraklat"}
+                          </button>
+                          <button type="button" onClick={() => void remove(m)} aria-label={`${m.email} bağlantısını kaldır`} className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-danger">
+                            <TrashIcon size={15} />
+                          </button>
                         </div>
-                      </div>
-                    ) : (
-                      <Button variant="secondary" onClick={() => void recheckDns(m)} disabled={busy === `dns-${m.id}`}>
-                        {busy === `dns-${m.id}` ? "Denetleniyor…" : "Alan adını denetle"}
-                      </Button>
+                      </td>
+                    </tr>
+                    {open && (
+                      <tr className="border-t border-line bg-sunken/30">
+                        <td colSpan={7} className="px-4 py-4">
+                          <h3 className="mb-1 flex items-center gap-2 text-sm font-medium">
+                            {dns.tone === "ok" && (
+                              <span className="text-accent">
+                                <CheckIcon size={16} />
+                              </span>
+                            )}
+                            Alan adı sağlığı (SPF · DKIM · DMARC · MX)
+                          </h3>
+                          {m.dnsCheck ? (
+                            <div className="grid gap-2">
+                              <ul className="divide-y divide-line">
+                                {m.dnsCheck.checks.map((c) => (
+                                  <DnsRow key={c.key} check={c} />
+                                ))}
+                              </ul>
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-xs text-muted">
+                                  Son denetim: {m.dnsCheckedAt ? new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(m.dnsCheckedAt)) : "—"}. Kayıtların yayılması birkaç saat sürebilir.
+                                </p>
+                                <Button variant="secondary" onClick={() => void recheckDns(m)} disabled={busy === `dns-${m.id}`}>
+                                  {busy === `dns-${m.id}` ? "Denetleniyor…" : "Yeniden denetle"}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <Button variant="secondary" onClick={() => void recheckDns(m)} disabled={busy === `dns-${m.id}`}>
+                              {busy === `dns-${m.id}` ? "Denetleniyor…" : "Alan adını denetle"}
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
                     )}
-                  </Disclosure>
-                </article>
-              );
-            })
-          )}
-        </section>
+                  </Fragment>
+                );
+              })}
+              {shown.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted">
+                    Aramaya uyan gönderici adresi yok.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {panel && (
-          <aside aria-label={panel.mode === "new" ? "Posta kutusu bağla" : "Posta kutusu ayarları"} className="rounded-panel bg-surface p-5 ring-1 ring-line lg:sticky lg:top-6">
-            {panel.mode === "new" ? (
-              <MailboxWizard
-                googleReady={googleReady}
-                onDone={(m) => {
-                  put(m);
-                  setPanel(null);
-                }}
-                onCancel={() => setPanel(null)}
-              />
-            ) : editing ? (
-              <MailboxEdit
-                key={editing.id}
-                mailbox={editing}
-                onSaved={(m) => {
-                  put(m);
-                  setPanel(null);
-                }}
-                onCancel={() => setPanel(null)}
-              />
-            ) : null}
-          </aside>
+      <Modal open={panel?.mode === "new"} onClose={() => setPanel(null)} title="Gönderici adresi bağla" width="36rem">
+        <MailboxWizard
+          googleReady={googleReady}
+          onDone={(m) => {
+            put(m);
+            setPanel(null);
+          }}
+          onCancel={() => setPanel(null)}
+        />
+      </Modal>
+      <Modal open={panel?.mode === "edit" && Boolean(editing)} onClose={() => setPanel(null)} title="Gönderici adresi ayarları" width="34rem">
+        {editing && (
+          <MailboxEdit
+            key={editing.id}
+            mailbox={editing}
+            onSaved={(m) => {
+              put(m);
+              setPanel(null);
+            }}
+            onCancel={() => setPanel(null)}
+          />
         )}
-      </div>
+      </Modal>
     </div>
   );
 }

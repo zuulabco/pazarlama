@@ -106,7 +106,7 @@ export function DayPanel({
         className="grid gap-2"
       >
         <label htmlFor="plan-quick" className="flex items-center gap-1.5 text-sm font-medium">
-          <span className="text-forest">
+          <span className="text-accent">
             <SparkleIcon size={16} />
           </span>
           Yazın, planı biz çıkaralım
@@ -149,7 +149,7 @@ export function DayPanel({
                 key={k.value}
                 type="button"
                 onClick={() => onNew(blankDraft(selected, k.value))}
-                className="h-9 rounded-full bg-surface px-3.5 text-sm ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest"
+                className="h-9 rounded-full bg-surface px-3.5 text-sm ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent"
               >
                 {k.label} ekle
               </button>

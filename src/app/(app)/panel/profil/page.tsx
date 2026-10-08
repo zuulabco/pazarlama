@@ -1,3 +1,4 @@
+import { SectionTabs } from "../../_components/section-tabs";
 import { PageSkeleton } from "../../_components/skeletons";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -24,15 +25,16 @@ async function ProfileContent() {
 
   return (
     <>
+      <SectionTabs title="Profil" />
       <header className="flex items-center gap-5">
         <span
           aria-hidden="true"
-          className="grid size-16 shrink-0 place-items-center rounded-full bg-forest text-xl font-semibold text-pollen"
+          className="grid size-16 shrink-0 place-items-center rounded-full bg-forest text-xl font-semibold text-white"
         >
           {initials}
         </span>
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">{profile.businessName}</h1>
+          <h2 className="truncate text-2xl font-semibold tracking-tight">{profile.businessName}</h2>
           <p className="truncate text-muted">{user.email}</p>
         </div>
       </header>

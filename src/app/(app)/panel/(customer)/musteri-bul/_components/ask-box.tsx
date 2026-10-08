@@ -157,7 +157,7 @@ export function AskBox({ searchId }: { searchId: string }) {
                           setQuestion(ex);
                           void ask(ex);
                         }}
-                        className="h-8 rounded-full bg-sunken px-3.5 text-sm text-muted transition-colors hover:bg-forest-soft hover:text-forest"
+                        className="h-8 rounded-full bg-sunken px-3.5 text-sm text-muted transition-colors hover:bg-forest-soft hover:text-accent"
                       >
                         {ex}
                       </button>

@@ -1,5 +1,5 @@
 /**
- * Posta kutusuna gelen iletilerin sınıflandırılması (saf): yanıt mı, otomatik yanıt (ofis dışı) mı, geri dönen
+ * Gönderici adresine gelen iletilerin sınıflandırılması (saf): yanıt mı, otomatik yanıt (ofis dışı) mı, geri dönen
  * e-posta (bounce) mı? Ve bounce raporundan hangi gönderimin, hangi adrese ulaşamadığının çıkarılması.
  */
 

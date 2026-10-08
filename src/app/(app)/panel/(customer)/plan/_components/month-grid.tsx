@@ -52,7 +52,7 @@ export function MonthGrid({
             className="relative grid min-h-16 content-start gap-1 border-t border-l border-line p-1 text-left transition-colors outline-none first:border-l-0 hover:bg-sunken/60 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-forest aria-pressed:bg-forest-soft/70 data-[out=true]:bg-sunken/30 data-[out=true]:text-muted sm:min-h-[6.5rem] sm:p-1.5 [&:nth-child(7n+8)]:border-l-0"
           >
             <span
-              className={`grid size-6 place-items-center rounded-full text-xs font-medium tabular-nums sm:text-sm ${isToday ? "bg-forest text-white" : ""} ${isSelected && !isToday ? "text-forest" : ""}`}
+              className={`grid size-6 place-items-center rounded-full text-xs font-medium tabular-nums sm:text-sm ${isToday ? "bg-forest text-white" : ""} ${isSelected && !isToday ? "text-accent" : ""}`}
             >
               {d.getDate()}
             </span>

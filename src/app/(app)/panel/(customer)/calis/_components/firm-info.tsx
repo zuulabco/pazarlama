@@ -23,7 +23,7 @@ export function FirmInfo({ firm }: { firm: WorkFirm }) {
         <ul className="grid gap-2 text-sm">
           {firm.signals.map((s) => (
             <li key={s} className="flex gap-2.5 text-muted">
-              <span className="mt-0.5 text-forest">
+              <span className="mt-0.5 text-accent">
                 <CheckIcon size={16} />
               </span>
               {s}
@@ -40,7 +40,7 @@ export function FirmInfo({ firm }: { firm: WorkFirm }) {
           </ul>
         )}
         <p className="text-xs text-muted">Notlarınız da mesajda kullanılır. Not eklemek için Takip sayfasına bakın.</p>
-        <Link href="/panel/firmalar" className="w-fit text-sm font-medium text-forest underline underline-offset-4 hover:no-underline">
+        <Link href="/panel/firmalar" className="w-fit text-sm font-medium text-accent underline underline-offset-4 hover:no-underline">
           Takip listesinde aç
         </Link>
       </div>

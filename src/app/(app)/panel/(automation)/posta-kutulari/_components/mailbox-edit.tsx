@@ -22,7 +22,7 @@ function NumberField({ label, hint, value, onChange, error }: { label: string; h
   );
 }
 
-/** Posta kutusu ayarları: gönderen adı, imza, günlük/saatlik limit, (hata varsa) şifreyi yenileme. */
+/** Gönderici adresi ayarları: gönderen adı, imza, günlük/saatlik limit, (hata varsa) şifreyi yenileme. */
 export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; onSaved: (m: Mailbox) => void; onCancel: () => void }) {
   const [fromName, setFromName] = useState(mailbox.fromName ?? "");
   const [signature, setSignature] = useState(mailbox.signature);
@@ -46,7 +46,7 @@ export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; 
     });
     setBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });
-    toast("Posta kutusu güncellendi");
+    toast("Gönderici adresi güncellendi");
     onSaved(r.data.mailbox);
   }
 
@@ -60,7 +60,6 @@ export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; 
       className="grid gap-4"
     >
       <div>
-        <h3 className="text-lg font-semibold tracking-tight">Posta kutusu ayarları</h3>
         <p className="text-sm text-muted">{mailbox.email}</p>
       </div>
 

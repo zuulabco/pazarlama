@@ -3,7 +3,7 @@ import MailComposer from "nodemailer/lib/mail-composer";
 import type { OutgoingMail } from "./smtp";
 
 /**
- * Google OAuth ile bağlanan posta kutuları için Gmail API istemcisi (gönderme ve gelen kutusunu okuma).
+ * Google OAuth ile bağlanan gönderici adresleri için Gmail API istemcisi (gönderme ve gelen kutusunu okuma).
  * İzinler: gmail.send (gönderme) ve gmail.readonly (yanıt/geri dönen e-postaları bulma). Hiçbir iletiyi silmez/değiştirmez.
  */
 
@@ -59,7 +59,7 @@ async function tokenRequest(params: Record<string, string>): Promise<TokenRespon
     // invalid_grant: kullanıcı erişimi geri aldı, parolasını değiştirdi ya da test modunda jeton 7 günde sona erdi.
     const revoked = body.error === "invalid_grant";
     throw new GmailApiError(
-      revoked ? "Google erişimi sona ermiş. Posta kutusunu “Google ile bağlan” ile yeniden bağlayın." : "Google ile iletişim kurulamadı. Biraz sonra tekrar deneyin.",
+      revoked ? "Google erişimi sona ermiş. Gönderici adresini “Google ile bağlan” ile yeniden bağlayın." : "Google ile iletişim kurulamadı. Biraz sonra tekrar deneyin.",
       res.status,
       revoked ? { code: "EAUTH" } : {},
     );
@@ -97,7 +97,7 @@ async function call<T>(refreshToken: string, path: string, init: { method?: stri
   const message = err?.error?.message ?? "";
   if (res.status === 401 || (res.status === 403 && /insufficient|scope/i.test(`${reason} ${message}`))) {
     cache.delete(refreshToken);
-    throw new GmailApiError("Google erişimi yetersiz ya da sona ermiş. Posta kutusunu “Google ile bağlan” ile yeniden bağlayın.", res.status, { code: "EAUTH" });
+    throw new GmailApiError("Google erişimi yetersiz ya da sona ermiş. Gönderici adresini “Google ile bağlan” ile yeniden bağlayın.", res.status, { code: "EAUTH" });
   }
   if (res.status === 400 && /invalid.*(to|recipient)|recipient address|invalid address/i.test(message)) {
     throw new GmailApiError("Alıcı adresi geçersiz.", 400, { responseCode: 550, response: "550 5.1.1 invalid recipient address" });

@@ -12,4 +12,5 @@ export const finishLabels: Record<FinishReason, string> = {
   elle: "Elle durduruldu",
   gecersiz: "Geçersiz adres",
   kara_liste: "Kara listede",
+  sirket: "Aynı şirketten biri yanıt verdi",
 };

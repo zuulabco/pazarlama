@@ -14,29 +14,30 @@
   --color-current: currentColor;
   --color-white: #ffffff;
 
-  /* Zemin & metin */
-  --color-paper: #f4f6f3;
+  /* Zemin & metin (açık tema): nötr gri yüzeyler, tek mavi vurgu */
+  --color-paper: #f6f7f9;
   --color-surface: #ffffff;
-  --color-sunken: #eaeeea;
-  --color-ink: #15201c;
-  --color-muted: #5b6862;
-  --color-line: #d9dfda;
-  --color-line-strong: #b9c3bc;
+  --color-sunken: #eceff3;
+  --color-ink: #16181c;
+  --color-muted: #5b616b;
+  --color-line: #e1e5ea;
+  --color-line-strong: #c5ccd6;
 
-  /* Marka */
-  --color-forest: #1d4a3c;
-  --color-forest-hover: #163a2f;
-  --color-forest-soft: #dfe9e3;
-  --color-pollen: #e3f27a;
+  /* Marka: forest = dolgu (düğme, seçili öğe; üzerine beyaz yazı), accent = mavi metin/simge (zemine göre kontrastlı) */
+  --color-forest: #0072e5;
+  --color-forest-hover: #005fc4;
+  --color-forest-soft: #e3effd;
+  --color-accent: #005cc0;
+  --color-pollen: #fff1b8;
 
   /* Geri bildirim */
-  --color-danger: #a8321f;
-  --color-danger-soft: #fbeae6;
+  --color-danger: #c4271c;
+  --color-danger-soft: #fdecea;
 
   /* Puan skalası (düşük → yüksek) */
-  --color-score-low: #c9d2cc;
-  --color-score-mid: #8fb3a3;
-  --color-score-high: #1d4a3c;
+  --color-score-low: #d6dce5;
+  --color-score-mid: #7fb3ee;
+  --color-score-high: #0072e5;
 
   /* Tipografi — 1.25 oranlı ölçek, gövde 17px */
   --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
@@ -62,13 +63,13 @@
   --tracking-display: -0.038em;
 
   /* Yarıçaplar hiyerarşiye göre: kontrol < satır < panel */
-  --radius-control: 0.625rem;
-  --radius-row: 0.75rem;
-  --radius-panel: 1.25rem;
+  --radius-control: 0.5rem;
+  --radius-row: 0.625rem;
+  --radius-panel: 0.875rem;
 
   /* Gölge tek ve katmanlı: yalnızca "yüzen" yüzeylerde */
-  --shadow-float: 0 1px 1px rgb(21 32 28 / 0.04), 0 8px 24px -6px rgb(21 32 28 / 0.1),
-    0 32px 64px -24px rgb(21 32 28 / 0.14);
+  --shadow-float: 0 1px 1px rgb(16 24 40 / 0.04), 0 8px 24px -6px rgb(16 24 40 / 0.1),
+    0 32px 64px -24px rgb(16 24 40 / 0.14);
 
   /* Hareket */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -86,27 +87,44 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --color-paper: #0f1512;
-  --color-surface: #171f1b;
-  --color-sunken: #202a25;
-  --color-ink: #e9efeb;
-  --color-muted: #9aa8a1;
-  --color-line: #2a3631;
-  --color-line-strong: #3c4a43;
+  --color-paper: #121213;
+  --color-surface: #1b1b1d;
+  --color-sunken: #0f0f10;
+  --color-ink: #d5d8dc;
+  --color-muted: #8f9397;
+  --color-line: #2a2d32;
+  --color-line-strong: #3b4048;
 
-  --color-forest: #35906f;
-  --color-forest-hover: #2b7a5d;
-  --color-forest-soft: #1c2d26;
-  --color-pollen: #4a5a1c;
+  --color-forest: #0072e5;
+  --color-forest-hover: #1a85f0;
+  --color-forest-soft: #10253f;
+  --color-accent: #5aa9ff;
+  --color-pollen: #4d3d1b;
 
-  --color-danger: #ec8a77;
-  --color-danger-soft: #3a1f1a;
+  --color-danger: #ff6568;
+  --color-danger-soft: #3a1d1f;
 
-  --color-score-low: #33413a;
-  --color-score-mid: #4f7f6b;
-  --color-score-high: #5bbd95;
+  --color-score-low: #2e2e2f;
+  --color-score-mid: #1d5ea8;
+  --color-score-high: #3b9bff;
 
-  --shadow-float: 0 1px 1px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.5), 0 32px 64px -24px rgb(0 0 0 / 0.6);
+  --shadow-float: 0 1px 1px rgb(0 0 0 / 0.4), 0 8px 24px -6px rgb(0 0 0 / 0.6), 0 32px 64px -24px rgb(0 0 0 / 0.7);
+}
+
+/*
+ * Uygulama kabuğu (giriş yapılmış alan): Instantly benzeri yoğun arayüz. Yazı ölçeği küçültülür; Tailwind yardımcıları
+ * bu değişkenleri okuduğu için tüm panel bileşenleri otomatik uyar. Marka sayfaları etkilenmez.
+ */
+.app-shell {
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.3125rem;
+  --text-2xl: 1.625rem;
+  --text-3xl: 2rem;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
 }
 
 @layer base {
@@ -135,7 +153,7 @@
   }
 
   ::selection {
-    background: var(--color-pollen);
+    background: var(--color-forest-soft);
     color: var(--color-ink);
   }
 

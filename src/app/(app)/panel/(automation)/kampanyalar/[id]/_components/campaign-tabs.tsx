@@ -227,7 +227,7 @@ export function PeopleTab({ sequenceId, onChanged }: { sequenceId: string; onCha
   );
 }
 
-const bandStyle = { iyi: "bg-forest-soft text-forest", gelisebilir: "bg-pollen/50 text-ink", kritik: "bg-danger-soft text-danger" } as const;
+const bandStyle = { iyi: "bg-forest-soft text-accent", gelisebilir: "bg-pollen/50 text-ink", kritik: "bg-danger-soft text-danger" } as const;
 const bandText = { iyi: "Sağlıklı", gelisebilir: "Gelişmeli", kritik: "Kritik" } as const;
 
 /** Etkinlik + Rapor sekmesi. */
@@ -316,7 +316,7 @@ export function ReportTab({ sequenceId }: { sequenceId: string }) {
   );
 }
 
-/** Ayarlar sekmesi: ad, saatler, posta kutuları, kurallar, limitler. */
+/** Ayarlar sekmesi: ad, saatler, gönderici adresleri, kurallar, limitler. */
 export function SettingsTab({ seq, mailboxes, onChange }: { seq: Sequence; mailboxes: Mailbox[]; onChange: (patch: Partial<Pick<Sequence, "name" | "description" | "schedule" | "settings">>) => void }) {
   const s = seq.settings;
   const set = (patch: Partial<SequenceSettings>) => onChange({ settings: { ...s, ...patch } });
@@ -370,9 +370,9 @@ export function SettingsTab({ seq, mailboxes, onChange }: { seq: Sequence; mailb
       </section>
 
       <section className="grid gap-3">
-        <h3 className="font-semibold tracking-tight">Posta kutuları</h3>
+        <h3 className="font-semibold tracking-tight">Gönderici adresleri</h3>
         {mailboxes.length === 0 ? (
-          <p className="text-sm text-muted">Bağlı posta kutusu yok. Posta kutuları sekmesinden bir adres bağlayın.</p>
+          <p className="text-sm text-muted">Bağlı gönderici adresi yok. Gönderici adresleri sekmesinden bir adres bağlayın.</p>
         ) : (
           <>
             <p className="text-sm text-muted">Hiçbiri seçilmezse bağlı tüm kutular sırayla kullanılır.</p>
@@ -398,9 +398,10 @@ export function SettingsTab({ seq, mailboxes, onChange }: { seq: Sequence; mailb
       <section className="grid gap-3">
         <h3 className="font-semibold tracking-tight">Kurallar</h3>
         <Toggle checked={s.pauseOnOoo} onChange={(v) => set({ pauseOnOoo: v })} label="Ofis dışı yanıtında kişiyi birkaç gün beklet" />
+        <Toggle checked={s.stopOnCompanyReply} onChange={(v) => set({ stopOnCompanyReply: v })} label="Aynı şirketten biri yanıt verince o şirketin diğer kişilerini durdur" hint="İş arkadaşına aynı konuda tekrar yazılmaz. Şirket, e-posta alan adından anlaşılır." />
         <Toggle checked={s.finishOnClick} onChange={(v) => set({ finishOnClick: v })} label="Bağlantıya tıklayan kişiyi dizide bitir" />
         <Toggle checked={s.allowPersonal} onChange={(v) => set({ allowPersonal: v })} label="Kişisel adreslere de gönder (gmail, hotmail vb.)" hint="Tacir olmayan kişilere ticari e-posta için önceden onay gerekir; bilinçli açın." />
-        <Toggle checked={s.includeSignature} onChange={(v) => set({ includeSignature: v })} label="Posta kutusunun imzasını ekle" />
+        <Toggle checked={s.includeSignature} onChange={(v) => set({ includeSignature: v })} label="Gönderici adresinin imzasını ekle" />
         <Toggle checked={s.trackOpens} onChange={(v) => set({ trackOpens: v })} label="Açılmaları izle" hint="Takip pikseli spam sinyali olabilir; varsayılan kapalıdır." />
         <Toggle checked={s.unresponsiveDays !== null} onChange={(v) => set({ unresponsiveDays: v ? 14 : null })} label="Son adımdan sonra yanıt gelmezse kişiyi “yanıtsız” say" />
         {s.unresponsiveDays !== null && (

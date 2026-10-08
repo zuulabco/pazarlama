@@ -12,7 +12,7 @@ const variants: Record<Variant, string> = {
   secondary: "bg-surface text-ink ring-1 ring-line-strong ring-inset hover:bg-sunken",
   quiet: "text-ink hover:bg-sunken",
   /** Koyu (forest) zemin üzerinde */
-  inverse: "bg-white text-forest hover:bg-forest-soft focus-visible:outline-white",
+  inverse: "bg-white text-accent hover:bg-forest-soft focus-visible:outline-white",
 };
 
 const sizes: Record<Size, string> = {

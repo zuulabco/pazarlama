@@ -196,7 +196,7 @@ export function ResultsArea({
                       type="button"
                       onClick={() => navigate((p) => p.delete(c.key))}
                       aria-label={`${c.label} süzgecini kaldır`}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-forest-soft pr-2.5 pl-3.5 text-sm font-medium text-forest hover:bg-line"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-forest-soft pr-2.5 pl-3.5 text-sm font-medium text-accent hover:bg-line"
                     >
                       {c.label}
                       <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">

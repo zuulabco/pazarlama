@@ -13,6 +13,7 @@ export const variableCatalog = [
   { key: "name", label: "Ad soyad", example: "Ayşe Demir" },
   { key: "company", label: "Firma", example: "Lale Diş Kliniği" },
   { key: "city", label: "Şehir", example: "Kadıköy" },
+  { key: "job_title", label: "Unvan", example: "Pazarlama Müdürü" },
   { key: "website", label: "Web sitesi", example: "lale.com.tr" },
   { key: "sender_first_name", label: "Benim adım", example: "Elif" },
   { key: "sender_name", label: "Adım soyadım", example: "Elif Yıldız" },
@@ -54,7 +55,7 @@ export function unfilledVariables(template: string, vars: RenderVars): string[] 
   return [...bad];
 }
 
-export type ContactLike = { name: string | null; company: string | null; city: string | null; website: string | null };
+export type ContactLike = { name: string | null; company: string | null; city: string | null; website: string | null; jobTitle?: string | null };
 export type SenderLike = { name: string | null; company: string | null };
 
 const clean = (v: string | null) => v?.trim() || undefined;
@@ -70,6 +71,7 @@ export function buildVars(contact: ContactLike, sender: SenderLike): RenderVars 
     name: full ? titleCase(full) : undefined,
     company: clean(contact.company),
     city: clean(contact.city),
+    job_title: clean(contact.jobTitle ?? null),
     website: clean(contact.website)?.replace(/^https?:\/\//i, "").replace(/\/$/, ""),
     sender_first_name: senderParts[0] ? titleCase(senderParts[0]) : undefined,
     sender_name: clean(sender.name),

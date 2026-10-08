@@ -83,7 +83,7 @@ export function HowItWorks() {
       <ol className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((step, i) => (
           <li key={step.title} className="border-t-2 border-line pt-5 first:border-forest">
-            <span className="text-sm font-semibold text-forest tabular-nums">{i + 1}</span>
+            <span className="text-sm font-semibold text-accent tabular-nums">{i + 1}</span>
             <h3 className="mt-3 text-lg font-semibold tracking-tight">{step.title}</h3>
             <p className="mt-2 text-muted">{step.text}</p>
           </li>
@@ -133,7 +133,7 @@ const exchanges = [
   {
     question: "Dijital ihtiyacı yüksek firmaları göster",
     source: "Verilerinizden, anında",
-    sourceClass: "bg-forest-soft text-forest",
+    sourceClass: "bg-forest-soft text-accent",
     answer: "Hedefinize uyan ve dijital ihtiyaç puanı 80'in üzerinde olan 24 firma bulundu.",
   },
   {

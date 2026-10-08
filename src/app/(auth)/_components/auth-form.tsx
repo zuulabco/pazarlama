@@ -120,7 +120,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         />
 
         {mode === "giris" && (
-          <Link href="/sifremi-unuttum" className="-mt-1 justify-self-start text-sm text-forest hover:underline">
+          <Link href="/sifremi-unuttum" className="-mt-1 justify-self-start text-sm text-accent hover:underline">
             Şifremi unuttum
           </Link>
         )}

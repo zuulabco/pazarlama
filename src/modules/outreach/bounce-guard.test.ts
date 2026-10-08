@@ -34,7 +34,7 @@ describe("activationProblems", () => {
   it("hazır kampanya sorunsuzdur", () => {
     expect(activationProblems({ steps: [step()], settings: defaultSettings }, [mailbox()])).toEqual([]);
   });
-  it("adım, boş mesaj, posta kutusu ve alan adı sorunlarını ayrı ayrı bildirir", () => {
+  it("adım, boş mesaj, gönderici adresi ve alan adı sorunlarını ayrı ayrı bildirir", () => {
     expect(activationProblems({ steps: [], settings: defaultSettings }, [mailbox()]).map((p) => p.code)).toEqual(["adim"]);
     const empty = activationProblems({ steps: [step({ variants: [blankVariant()] })], settings: defaultSettings }, [mailbox()]);
     expect(empty[0]).toMatchObject({ code: "bos_mesaj", message: "1. adımın konusu ya da mesajı boş." });
@@ -52,7 +52,7 @@ describe("activationProblems", () => {
     const steps = [step(), step({ id: "t", position: 1, variants: [{ ...blankVariant("A", "takip"), body: "Takip" }] })];
     expect(activationProblems({ steps, settings: defaultSettings }, [mailbox()])).toEqual([]);
   });
-  it("yalnızca arama/görev adımı olan kampanya posta kutusu istemez", () => {
+  it("yalnızca arama/görev adımı olan kampanya gönderici adresi istemez", () => {
     expect(activationProblems({ steps: [step({ kind: "arama" })], settings: defaultSettings }, [])).toEqual([]);
   });
 });

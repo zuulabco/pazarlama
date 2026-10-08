@@ -52,7 +52,7 @@ export const benefits = [
 ] as const;
 
 export const journey = [
-  { title: "Mesaj gelir", text: "WhatsApp ya da e-posta kutunuza, herhangi bir dilde." },
+  { title: "Mesaj gelir", text: "WhatsApp ya da e-gönderici adresinize, herhangi bir dilde." },
   { title: "Çevrilir", text: "Dil otomatik algılanır ve Türkçeye çevrilir." },
   { title: "Özetlenir ve etiketlenir", text: "Kısa özet çıkar, öncelik belirlenir." },
   { title: "Size haber verilir", text: "E-posta ya da WhatsApp bildirimi ve tabloya kayıt." },

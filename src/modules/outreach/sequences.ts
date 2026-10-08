@@ -1,4 +1,5 @@
 import "server-only";
+import { getAccount } from "./account";
 import { db } from "@/lib/supabase/server";
 import { OutreachUnavailableError } from "./contacts";
 import { defaultSchedule, type Schedule } from "./schedule";
@@ -96,7 +97,8 @@ export async function getSequence(uid: string, id: string): Promise<Sequence | n
 
 export async function createSequence(uid: string, input: { name: string; description?: string; steps?: Omit<Step, "id" | "position">[] }): Promise<Sequence> {
   const { count: n } = await db().from("outreach_sequences").select("id", { count: "exact", head: true }).eq("user_uid", uid).neq("status", "arsiv");
-  if ((n ?? 0) >= maxSequences) throw new Error(`En fazla ${maxSequences} kampanya oluşturabilirsiniz.`);
+  const { plan } = await getAccount(uid);
+  if ((n ?? 0) >= Math.min(maxSequences, plan.campaigns)) throw new Error(`En fazla ${Math.min(maxSequences, plan.campaigns)} kampanya oluşturabilirsiniz (${plan.label} paketi).`);
   const { data, error } = await db()
     .from("outreach_sequences")
     .insert({ user_uid: uid, name: input.name, description: input.description ?? "", schedule: defaultSchedule, settings: defaultSettings })

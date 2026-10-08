@@ -56,9 +56,9 @@ export type Step = {
 export type SequenceStatus = "taslak" | "aktif" | "duraklatildi" | "arsiv";
 
 export type SequenceSettings = {
-  /** Gönderimde kullanılabilecek posta kutuları; boşsa bağlı tüm kutular. */
+  /** Gönderimde kullanılabilecek gönderici adresleri; boşsa bağlı tüm kutular. */
   mailboxIds: string[];
-  /** Kampanyanın kayan 24 saatlik üst sınırı (boşsa yalnızca posta kutusu limitleri). */
+  /** Kampanyanın kayan 24 saatlik üst sınırı (boşsa yalnızca gönderici adresi limitleri). */
   maxPer24h: number | null;
   cc: string[];
   bcc: string[];
@@ -71,6 +71,8 @@ export type SequenceSettings = {
   pauseOnOoo: boolean;
   /** Bağlantıya tıklayan kişiyi dizide bitir. */
   finishOnClick: boolean;
+  /** Aynı şirketten (aynı alan adı) biri yanıt verince o şirketin diğer kişilerinin dizisini durdur. */
+  stopOnCompanyReply: boolean;
   /** Son adımdan N gün sonra yanıt yoksa kişiyi "yanıtsız" işaretle (boşsa kapalı). */
   unresponsiveDays: number | null;
   /** Alt bilgideki gönderici kimliği satırına eklenecek adres/telefon (ticari iletide gönderici bilgisi zorunludur). */
@@ -88,6 +90,7 @@ export const defaultSettings: SequenceSettings = {
   allowPersonal: false,
   pauseOnOoo: true,
   finishOnClick: false,
+  stopOnCompanyReply: true,
   unresponsiveDays: null,
   footerAddress: "",
 };
@@ -161,6 +164,7 @@ export const settingsSchema = z.object({
   allowPersonal: z.boolean(),
   pauseOnOoo: z.boolean(),
   finishOnClick: z.boolean(),
+  stopOnCompanyReply: z.boolean().default(true),
   unresponsiveDays: z.number().int().min(1).max(90).nullable(),
   footerAddress: z.string().trim().max(200),
 });

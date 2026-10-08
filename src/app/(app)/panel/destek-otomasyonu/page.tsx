@@ -3,14 +3,18 @@ import { ButtonLink } from "@/components/ui/button";
 import { benefits, exampleMessage as ex, faq, journey } from "@/modules/support/guide";
 import { SetupWizard } from "./_components/setup-wizard";
 
+import { SectionTabs } from "../../_components/section-tabs";
+
 export const metadata: Metadata = { title: "Çok dilli müşteri desteği" };
 
 export default function SupportAutomationPage() {
   return (
+    <>
+    <SectionTabs title="Destek otomasyonu" />
     <div className="grid gap-20">
       <section className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
         <div>
-          <p className="text-sm font-medium text-forest">Destek otomasyonu</p>
+          <p className="text-sm font-medium text-accent">Destek otomasyonu</p>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl lg:text-display lg:tracking-display">
             Müşteriniz hangi dilde yazarsa yazsın, anlayın ve anında yanıtlayın
           </h1>
@@ -68,7 +72,7 @@ export default function SupportAutomationPage() {
         <ol className="mt-8 grid gap-px overflow-hidden rounded-panel bg-line ring-1 ring-line sm:grid-cols-2 lg:grid-cols-5">
           {journey.map((s, i) => (
             <li key={s.title} className="bg-surface p-5">
-              <span className="grid size-7 place-items-center rounded-full bg-forest-soft text-xs font-semibold text-forest">{i + 1}</span>
+              <span className="grid size-7 place-items-center rounded-full bg-forest-soft text-xs font-semibold text-accent">{i + 1}</span>
               <h3 className="mt-3 font-semibold">{s.title}</h3>
               <p className="mt-1 text-sm text-muted">{s.text}</p>
             </li>
@@ -104,5 +108,6 @@ export default function SupportAutomationPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

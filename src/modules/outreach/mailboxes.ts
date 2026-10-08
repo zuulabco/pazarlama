@@ -3,11 +3,12 @@ import { db } from "@/lib/supabase/server";
 import { OutreachUnavailableError } from "./contacts";
 import { decryptSecret, encryptSecret } from "./crypto";
 import type { DnsReport } from "./dns-health";
-import { maxMailboxes, type Mailbox, type MailboxInput } from "./mailbox-schema";
+import { getAccount } from "./account";
+import type { Mailbox, MailboxInput } from "./mailbox-schema";
 
 export class DuplicateMailboxError extends Error {
   constructor() {
-    super("Bu posta kutusu zaten bağlı.");
+    super("Bu gönderici adresi zaten bağlı.");
   }
 }
 
@@ -69,28 +70,34 @@ const toMailbox = (r: Row): Mailbox => ({
   createdAt: r.created_at,
 });
 
+/** Paketin izin verdiği gönderici adresi sayısını aşmayı engeller. */
+async function assertSenderRoom(uid: string, current: number) {
+  const { plan } = await getAccount(uid);
+  if (current >= plan.senders) throw new Error(`En fazla ${plan.senders} gönderici adresi bağlayabilirsiniz (${plan.label} paketi).`);
+}
+
 export async function listMailboxes(uid: string): Promise<Mailbox[]> {
   const { data, error } = await db().from("outreach_mailboxes").select(columns).eq("user_uid", uid).order("created_at", { ascending: true }).returns<Row[]>();
-  check("Posta kutuları okunamadı", error);
+  check("Gönderici adresleri okunamadı", error);
   return (data ?? []).map(toMailbox);
 }
 
 export async function getMailbox(uid: string, id: string): Promise<Mailbox | null> {
   const { data, error } = await db().from("outreach_mailboxes").select(columns).eq("user_uid", uid).eq("id", id).maybeSingle<Row>();
-  check("Posta kutusu okunamadı", error);
+  check("Gönderici adresi okunamadı", error);
   return data ? toMailbox(data) : null;
 }
 
 /** Bağlantı bilgileriyle birlikte (şifre çözülmüş) döndürür. YALNIZCA sunucuda, gönderim/okuma için kullanılır. */
 export async function getMailboxCredentials(uid: string, id: string): Promise<{ mailbox: Mailbox; password: string } | null> {
   const { data, error } = await db().from("outreach_mailboxes").select(`${columns}, secret_enc`).eq("user_uid", uid).eq("id", id).maybeSingle<Row & { secret_enc: string }>();
-  check("Posta kutusu okunamadı", error);
+  check("Gönderici adresi okunamadı", error);
   return data ? { mailbox: toMailbox(data), password: decryptSecret(data.secret_enc) } : null;
 }
 
 export async function createMailbox(uid: string, input: MailboxInput, dns: DnsReport | null, imap?: { uidValidity: number; uidNext: number }): Promise<Mailbox> {
   const existing = await listMailboxes(uid);
-  if (existing.length >= maxMailboxes) throw new Error(`En fazla ${maxMailboxes} posta kutusu bağlayabilirsiniz.`);
+  await assertSenderRoom(uid, existing.length);
   const { data, error } = await db()
     .from("outreach_mailboxes")
     .insert({
@@ -113,7 +120,7 @@ export async function createMailbox(uid: string, input: MailboxInput, dns: DnsRe
     })
     .select(columns)
     .single<Row>();
-  check("Posta kutusu eklenemedi", error);
+  check("Gönderici adresi eklenemedi", error);
   return toMailbox(data!);
 }
 
@@ -132,7 +139,7 @@ export async function updateMailbox(
   if (patch.lastError !== undefined) update.last_error = patch.lastError;
   if (Object.keys(update).length === 0) return getMailbox(uid, id);
   const { data, error } = await db().from("outreach_mailboxes").update(update).eq("user_uid", uid).eq("id", id).select(columns).maybeSingle<Row>();
-  check("Posta kutusu güncellenemedi", error);
+  check("Gönderici adresi güncellenemedi", error);
   return data ? toMailbox(data) : null;
 }
 
@@ -150,26 +157,26 @@ export async function saveDnsCheck(uid: string, id: string, dns: DnsReport): Pro
 
 export async function deleteMailbox(uid: string, id: string) {
   const { error } = await db().from("outreach_mailboxes").delete().eq("user_uid", uid).eq("id", id);
-  check("Posta kutusu silinemedi", error);
+  check("Gönderici adresi silinemedi", error);
 }
 
 /**
- * Google OAuth ile posta kutusu bağlar (ya da aynı adres zaten bağlıysa yeni yenileme jetonuyla yeniden bağlar).
+ * Google OAuth ile gönderici adresi bağlar (ya da aynı adres zaten bağlıysa yeni yenileme jetonuyla yeniden bağlar).
  * `refreshToken` şifrelenip `secret_enc`'e yazılır; SMTP/IMAP alanları kullanılmaz (Gmail API üzerinden çalışılır).
  */
 export async function connectGoogleMailbox(uid: string, input: { email: string; fromName: string | null; refreshToken: string; historyId: string; dns: DnsReport | null }): Promise<Mailbox> {
   const email = input.email.trim().toLowerCase();
   const { data: existing, error: e1 } = await db().from("outreach_mailboxes").select("id").eq("user_uid", uid).ilike("email", email).maybeSingle<{ id: string }>();
-  check("Posta kutusu okunamadı", e1);
+  check("Gönderici adresi okunamadı", e1);
 
   const secrets = { secret_enc: encryptSecret(input.refreshToken), gmail_history_id: input.historyId, status: "bagli", last_error: null, imap_checked_at: new Date().toISOString() };
   if (existing) {
     const { data, error } = await db().from("outreach_mailboxes").update({ ...secrets, provider: "google", dns_check: input.dns, dns_checked_at: input.dns ? new Date().toISOString() : null }).eq("id", existing.id).eq("user_uid", uid).select(columns).single<Row>();
-    check("Posta kutusu güncellenemedi", error);
+    check("Gönderici adresi güncellenemedi", error);
     return toMailbox(data!);
   }
 
-  if ((await listMailboxes(uid)).length >= maxMailboxes) throw new Error(`En fazla ${maxMailboxes} posta kutusu bağlayabilirsiniz.`);
+  await assertSenderRoom(uid, (await listMailboxes(uid)).length);
   const { data, error } = await db()
     .from("outreach_mailboxes")
     .insert({
@@ -190,6 +197,6 @@ export async function connectGoogleMailbox(uid: string, input: { email: string; 
     })
     .select(columns)
     .single<Row>();
-  check("Posta kutusu eklenemedi", error);
+  check("Gönderici adresi eklenemedi", error);
   return toMailbox(data!);
 }

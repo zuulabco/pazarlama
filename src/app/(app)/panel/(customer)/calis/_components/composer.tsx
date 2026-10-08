@@ -164,7 +164,7 @@ export function Composer({
           {favorites.length === 0 && (
             <p className="-mt-2 text-sm text-muted">
               Takibe aldığınız firmaları buradan seçebilirsiniz.{" "}
-              <Link href="/panel/musteri-bul" className="font-medium text-forest underline underline-offset-4 hover:no-underline">
+              <Link href="/panel/musteri-bul" className="font-medium text-accent underline underline-offset-4 hover:no-underline">
                 Müşteri bul
               </Link>
             </p>
@@ -221,7 +221,7 @@ export function Composer({
           </div>
         ) : !draft ? (
           <div className="grid min-h-[22rem] content-center justify-items-center gap-4 text-center">
-            <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-forest">
+            <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-accent">
               <SparkleIcon size={22} />
             </span>
             <div className="grid gap-1.5">
@@ -233,7 +233,7 @@ export function Composer({
             <ul className="grid max-w-[28rem] gap-2 text-left text-sm text-muted">
               {["Yazım ve ek hataları otomatik denetlenir", "Beğenmediğiniz yeri tek tıkla yeniden yazdırırsınız", "Hazır olunca WhatsApp'ta ya da e-postada açılır"].map((t) => (
                 <li key={t} className="flex gap-2.5">
-                  <span className="mt-0.5 text-forest">
+                  <span className="mt-0.5 text-accent">
                     <CheckIcon size={16} />
                   </span>
                   {t}
@@ -272,7 +272,7 @@ export function Composer({
                     type="button"
                     disabled={busy !== null}
                     onClick={() => refine({ action: r.value })}
-                    className="h-9 rounded-full bg-sunken px-3.5 text-sm transition-colors hover:bg-forest-soft hover:text-forest disabled:opacity-50"
+                    className="h-9 rounded-full bg-sunken px-3.5 text-sm transition-colors hover:bg-forest-soft hover:text-accent disabled:opacity-50"
                   >
                     {r.label}
                   </button>

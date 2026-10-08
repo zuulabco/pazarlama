@@ -1,9 +1,9 @@
-/** Gönderim limitleri (saf): posta kutusu ve kampanya için bir tick'te en çok kaç e-posta gönderilebileceği. */
+/** Gönderim limitleri (saf): gönderici adresi ve kampanya için bir tick'te en çok kaç e-posta gönderilebileceği. */
 
 export type Counts = { lastHour: number; last24h: number };
 
 /**
- * Posta kutusunun şu an gönderebileceği e-posta sayısı: saatlik ve (kayan 24 saatlik) günlük limitten kalanların küçüğü.
+ * Gönderici adresinin şu an gönderebileceği e-posta sayısı: saatlik ve (kayan 24 saatlik) günlük limitten kalanların küçüğü.
  * Kayan pencere, gece yarısı sıfırlanan takvim gününden daha güvenlidir: gün başında ani patlama olmaz.
  */
 export function mailboxCapacity(limits: { dailyLimit: number; hourlyLimit: number }, sent: Counts): number {

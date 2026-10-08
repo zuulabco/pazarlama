@@ -13,7 +13,7 @@ const DISPOSABLE = new Set([
 export const isDisposable = (domain: string) => DISPOSABLE.has(domain.toLowerCase());
 
 /**
- * Bulunan ya da girilen adresin durumunu belirler. Gerçek posta kutusu doğrulaması (SMTP RCPT) yapılamadığı için
+ * Bulunan ya da girilen adresin durumunu belirler. Gerçek gönderici adresi doğrulaması (SMTP RCPT) yapılamadığı için
  * en iyi ihtimalle "alan adı posta alabiliyor" denir; asıl kalite bounce'tan öğrenmeyle sağlanır.
  */
 export function statusFor(input: { dns: MailDns; disposable: boolean; origin: "site" | "elle" }): EmailStatus {

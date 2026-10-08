@@ -38,6 +38,8 @@ type Row = {
   phone: string | null;
   website: string | null;
   city: string | null;
+  job_title: string | null;
+  linkedin_url: string | null;
   source: ContactSource;
   source_url: string | null;
   favorite_id: string | null;
@@ -48,7 +50,7 @@ type Row = {
 };
 
 const columns =
-  "id, name, company, email, email_status, email_kind, phone, website, city, source, source_url, favorite_id, found_at, discovery_note, discovered_at, created_at";
+  "id, name, company, email, email_status, email_kind, phone, website, city, job_title, linkedin_url, source, source_url, favorite_id, found_at, discovery_note, discovered_at, created_at";
 
 const toContact = (r: Row, lists: Contact["lists"] = []): Contact => ({
   id: r.id,
@@ -60,6 +62,8 @@ const toContact = (r: Row, lists: Contact["lists"] = []): Contact => ({
   phone: r.phone,
   website: r.website,
   city: r.city,
+  jobTitle: r.job_title,
+  linkedinUrl: r.linkedin_url,
   source: r.source,
   sourceUrl: r.source_url,
   favoriteId: r.favorite_id,
@@ -138,7 +142,7 @@ export async function getContact(uid: string, id: string): Promise<Contact | nul
   return toContact(data, (await listsOf(uid, [id])).get(id));
 }
 
-async function countContacts(uid: string) {
+export async function countContacts(uid: string) {
   const { count, error } = await db().from("outreach_contacts").select("id", { count: "exact", head: true }).eq("user_uid", uid);
   check("Kişiler sayılamadı", error);
   return count ?? 0;

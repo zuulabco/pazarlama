@@ -162,7 +162,7 @@ function FavoriteCard({
             </Link>
             <Link
               href={`/panel/plan?firma=${fav.id}&yeni=1`}
-              className="inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest"
+              className="inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent"
             >
               <CalendarIcon size={16} />
               Plan yap
@@ -256,7 +256,7 @@ function FavoriteCard({
               <span />
             )}
             {next && (
-              <button type="button" onClick={() => move(next.value)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft py-1 pr-2 pl-3 font-medium text-forest transition-colors hover:bg-line">
+              <button type="button" onClick={() => move(next.value)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft py-1 pr-2 pl-3 font-medium text-accent transition-colors hover:bg-line">
                 {next.label}
                 <ArrowRightIcon size={15} />
               </button>

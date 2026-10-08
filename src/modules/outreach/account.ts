@@ -1,0 +1,55 @@
+import "server-only";
+import { db } from "@/lib/supabase/server";
+import { OutreachUnavailableError } from "./contacts";
+import { planOf, plans, type Plan } from "./plans";
+
+export type Account = { plan: Plan; credits: number; periodStart: string };
+
+export class InsufficientCreditsError extends Error {
+  constructor(readonly needed: number, readonly available: number) {
+    super(`Yeterli krediniz yok: ${needed} kredi gerekiyor, ${available} kredi kaldı.`);
+  }
+}
+
+const unavailable = (e: { code?: string; message: string } | null) => {
+  if (!e) return;
+  if (e.code === "42P01" || e.code === "PGRST205" || e.code === "PGRST202" || e.code === "42883") throw new OutreachUnavailableError();
+  throw new Error(e.message);
+};
+
+/**
+ * Kullanıcının paketini ve kalan kredisini döndürür; hesap yoksa ücretsiz paketle açar, ay değiştiyse krediyi yeniler.
+ * Paketin kredisi veritabanına parametre olarak verilir; mevcut hesabın paketi önce okunur.
+ */
+export async function getAccount(uid: string): Promise<Account> {
+  const existing = await db().from("outreach_accounts").select("plan").eq("user_uid", uid).maybeSingle<{ plan: string }>();
+  unavailable(existing.error);
+  const plan = planOf(existing.data?.plan);
+  const { data, error } = await db().rpc("outreach_account_touch", { p_uid: uid, p_monthly: plan.monthlyCredits });
+  unavailable(error);
+  const row = (Array.isArray(data) ? data[0] : data) as { out_plan: string; out_credits: number; out_period_start: string } | null;
+  return { plan: planOf(row?.out_plan ?? plan.key), credits: row?.out_credits ?? plan.monthlyCredits, periodStart: row?.out_period_start ?? new Date().toISOString() };
+}
+
+/** Krediyi atomik olarak düşer; yetmiyorsa hata fırlatır. Yeni bakiyeyi döndürür. */
+export async function spendCredits(uid: string, amount: number, reason: "arama", ref: string): Promise<number> {
+  if (amount <= 0) return (await getAccount(uid)).credits;
+  const { data, error } = await db().rpc("outreach_credit_change", { p_uid: uid, p_delta: -amount, p_reason: reason, p_ref: ref });
+  unavailable(error);
+  if (data === null || data === undefined) throw new InsufficientCreditsError(amount, (await getAccount(uid)).credits);
+  return data as number;
+}
+
+/** Kullanılmayan krediyi iade eder. */
+export async function refundCredits(uid: string, amount: number, ref: string): Promise<void> {
+  if (amount <= 0) return;
+  const { error } = await db().rpc("outreach_credit_change", { p_uid: uid, p_delta: amount, p_reason: "iade", p_ref: ref });
+  unavailable(error);
+}
+
+/** Kullanıcının paketini değiştirir (ödeme bağlanana kadar elle/yönetici işlemi için). */
+export async function setPlan(uid: string, plan: keyof typeof plans) {
+  await getAccount(uid);
+  const { error } = await db().from("outreach_accounts").update({ plan }).eq("user_uid", uid);
+  unavailable(error);
+}

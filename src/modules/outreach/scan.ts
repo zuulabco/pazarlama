@@ -3,15 +3,16 @@ import { simpleParser } from "mailparser";
 import { db } from "@/lib/supabase/server";
 import { addSuppression } from "./contacts";
 import { decryptSecret } from "./crypto";
+import { companyDomain } from "./company";
 import { addEvent, finishContactEnrollments } from "./enrollments";
 import { getProfile, getRaw, newInboxMessageIds } from "./gmail";
 import { withImap, type ImapConfig } from "./imap";
 import { classifyInbound, messageIds, parseBounce } from "./inbound";
 
 /**
- * Posta kutusunun gelen kutusunu tarar: kampanya e-postalarımıza gelen yanıtları, ofis dışı otomatik yanıtları ve geri dönen
+ * Gönderici adresinin gelen kutusunu tarar: kampanya e-postalarımıza gelen yanıtları, ofis dışı otomatik yanıtları ve geri dönen
  * (bounce) e-postaları bulur; kampanyayı durdurur, kara listeyi ve kişi durumunu günceller. Sunucusuz ortamda kalıcı
- * bağlantı yoktur: her çağrı bağlan → yeni iletileri oku → kapat. Okunan son UID posta kutusunda saklanır.
+ * bağlantı yoktur: her çağrı bağlan → yeni iletileri oku → kapat. Okunan son UID gönderici adresinde saklanır.
  */
 
 export type ScanResult = { scanned: number; replies: number; ooo: number; bounces: number };
@@ -73,6 +74,37 @@ async function onReply(uid: string, sent: SentRow, info: { subject: string; from
     await db().from("outreach_enrollments").update({ status: "bitti", finish_reason: "yanit", next_run_at: null, claimed_until: null }).eq("id", sent.enrollment_id).in("status", ["aktif", "duraklatildi"]);
   }
   await addEvent({ uid, kind: "yanit", sequenceId: sent.sequence_id, enrollmentId: sent.enrollment_id, messageRowId: sent.id, contactId: sent.contact_id, meta: info });
+  await stopSameCompany(uid, sent);
+}
+
+/**
+ * Aynı şirketten (aynı kişisel olmayan alan adı) biri yanıt verdiyse, o şirketin aynı kampanyadaki diğer kişilerinin dizisini durdurur:
+ * iş arkadaşına aynı konuda tekrar yazmak yanıt vereni rahatsız eder. Kampanya ayarından kapatılabilir.
+ */
+async function stopSameCompany(uid: string, sent: SentRow) {
+  if (!sent.sequence_id || !sent.contact_id) return;
+  const { data: seq } = await db().from("outreach_sequences").select("settings").eq("id", sent.sequence_id).maybeSingle();
+  if ((seq?.settings as { stopOnCompanyReply?: boolean } | null)?.stopOnCompanyReply === false) return;
+
+  const { data: me } = await db().from("outreach_contacts").select("email").eq("user_uid", uid).eq("id", sent.contact_id).maybeSingle<{ email: string | null }>();
+  const domain = companyDomain(me?.email);
+  if (!domain) return;
+
+  const { data: mates } = await db().from("outreach_contacts").select("id").eq("user_uid", uid).ilike("email", `%@${domain}`).neq("id", sent.contact_id).limit(200).returns<{ id: string }[]>();
+  const ids = (mates ?? []).map((m) => m.id);
+  if (ids.length === 0) return;
+
+  const { data: stopped } = await db()
+    .from("outreach_enrollments")
+    .update({ status: "bitti", finish_reason: "sirket", next_run_at: null, claimed_until: null })
+    .eq("sequence_id", sent.sequence_id)
+    .in("contact_id", ids)
+    .in("status", ["aktif", "duraklatildi"])
+    .select("id, contact_id")
+    .returns<{ id: string; contact_id: string }[]>();
+  for (const e of stopped ?? []) {
+    await addEvent({ uid, kind: "bitti", sequenceId: sent.sequence_id, enrollmentId: e.id, contactId: e.contact_id, meta: { reason: "sirket", domain } });
+  }
 }
 
 async function onAutoReply(uid: string, sent: SentRow, subject: string) {
@@ -96,7 +128,7 @@ async function onBounce(uid: string, mailboxId: string, raw: string) {
   const found = await findSent(uid, mailboxId, bodyIds);
   let sent: SentRow | undefined = bodyIds.map((id) => found.get(id)).find(Boolean);
   if (!sent && parsed.recipient) {
-    // Asıl ileti bulunamadıysa: bu posta kutusundan o alıcıya en son gönderilen ileti
+    // Asıl ileti bulunamadıysa: bu gönderici adresinden o alıcıya en son gönderilen ileti
     const { data } = await db().from("outreach_messages").select("id, message_id, enrollment_id, sequence_id, contact_id, to_email").eq("user_uid", uid).eq("mailbox_id", mailboxId).eq("to_email", parsed.recipient).order("sent_at", { ascending: false }).limit(1).returns<SentRow[]>();
     sent = data?.[0];
   }
@@ -145,7 +177,7 @@ async function handleInbound(row: Pick<MailboxRow, "id" | "user_uid">, item: Inb
   }
 }
 
-/** Google OAuth ile bağlı posta kutusunun gelen kutusunu Gmail API ile tarar (geçmiş kimliğinden itibaren yeni iletiler). */
+/** Google OAuth ile bağlı gönderici adresinin gelen kutusunu Gmail API ile tarar (geçmiş kimliğinden itibaren yeni iletiler). */
 export async function scanGoogleMailbox(row: MailboxRow): Promise<ScanResult> {
   const res: ScanResult = { scanned: 0, replies: 0, ooo: 0, bounces: 0 };
   const refresh = decryptSecret(row.secret_enc);
@@ -228,7 +260,7 @@ export async function scanMailbox(row: MailboxRow): Promise<ScanResult> {
       }
       res.scanned = msgs.length;
 
-      // Başlıklardaki tüm Message-ID'lerden bu posta kutusunun gönderdiklerini tek sorguda bul
+      // Başlıklardaki tüm Message-ID'lerden bu gönderici adresinin gönderdiklerini tek sorguda bul
       const heads = msgs.map((m) => ({ m, h: parseHeaders(m.headers ?? "") }));
       const refIds = [...new Set(heads.flatMap(({ h }) => [...messageIds(h["in-reply-to"]), ...messageIds(h["references"])]))];
       const sentMap = await findSent(row.user_uid, row.id, refIds);
@@ -253,7 +285,7 @@ export async function scanMailbox(row: MailboxRow): Promise<ScanResult> {
   return res;
 }
 
-/** En uzun süredir taranmayan bağlı posta kutularından en çok `limit` tanesini tarar (her biri en geç 2 dakikada bir). */
+/** En uzun süredir taranmayan bağlı gönderici adreslerinden en çok `limit` tanesini tarar (her biri en geç 2 dakikada bir). */
 export async function scanDueMailboxes(limit = 3, deadlineMs = 120_000): Promise<ScanResult & { mailboxes: number }> {
   const total = { scanned: 0, replies: 0, ooo: 0, bounces: 0, mailboxes: 0 };
   const deadline = Date.now() + deadlineMs;
@@ -276,7 +308,7 @@ export async function scanDueMailboxes(limit = 3, deadlineMs = 120_000): Promise
       total.bounces += r.bounces;
       total.mailboxes++;
     } catch (e) {
-      // Bağlantı hatası: bir sonraki turda yeniden denenir; sürekli hata verirse kullanıcı Posta kutuları'nda görür.
+      // Bağlantı hatası: bir sonraki turda yeniden denenir; sürekli hata verirse kullanıcı Gönderici adresleri'nda görür.
       await db().from("outreach_mailboxes").update({ imap_checked_at: new Date().toISOString(), last_error: e instanceof Error ? e.message.slice(0, 200) : "Gelen kutusu okunamadı" }).eq("id", row.id);
     }
   }

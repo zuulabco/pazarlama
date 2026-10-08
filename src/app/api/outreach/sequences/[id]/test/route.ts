@@ -16,13 +16,13 @@ const tooFast = rateLimiter(6);
 const bodySchema = z.object({
   subject: z.string().max(150),
   body: z.string().min(1, "Mesaj boş.").max(5000),
-  /** Test e-postasının gideceği adres; boşsa seçilen posta kutusunun kendi adresi. */
+  /** Test e-postasının gideceği adres; boşsa seçilen gönderici adresinin kendi adresi. */
   to: z.string().trim().toLowerCase().regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Geçerli bir e-posta adresi yazın.").optional(),
   mailboxId: z.uuid().optional(),
 });
 
 /**
- * "Bana test e-postası gönder": adımın metnini örnek verilerle (Ayşe, Lale Diş Kliniği…) doldurup kampanyanın posta kutusundan
+ * "Bana test e-postası gönder": adımın metnini örnek verilerle (Ayşe, Lale Diş Kliniği…) doldurup kampanyanın gönderici adresinden
  * gönderir; gerçek e-postayla aynı imza ve abonelik alt bilgisini taşır. Kampanya kayıtlarına dokunmaz.
  */
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/sequences/[id]/test">) {
@@ -39,9 +39,9 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/se
     if (!seq) return fail("Kampanya bulunamadı.", 404);
     const boxes = (await listMailboxes(g.user.uid)).filter((m) => m.status === "bagli" && (seq.settings.mailboxIds.length === 0 || seq.settings.mailboxIds.includes(m.id)));
     const chosen = boxes.find((m) => m.id === body.data.mailboxId) ?? boxes[0];
-    if (!chosen) return fail("Test için bağlı bir posta kutusu yok. Posta kutuları sayfasından bağlayın.", 409);
+    if (!chosen) return fail("Test için bağlı bir gönderici adresi yok. Gönderici adresleri sayfasından bağlayın.", 409);
     const creds = await getMailboxCredentials(g.user.uid, chosen.id);
-    if (!creds) return fail("Posta kutusu bulunamadı.", 404);
+    if (!creds) return fail("Gönderici adresi bulunamadı.", 404);
 
     const vars = { ...sampleVars, sender_name: chosen.fromName ?? sampleVars.sender_name };
     const token = signToken(`e:00000000-0000-0000-0000-000000000000`); // örnek: gerçek bir kişiye bağlı değil, tıklanınca "geçersiz" der

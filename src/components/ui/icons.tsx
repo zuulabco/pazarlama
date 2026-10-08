@@ -139,3 +139,32 @@ export const ChevronRightIcon = ({ size }: P) => (
     <path d="m8 5 5 5-5 5" />
   </Svg>
 );
+
+export const LockIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <rect x="4.5" y="9" width="11" height="7" rx="1.6" />
+    <path d="M7 9V6.8a3 3 0 0 1 6 0V9" />
+  </Svg>
+);
+
+export const HomeIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M3.5 9.2 10 3.8l6.5 5.4V16a.8.8 0 0 1-.8.8H4.3a.8.8 0 0 1-.8-.8V9.2Z" />
+    <path d="M8 16.8v-4.4h4v4.4" />
+  </Svg>
+);
+
+export const UsersIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <circle cx="7.6" cy="7" r="2.8" />
+    <path d="M2.8 16c.5-2.6 2.5-4 4.8-4s4.3 1.4 4.8 4" />
+    <path d="M13 4.4a2.8 2.8 0 0 1 0 5.2M14.4 12.2c1.6.4 2.6 1.6 2.9 3.4" />
+  </Svg>
+);
+
+export const SendIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="m3.4 9.6 13-5.6-4.6 12.4-2.6-5.2-5.8-1.6Z" />
+    <path d="m9.2 11.2 3-3" />
+  </Svg>
+);

@@ -11,7 +11,7 @@ export function RichText({ text }: { text: string }) {
             href={m[2]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-forest underline underline-offset-4 hover:no-underline"
+            className="text-accent underline underline-offset-4 hover:no-underline"
           >
             {m[1]}
           </a>

@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { DnsReport } from "./dns-health";
 import type { Provider } from "./presets";
 
-/** Posta kutusu alanları ve kuralları (sunucu ve istemci ortak). */
+/** Gönderici adresi alanları ve kuralları (sunucu ve istemci ortak). */
 
 export type Mailbox = {
   id: string;
@@ -25,8 +25,7 @@ export type Mailbox = {
   createdAt: string;
 };
 
-/** Kullanıcı başına en çok bu kadar posta kutusu (kötüye kullanıma karşı). */
-export const maxMailboxes = 5;
+/** Kullanıcı başına en çok bu kadar gönderici adresi (kötüye kullanıma karşı). */
 
 const HOST = /^(?!-)[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})+$/i;
 const server = (ports: [number, ...number[]]) =>

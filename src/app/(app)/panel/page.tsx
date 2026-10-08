@@ -7,6 +7,7 @@ import styles from "@/components/showcase/showcase.module.css";
 import { requireUser } from "@/lib/auth/session";
 import { getProfile } from "@/modules/profile/repository";
 import { appModules } from "@/modules/registry";
+import { SectionTabs } from "../_components/section-tabs";
 import { DashboardSkeleton } from "../_components/skeletons";
 
 export const metadata: Metadata = { title: "Panel" };
@@ -47,9 +48,10 @@ async function PanelContent() {
   const firstName = user.name?.split(" ")[0];
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+      <SectionTabs title="Ana sayfa" />
+      <h2 className="text-2xl font-semibold tracking-tight">
         {firstName ? `Merhaba ${firstName}` : "Merhaba"}
-      </h1>
+      </h2>
       <p className="mt-2 max-w-prose text-muted">{profile.businessName} için neyle başlamak istersiniz?</p>
       <Features />
     </>

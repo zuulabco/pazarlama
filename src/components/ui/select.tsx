@@ -144,7 +144,7 @@ export function Select<T extends string>({
                   {o.hint && <span className="text-sm text-muted">{o.hint}</span>}
                 </span>
                 {selected && (
-                  <svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" className="shrink-0 text-forest">
+                  <svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" className="shrink-0 text-accent">
                     <path d="m2.5 6.2 2.2 2.2 4.8-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}

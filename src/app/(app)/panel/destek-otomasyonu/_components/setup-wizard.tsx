@@ -160,7 +160,7 @@ export function SetupWizard() {
             >
               <span
                 className={`grid size-7 place-items-center rounded-full text-xs font-semibold ${
-                  i === step ? "bg-forest text-white" : i < step ? "bg-forest-soft text-forest" : "bg-sunken text-muted"
+                  i === step ? "bg-forest text-white" : i < step ? "bg-forest-soft text-accent" : "bg-sunken text-muted"
                 }`}
               >
                 {i < step ? "✓" : i + 1}
@@ -202,7 +202,7 @@ export function SetupWizard() {
 
             <Group title="Müşteri mesajları nereden gelsin?" error={errors.channels}>
               <Toggle title="WhatsApp" text="İşletme numaranıza yazılan mesajlar." on={config.whatsapp} onChange={(v) => set("whatsapp", v)} />
-              <Toggle title="E-posta" text="Destek e-posta kutunuza gelen mesajlar." on={config.email} onChange={(v) => set("email", v)} />
+              <Toggle title="E-posta" text="Destek e-gönderici adresinize gelen mesajlar." on={config.email} onChange={(v) => set("email", v)} />
             </Group>
 
             <Group title="Mesaj gelince ekibe nasıl haber verilsin?" error={errors.outputs}>

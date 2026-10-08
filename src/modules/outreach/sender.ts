@@ -19,7 +19,7 @@ import type { SenderContext } from "./ai-prompts";
 
 /**
  * Gönderici (zamanlayıcının "tick"i): vadesi gelen kampanya kayıtlarını kilitler, her biri için pencere, limit ve kurallara
- * bakar, e-postayı doğru posta kutusundan gönderir ve bir sonraki adımı planlar. Her çağrı sınırlı iş yapar (zaman aşımına karşı).
+ * bakar, e-postayı doğru gönderici adresinden gönderir ve bir sonraki adımı planlar. Her çağrı sınırlı iş yapar (zaman aşımına karşı).
  */
 
 export type TickResult = { claimed: number; sent: number; tasks: number; deferred: number; finished: number; failed: number; bounced: number };
@@ -198,12 +198,12 @@ async function runEmailStep(en: EnrollmentRow, seq: Sequence, active: Step[], st
   if (!sup) ctx.suppressions.set(uid, (sup = await suppressionSets(uid)));
   if (isSuppressedIn(sup, contact.email)) return void (await finish(en, "kara_liste"), res.finished++);
 
-  // ── posta kutusu ve kapasite
+  // ── gönderici adresi ve kapasite
   const all = await loadMailboxes(uid, ctx);
   const allowed = all.filter((m) => seq.settings.mailboxIds.length === 0 || seq.settings.mailboxIds.includes(m.mailbox.id));
   const sticky = en.mailbox_id ? allowed.find((m) => m.mailbox.id === en.mailbox_id) : undefined;
   const capOf = (m: { mailbox: Mailbox }) => mailboxCapacity(m.mailbox, ctx.counts.get(m.mailbox.id) ?? { lastHour: 0, last24h: 0 });
-  // Takip e-postaları aynı konuşmada kalsın diye ilk adımın posta kutusu korunur; ilk adımda en boş kutu seçilir.
+  // Takip e-postaları aynı konuşmada kalsın diye ilk adımın gönderici adresi korunur; ilk adımda en boş kutu seçilir.
   const chosen = en.thread_root ? sticky : allowed.map((m) => ({ m, cap: capOf(m) })).sort((a, b) => b.cap - a.cap)[0]?.m;
   const campaignCap = campaignCapacity(seq.settings.maxPer24h, await campaignSent24h(seq.id, ctx));
   if (!chosen || capOf(chosen) <= 0 || campaignCap <= 0) {

@@ -22,7 +22,7 @@ export function activationProblems(seq: Pick<Sequence, "steps" | "settings">, ma
     const allowed = mailboxes.filter((m) => seq.settings.mailboxIds.length === 0 || seq.settings.mailboxIds.includes(m.id));
     const usable = allowed.filter((m) => m.status === "bagli");
     if (usable.length === 0) {
-      problems.push({ code: "posta_kutusu", message: "Gönderim için bağlı bir posta kutusu yok. Posta kutuları sayfasından bağlayın.", overridable: false });
+      problems.push({ code: "posta_kutusu", message: "Gönderim için bağlı bir gönderici adresi yok. Gönderici adresleri sayfasından bağlayın.", overridable: false });
     } else {
       // DMARC tek başına engel değil (önerilir); SPF/DKIM/MX eksikse geçilebilir uyarı verilir.
       const blocking = (m: Mailbox) => (m.dnsCheck?.checks ?? []).filter((c) => c.status !== "ok" && c.key !== "dmarc");

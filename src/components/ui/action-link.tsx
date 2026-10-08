@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 const base =
-  "inline-flex items-center gap-2 rounded-full text-sm font-medium text-ink ring-1 ring-line-strong ring-inset transition-[background-color,color,box-shadow] duration-200 hover:bg-forest-soft hover:text-forest hover:ring-forest/40";
+  "inline-flex items-center gap-2 rounded-full text-sm font-medium text-ink ring-1 ring-line-strong ring-inset transition-[background-color,color,box-shadow] duration-200 hover:bg-forest-soft hover:text-accent hover:ring-forest/40";
 
 /**
  * İletişim eylemi bağlantısı (ara, web sitesi, harita). Simgeli kapsül; `iconOnly` ise yalnızca yuvarlak

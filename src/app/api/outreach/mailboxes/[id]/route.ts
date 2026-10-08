@@ -17,7 +17,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/outreach/m
   if (tooFast(g.user.uid)) return fail("Çok hızlı istek gönderiyorsunuz. Biraz bekleyin.", 429);
 
   const { id } = await ctx.params;
-  if (!z.uuid().safeParse(id).success) return fail("Posta kutusu bulunamadı.", 404);
+  if (!z.uuid().safeParse(id).success) return fail("Gönderici adresi bulunamadı.", 404);
   const body = mailboxPatchSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return fail(body.error.issues[0]?.message ?? "Geçersiz istek.", 400);
 
@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/outreach/m
     const patch: Parameters<typeof updateMailbox>[2] = { ...body.data };
     if (body.data.password) {
       const current = await getMailboxCredentials(g.user.uid, id);
-      if (!current) return fail("Posta kutusu bulunamadı.", 404);
+      if (!current) return fail("Gönderici adresi bulunamadı.", 404);
       const { mailbox } = current;
       const user = mailbox.username;
       const [smtp, imap] = await Promise.allSettled([
@@ -38,18 +38,18 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/outreach/m
       patch.lastError = null;
     }
     const mailbox = await updateMailbox(g.user.uid, id, patch);
-    return mailbox ? NextResponse.json({ mailbox }) : fail("Posta kutusu bulunamadı.", 404);
+    return mailbox ? NextResponse.json({ mailbox }) : fail("Gönderici adresi bulunamadı.", 404);
   } catch (e) {
     return outreachFailure(e);
   }
 }
 
-/** Posta kutusunu bağlantıdan çıkarır (şifre silinir; e-posta hesabınıza dokunulmaz). */
+/** Gönderici adresini bağlantıdan çıkarır (şifre silinir; e-posta hesabınıza dokunulmaz). */
 export async function DELETE(req: NextRequest, ctx: RouteContext<"/api/outreach/mailboxes/[id]">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   const { id } = await ctx.params;
-  if (!z.uuid().safeParse(id).success) return fail("Posta kutusu bulunamadı.", 404);
+  if (!z.uuid().safeParse(id).success) return fail("Gönderici adresi bulunamadı.", 404);
   try {
     await deleteMailbox(g.user.uid, id);
     return NextResponse.json({ ok: true });

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * Posta kutusu bağlar. Kaydetmeden önce SMTP (gönderme) ve IMAP (okuma) girişi sınanır; ikisi de çalışmazsa kaydedilmez.
+ * Gönderici adresi bağlar. Kaydetmeden önce SMTP (gönderme) ve IMAP (okuma) girişi sınanır; ikisi de çalışmazsa kaydedilmez.
  * Şifre şifrelenerek saklanır ve bir daha istemciye gönderilmez.
  */
 export async function POST(req: NextRequest) {

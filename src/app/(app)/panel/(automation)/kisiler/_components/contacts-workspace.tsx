@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { DownloadIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { DownloadIcon, PlusIcon, SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
 import { toast, Toaster } from "@/components/ui/toast";
@@ -12,6 +12,7 @@ import { statusLabels, type EmailStatus } from "@/modules/outreach/discover/veri
 import type { Contact } from "@/modules/outreach/schema";
 import { ContactForm, blankContact, draftOf, type ContactDraft } from "./contact-form";
 import { KindChip, StatusChip, api, download, sourceLabels } from "./contact-ui";
+import type { AccountSummary } from "@/modules/outreach/usage";
 import { CsvPanel } from "./csv-panel";
 import { ListsView, SuppressionsView } from "./side-views";
 
@@ -40,12 +41,14 @@ export function ContactsWorkspace({
   initialTotal,
   initialLists,
   initialSuppressions,
+  initialAccount,
   unavailable,
 }: {
   initialContacts: Contact[];
   initialTotal: number;
   initialLists: ContactList[];
   initialSuppressions: Suppression[];
+  initialAccount: AccountSummary | null;
   unavailable: boolean;
 }) {
   const [view, setView] = useState<View>("kisiler");
@@ -58,6 +61,7 @@ export function ContactsWorkspace({
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [panel, setPanel] = useState<Panel>(null);
+  const account = initialAccount;
   const [draft, setDraft] = useState<ContactDraft>(blankContact);
   const [saving, setSaving] = useState(false);
   const [finding, setFinding] = useState<Set<string>>(new Set());
@@ -228,7 +232,7 @@ export function ContactsWorkspace({
     const rows = contacts.filter((c) => selected.size === 0 || selected.has(c.id));
     download(
       "kisiler.csv",
-      toCsv(["Firma", "Ad", "E-posta", "E-posta durumu", "Telefon", "Web sitesi", "Şehir", "Kaynak"], rows.map((c) => [c.company ?? "", c.name ?? "", c.email ?? "", statusLabels[c.emailStatus], c.phone ?? "", c.website ?? "", c.city ?? "", sourceLabels[c.source]])),
+      toCsv(["Firma", "Ad", "Unvan", "E-posta", "E-posta durumu", "Telefon", "Web sitesi", "Şehir", "Kaynak"], rows.map((c) => [c.company ?? "", c.name ?? "", c.jobTitle ?? "", c.email ?? "", statusLabels[c.emailStatus], c.phone ?? "", c.website ?? "", c.city ?? "", sourceLabels[c.source]])),
     );
   }
 
@@ -268,13 +272,24 @@ export function ContactsWorkspace({
         />
         {view === "kisiler" && (
           <div className="flex flex-wrap items-center gap-2">
+            {account && (
+              <span className="rounded-full bg-sunken px-3 py-1.5 text-sm" title={`${account.plan.label} paketi`}>
+                Kalan kredi: <span className="font-medium tabular-nums">{new Intl.NumberFormat("tr-TR").format(account.credits)}</span>
+              </span>
+            )}
+            {account && (
+              <ButtonLink href="/panel/kisi-bul">
+                <SparkleIcon size={16} />
+                Kişi bul
+              </ButtonLink>
+            )}
             <Button variant="secondary" onClick={() => void importFromFollow()}>
               Takipten ekle
             </Button>
             <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
               CSV içe aktar
             </Button>
-            <Button onClick={openNew}>
+            <Button variant={account ? "secondary" : "primary"} onClick={openNew}>
               <PlusIcon size={16} />
               Kişi ekle
             </Button>
@@ -334,7 +349,7 @@ export function ContactsWorkspace({
                   <span>
                     {run.done} / {run.total} firma tarandı · {run.found} e-posta bulundu
                   </span>
-                  <button type="button" onClick={() => (cancel.current = true)} className="font-medium text-forest underline underline-offset-4 hover:no-underline">
+                  <button type="button" onClick={() => (cancel.current = true)} className="font-medium text-accent underline underline-offset-4 hover:no-underline">
                     Durdur
                   </button>
                 </div>
@@ -398,10 +413,10 @@ export function ContactsWorkspace({
                   {total} kişi{filtered ? " (süzgeçle)" : ""} · bu sayfada {withEmail} tanesinin geçerli e-postası var
                 </p>
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => void findAllMissing()} disabled={Boolean(run)} className="font-medium text-forest underline underline-offset-4 hover:no-underline disabled:opacity-50">
+                  <button type="button" onClick={() => void findAllMissing()} disabled={Boolean(run)} className="font-medium text-accent underline underline-offset-4 hover:no-underline disabled:opacity-50">
                     E-postası olmayanları tara
                   </button>
-                  <button type="button" onClick={exportSelected} className="font-medium text-forest underline underline-offset-4 hover:no-underline">
+                  <button type="button" onClick={exportSelected} className="font-medium text-accent underline underline-offset-4 hover:no-underline">
                     Bu sayfayı CSV indir
                   </button>
                 </div>
@@ -414,11 +429,19 @@ export function ContactsWorkspace({
                 <p className="max-w-[30rem] text-muted">
                   {filtered
                     ? "Süzgeçleri gevşetmeyi deneyin."
-                    : "Takip listenizdeki firmaları ekleyin, CSV yükleyin ya da elle kişi ekleyin. Sonra web sitelerinden e-postalarını bulabilirsiniz."}
+                    : "Kişi bul ile unvana göre iş e-postalarını bulun, Takip listenizdeki firmaları ekleyin, CSV yükleyin ya da elle kişi ekleyin."}
                 </p>
                 {!filtered && (
                   <div className="flex flex-wrap justify-center gap-2">
-                    <Button onClick={() => void importFromFollow()}>Takipten ekle</Button>
+                    {account && (
+                      <ButtonLink href="/panel/kisi-bul">
+                        <SparkleIcon size={16} />
+                        Kişi bul
+                      </ButtonLink>
+                    )}
+                    <Button variant={account ? "secondary" : "primary"} onClick={() => void importFromFollow()}>
+                      Takipten ekle
+                    </Button>
                     <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
                       CSV içe aktar
                     </Button>
@@ -450,7 +473,7 @@ export function ContactsWorkspace({
                       <button type="button" onClick={() => openEdit(c)} className="grid min-w-0 gap-0.5 text-left">
                         <span className="truncate font-medium">{c.company ?? c.name ?? "(adsız)"}</span>
                         <span className="truncate text-sm text-muted">
-                          {[c.company ? c.name : null, c.lists.map((l) => l.name).join(", ") || null, sourceLabels[c.source]].filter(Boolean).join(" · ")}
+                          {[c.company ? c.name : null, c.jobTitle, c.lists.map((l) => l.name).join(", ") || null, sourceLabels[c.source]].filter(Boolean).join(" · ")}
                         </span>
                       </button>
                       <div className="col-start-2 col-end-4 row-start-2 min-w-0 md:col-end-auto md:row-start-auto">
@@ -479,7 +502,7 @@ export function ContactsWorkspace({
                             type="button"
                             onClick={() => void findOne(c.id)}
                             disabled={finding.has(c.id)}
-                            className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest disabled:opacity-60"
+                            className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent disabled:opacity-60"
                           >
                             <SearchIcon size={14} />
                             {finding.has(c.id) ? "Taranıyor" : "Bul"}

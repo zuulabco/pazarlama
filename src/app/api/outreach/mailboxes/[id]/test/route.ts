@@ -9,18 +9,18 @@ export const maxDuration = 60;
 
 const tooFast = rateLimiter(6);
 
-/** Posta kutusunun kendi adresine bir test e-postası gönderir (göndermenin çalıştığını ve hangi adrese gittiğini gösterir). */
+/** Gönderici adresinin kendi adresine bir test e-postası gönderir (göndermenin çalıştığını ve hangi adrese gittiğini gösterir). */
 export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/mailboxes/[id]/test">) {
   const g = await guard(req, { write: true });
   if ("response" in g) return g.response;
   if (tooFast(g.user.uid)) return fail("Çok fazla test e-postası gönderdiniz. Biraz bekleyin.", 429);
 
   const { id } = await ctx.params;
-  if (!z.uuid().safeParse(id).success) return fail("Posta kutusu bulunamadı.", 404);
+  if (!z.uuid().safeParse(id).success) return fail("Gönderici adresi bulunamadı.", 404);
 
   try {
     const creds = await getMailboxCredentials(g.user.uid, id);
-    if (!creds) return fail("Posta kutusu bulunamadı.", 404);
+    if (!creds) return fail("Gönderici adresi bulunamadı.", 404);
     const { mailbox, password } = creds;
 
     try {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/ma
           from: mailbox.fromName ? { name: mailbox.fromName, address: mailbox.email } : mailbox.email,
           to: mailbox.email,
           subject: "Adspine test e-postası",
-          text: `Merhaba,\n\nBu e-posta, ${mailbox.email} posta kutusunun Adspine'dan gönderim yapabildiğini doğrulamak için gönderildi.\n\nBir işlem yapmanız gerekmiyor.\n\n${mailbox.signature}`.trimEnd() + "\n",
+          text: `Merhaba,\n\nBu e-posta, ${mailbox.email} gönderici adresinin Adspine'dan gönderim yapabildiğini doğrulamak için gönderildi.\n\nBir işlem yapmanız gerekmiyor.\n\n${mailbox.signature}`.trimEnd() + "\n",
         },
       );
       if (mailbox.status === "hata") await updateMailbox(g.user.uid, id, { status: "bagli", lastError: null });

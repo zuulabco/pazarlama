@@ -121,7 +121,7 @@ export function ContactForm({
           </div>
           {contact.discoveryNote && <p className="text-muted">{contact.discoveryNote}</p>}
           {contact.sourceUrl && (
-            <a href={contact.sourceUrl} target="_blank" rel="noopener noreferrer" className="w-fit truncate text-forest underline underline-offset-4 hover:no-underline">
+            <a href={contact.sourceUrl} target="_blank" rel="noopener noreferrer" className="w-fit truncate text-accent underline underline-offset-4 hover:no-underline">
               Bulunduğu sayfa
             </a>
           )}

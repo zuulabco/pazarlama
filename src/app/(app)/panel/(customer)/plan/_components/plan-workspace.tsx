@@ -167,7 +167,7 @@ export function PlanWorkspace({
     return (
       <div role="status" className="grid justify-items-center gap-3 rounded-panel bg-surface px-6 py-16 text-center ring-1 ring-line">
         <Toaster />
-        <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-forest">
+        <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-accent">
           <CalendarIcon size={22} />
         </span>
         <p className="text-lg font-semibold tracking-tight">Plan henüz etkinleştirilmedi</p>
@@ -225,7 +225,7 @@ export function PlanWorkspace({
           <MonthGrid year={cursor.y} month={cursor.m} today={todayKey} selected={selected} byDay={byDay} onSelect={setSelected} onAdd={(key) => openNew(blankDraft(key))} />
         ) : agenda.length === 0 ? (
           <div className="grid justify-items-center gap-3 py-16 text-center">
-            <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-forest">
+            <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-accent">
               <CalendarIcon size={22} />
             </span>
             <p className="font-medium">Önümüzdeki 60 günde planınız yok</p>

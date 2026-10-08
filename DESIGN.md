@@ -36,10 +36,14 @@ Bu kurallar sitenin tamamı için geçerlidir. Yeni bir ekran eklerken önce bur
 
 - Aynı bilgi arayüzde iki yerde sorulmaz (örn. web sitesi süzgeci tek yerdedir; hem yeni aramayı hem sonuçları etkiler).
 
-## 6. Token'lar
+## 6. Token'lar ve uygulama kabuğu
 
 - Renk, yarıçap, gölge ve hareket değerleri `src/app/globals.css`'teki token'lardan gelir; bileşenlerde ham değer yazılmaz.
 - Yeni bileşen, mevcut `rounded-control / row / panel` hiyerarşisini izler.
+- **Palet (Instantly'den esinli):** nötr gri yüzeyler + tek mavi vurgu. `forest` dolgu (düğme, seçili öğe; üzerine `text-white`), `accent` mavi metin/simge (koyu zeminde daha açık mavi). Mavi metin için `text-accent`, dolgu için `bg-forest` kullanılır; `text-forest` kullanılmaz.
+- **Tema:** panel varsayılan olarak koyudur (kayıtlı seçim yoksa); menüden açık tema seçilebilir. Marka sayfaları her zaman açıktır.
+- **Kabuk:** giriş yapılmış alan `.app-shell` sınıfıyla çizilir (yoğun yazı ölçeği: gövde 14 px). Solda yalnızca simgeli dikey çubuk (`AppRail`; dar ekranda alt çubuk), içerik tam genişliktedir. Her sayfa kendi üst çubuğunu `SectionTabs` ile çizer: solda başlık, yanında alt görünümlerin sekmeleri. Sayfa içinde ikinci bir büyük başlık yinelenmez.
+- **Liste ekranları** (kampanyalar, gönderici adresleri, kişiler): üstte arama + süzgeç + birincil eylem, altında tablo. Oluşturma ve ayar formları yan panel yerine `Modal` ile açılır.
 
 ## 7. Geri bildirim
 

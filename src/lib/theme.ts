@@ -5,7 +5,7 @@ import { THEME_KEY } from "./theme-script";
 
 /**
  * Panel teması (açık/koyu). Kaynak, <html data-theme="dark"> özniteliğidir; seçim localStorage'da
- * saklanır. Seçim yoksa cihazın tercihi kullanılır. Marka sayfaları her zaman açık temadadır.
+ * saklanır. Seçim yoksa koyu tema kullanılır. Marka sayfaları her zaman açık temadadır.
  * İlk boyamada yanıp sönmeyi önleyen betik `theme-script.ts` içindedir.
  */
 const KEY = THEME_KEY;
@@ -20,7 +20,7 @@ export function storedTheme(): Theme {
   } catch {
     // Depolama kapalıysa cihaz tercihi kullanılır.
   }
-  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 export function applyTheme(theme: Theme) {

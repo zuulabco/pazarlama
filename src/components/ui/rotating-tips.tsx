@@ -27,7 +27,7 @@ export function RotatingTips({ tips, label = "İpucu" }: { tips: readonly string
 
   return (
     <div className="grid max-w-[28rem] justify-items-center gap-1.5 text-center" aria-live="off">
-      {label && <p className="text-xs font-medium tracking-wide text-forest">{label}</p>}
+      {label && <p className="text-xs font-medium tracking-wide text-accent">{label}</p>}
       {/* key değişince animasyon yeniden başlar */}
       <p key={index} className={`${styles.tip} min-h-12 text-balance text-muted`}>
         {tips[index]}

@@ -15,7 +15,7 @@ const back = (ok: boolean, extra: Record<string, string> = {}) => {
 
 const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-/** Google'ın dönüş adresi: durumu doğrular, kodu jetonlarla değiştirir, posta kutusunu bağlar. */
+/** Google'ın dönüş adresi: durumu doğrular, kodu jetonlarla değiştirir, gönderici adresini bağlar. */
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams;
   if (q.get("error")) return back(false, { neden: q.get("error") === "access_denied" ? "reddedildi" : "google" });

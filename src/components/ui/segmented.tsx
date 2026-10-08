@@ -15,7 +15,7 @@ export function Segmented({ label, items }: { label: string; items: SegmentedIte
           aria-pressed={i.pressed}
           onClick={i.onClick}
           disabled={i.disabled}
-          className="h-8 rounded-[0.5rem] px-2 text-sm whitespace-nowrap text-muted transition-[background-color,color,box-shadow] duration-150 hover:text-ink disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-surface aria-pressed:font-medium aria-pressed:text-forest aria-pressed:shadow-sm"
+          className="h-8 rounded-[0.5rem] px-2 text-sm whitespace-nowrap text-muted transition-[background-color,color,box-shadow] duration-150 hover:text-ink disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-surface aria-pressed:font-medium aria-pressed:text-accent aria-pressed:shadow-sm"
         >
           {i.label}
         </button>

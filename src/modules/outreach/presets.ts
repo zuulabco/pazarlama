@@ -61,6 +61,6 @@ export const passwordHelp: Record<Provider, { label: string; steps: string[]; li
   },
   ozel: {
     label: "Şifre",
-    steps: ["Barındırma sağlayıcınızın verdiği SMTP/IMAP sunucu bilgilerini ve posta kutusu şifresini girin.", "Sunucu adlarını “Sunucu ayarları” bölümünden düzeltebilirsiniz."],
+    steps: ["Barındırma sağlayıcınızın verdiği SMTP/IMAP sunucu bilgilerini ve gönderici adresi şifresini girin.", "Sunucu adlarını “Sunucu ayarları” bölümünden düzeltebilirsiniz."],
   },
 };

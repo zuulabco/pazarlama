@@ -29,7 +29,7 @@ export function ResetForm() {
 
   if (state === "sent") {
     return (
-      <p role="status" className="rounded-control bg-forest-soft px-4 py-3 text-forest">
+      <p role="status" className="rounded-control bg-forest-soft px-4 py-3 text-accent">
         Bu adrese kayıtlı bir hesap varsa sıfırlama bağlantısı gönderildi. Gelen kutunuzu ve spam klasörünü kontrol edin.
       </p>
     );

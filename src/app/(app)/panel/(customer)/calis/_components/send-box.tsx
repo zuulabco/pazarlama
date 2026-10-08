@@ -102,7 +102,7 @@ export function SendBox({ kind, draft, firm }: { kind: WorkKind; draft: Draft; f
         <button
           type="button"
           onClick={copy}
-          className="inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-forest"
+          className="inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent"
         >
           <CopyIcon />
           Kopyala

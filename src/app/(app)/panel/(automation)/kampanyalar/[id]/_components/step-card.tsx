@@ -235,7 +235,7 @@ export function StepCard({
                 </button>
               ))}
               {step.variants.length < maxVariants && (
-                <button type="button" onClick={addVariant} className="h-9 rounded-full px-3.5 text-sm text-forest transition-colors hover:bg-forest-soft">
+                <button type="button" onClick={addVariant} className="h-9 rounded-full px-3.5 text-sm text-accent transition-colors hover:bg-forest-soft">
                   + A/B testi ekle
                 </button>
               )}
@@ -354,7 +354,7 @@ export function StepCard({
                         if (focus === "subject") insertAtCursor(subjectRef.current, v.subject, token, (s) => setVariant({ subject: s }));
                         else insertAtCursor(bodyRef.current, v.body, token, (s) => setVariant({ body: s }));
                       }}
-                      className="h-7 rounded-full bg-sunken px-2.5 text-xs transition-colors hover:bg-forest-soft hover:text-forest"
+                      className="h-7 rounded-full bg-sunken px-2.5 text-xs transition-colors hover:bg-forest-soft hover:text-accent"
                     >
                       {vc.label}
                     </button>
@@ -378,7 +378,7 @@ export function StepCard({
               <Button variant="secondary" onClick={() => void test()} disabled={testBusy || !v.body.trim()}>
                 {testBusy ? "Gönderiliyor…" : "Bana test e-postası gönder"}
               </Button>
-              <span className={`ml-auto rounded-full px-3 py-1 text-xs font-medium ${spam.label === "İyi" ? "bg-forest-soft text-forest" : spam.label === "Riskli" ? "bg-danger-soft text-danger" : "bg-pollen/50 text-ink"}`}>
+              <span className={`ml-auto rounded-full px-3 py-1 text-xs font-medium ${spam.label === "İyi" ? "bg-forest-soft text-accent" : spam.label === "Riskli" ? "bg-danger-soft text-danger" : "bg-pollen/50 text-ink"}`}>
                 Spam riski: {spam.label} ({spam.score})
               </span>
             </div>
@@ -428,7 +428,7 @@ export function StepCard({
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-forest">Denetimde dikkat çeken bir şey yok.</p>
+                  <p className="text-sm text-accent">Denetimde dikkat çeken bir şey yok.</p>
                 )}
               </div>
             </Collapse>

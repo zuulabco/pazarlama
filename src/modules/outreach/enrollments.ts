@@ -13,7 +13,7 @@ function check(what: string, error: DbError | null) {
 }
 
 export type EnrollmentStatus = "aktif" | "bitti" | "duraklatildi" | "hata";
-export type FinishReason = "tamamlandi" | "yanit" | "abonelik" | "bounce" | "sikayet" | "tiklama" | "yanitsiz" | "elle" | "gecersiz" | "kara_liste";
+export type FinishReason = "tamamlandi" | "yanit" | "abonelik" | "bounce" | "sikayet" | "tiklama" | "yanitsiz" | "elle" | "gecersiz" | "kara_liste" | "sirket";
 
 
 export type Enrollment = {

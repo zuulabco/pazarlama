@@ -102,7 +102,7 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
             aria-pressed={fav}
             aria-label={fav ? `${lead.name} firmasını takipten çıkar` : `${lead.name} firmasını takibe al`}
             title={fav ? "Takipten çıkar" : "Takibe al"}
-            className="group absolute top-2.5 right-2.5 z-10 grid size-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-forest aria-pressed:text-forest"
+            className="group absolute top-2.5 right-2.5 z-10 grid size-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-accent aria-pressed:text-accent"
           >
             <BookmarkIcon filled={fav} />
           </button>
@@ -163,7 +163,7 @@ export function LeadRow({ lead, favorited, rank }: { lead: Lead; favorited: bool
               type="button"
               onClick={toggle}
               aria-pressed={fav}
-              className="group inline-flex h-9 items-center gap-2 rounded-full bg-surface px-3.5 text-sm font-medium text-forest ring-1 ring-forest/40 ring-inset transition-[background-color,color] duration-200 hover:bg-forest-soft aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
+              className="group inline-flex h-9 items-center gap-2 rounded-full bg-surface px-3.5 text-sm font-medium text-accent ring-1 ring-forest/40 ring-inset transition-[background-color,color] duration-200 hover:bg-forest-soft aria-pressed:bg-forest aria-pressed:text-white aria-pressed:ring-forest"
             >
               <BookmarkIcon size={16} filled={fav} />
               {fav ? "Takipte" : "Takibe al"}
