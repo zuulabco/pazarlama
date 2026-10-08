@@ -40,6 +40,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext<"/api/outreach/m
     const mailbox = await updateMailbox(g.user.uid, id, patch);
     return mailbox ? NextResponse.json({ mailbox }) : fail("Gönderici adresi bulunamadı.", 404);
   } catch (e) {
+    if (e instanceof Error && e.message.startsWith("Isındırmayı")) return fail(e.message, 400);
     return outreachFailure(e);
   }
 }

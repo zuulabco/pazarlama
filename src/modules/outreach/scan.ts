@@ -6,6 +6,7 @@ import { decryptSecret } from "./crypto";
 import { companyDomain } from "./company";
 import { addEvent, finishContactEnrollments } from "./enrollments";
 import { storeReply } from "./unibox";
+import { onWarmupArrival, rescueSpam } from "./warmup";
 import { getProfile, getRaw, newInboxMessageIds } from "./gmail";
 import { withImap, type ImapConfig } from "./imap";
 import { classifyInbound, messageIds, parseBounce } from "./inbound";
@@ -56,6 +57,7 @@ type MailboxRow = {
   imap_uidvalidity: number | null;
   imap_last_uid: number;
   gmail_history_id: string | null;
+  warmup_enabled: boolean;
 };
 
 type SentRow = { id: string; message_id: string; enrollment_id: string | null; sequence_id: string | null; contact_id: string | null; to_email: string };
@@ -186,6 +188,10 @@ async function keepReply(row: Pick<MailboxRow, "id" | "user_uid">, sent: SentRow
 async function handleInbound(row: Pick<MailboxRow, "id" | "user_uid">, item: InboundItem, ours: Set<string>, sentMap: Map<string, SentRow>, res: ScanResult) {
   const { h } = item;
   try {
+    // Isındırma e-postası: kampanya yanıtı sayılmaz; ulaştığı kaydedilir ve (çoğunlukla) yanıtlanır.
+    const warm = h["x-adspine-warmup"]?.trim();
+    if (warm) return void (await onWarmupArrival(row, warm));
+    if (h["x-adspine-warmup-reply"]) return;
     const kind = classifyInbound(
       { from: `${item.fromName} <${item.from}>`, subject: item.subject, contentType: h["content-type"], autoSubmitted: h["auto-submitted"], precedence: h["precedence"], xAutoreply: h["x-autoreply"] ?? h["x-auto-response-suppress"], inReplyTo: h["in-reply-to"], references: h["references"] },
       ours,
@@ -287,7 +293,7 @@ export async function scanMailbox(row: MailboxRow): Promise<ScanResult> {
       const msgs: Awaited<ReturnType<typeof collect>> = await collect();
       async function collect() {
         const list = [];
-        for await (const m of client.fetch(`${from}:*`, { uid: true, envelope: true, size: true, headers: ["in-reply-to", "references", "auto-submitted", "precedence", "x-autoreply", "x-auto-response-suppress", "content-type"] }, { uid: true })) {
+        for await (const m of client.fetch(`${from}:*`, { uid: true, envelope: true, size: true, headers: ["x-adspine-warmup", "x-adspine-warmup-reply", "in-reply-to", "references", "auto-submitted", "precedence", "x-autoreply", "x-auto-response-suppress", "content-type"] }, { uid: true })) {
           if (m.uid >= from) list.push(m);
           if (list.length >= MAX_PER_SCAN) break;
         }
@@ -327,7 +333,7 @@ export async function scanDueMailboxes(limit = 3, deadlineMs = 120_000): Promise
   const since = new Date(Date.now() - 2 * 60_000).toISOString();
   const { data } = await db()
     .from("outreach_mailboxes")
-    .select("id, user_uid, email, provider, imap_host, imap_port, imap_secure, username, secret_enc, imap_uidvalidity, imap_last_uid, gmail_history_id")
+    .select("id, user_uid, email, provider, imap_host, imap_port, imap_secure, username, secret_enc, imap_uidvalidity, imap_last_uid, gmail_history_id, warmup_enabled")
     .eq("status", "bagli")
     .or(`imap_checked_at.is.null,imap_checked_at.lt.${since}`)
     .order("imap_checked_at", { ascending: true, nullsFirst: true })
@@ -337,6 +343,8 @@ export async function scanDueMailboxes(limit = 3, deadlineMs = 120_000): Promise
     if (Date.now() > deadline) break;
     try {
       const r = await scanMailbox(row);
+      // Isındırma açıksa spam klasöründeki ısındırma iletileri bulunur (IMAP'te gelen kutusuna taşınır).
+      if (row.warmup_enabled) await rescueSpam(row).catch((e) => console.error("Spam kurtarma:", e instanceof Error ? e.message : e));
       total.scanned += r.scanned;
       total.replies += r.replies;
       total.ooo += r.ooo;

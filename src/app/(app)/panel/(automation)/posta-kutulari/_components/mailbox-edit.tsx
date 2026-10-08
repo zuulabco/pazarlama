@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { TextArea } from "@/components/ui/text-fields";
 import { toast } from "@/components/ui/toast";
 import type { Mailbox } from "@/modules/outreach/mailbox-schema";
+import type { WarmupStats } from "@/modules/outreach/warmup-rules";
 import { api } from "../../kisiler/_components/contact-ui";
 
 const inputClass =
@@ -30,19 +32,33 @@ export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; 
   const [hourly, setHourly] = useState(String(mailbox.hourlyLimit));
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [warm, setWarm] = useState(mailbox.warmupEnabled);
+  const [consent, setConsent] = useState(Boolean(mailbox.warmupConsentAt));
+  const [stats, setStats] = useState<WarmupStats | null>(null);
+
+  // Isındırma açıksa son 14 günün özeti yüklenir.
+  useEffect(() => {
+    if (!mailbox.warmupEnabled) return;
+    let live = true;
+    void api<{ stats: WarmupStats }>(`/api/outreach/mailboxes/${mailbox.id}/warmup`).then((r) => live && r.ok && setStats(r.data.stats));
+    return () => {
+      live = false;
+    };
+  }, [mailbox.id, mailbox.warmupEnabled]);
 
   const d = Number(daily);
   const h = Number(hourly);
   const dailyError = !daily || d < 1 ? "En az 1 olmalı." : d > 500 ? "En çok 500." : undefined;
   const hourlyError = !hourly || h < 1 ? "En az 1 olmalı." : h > 100 ? "En çok 100." : h > d ? "Saatlik limit günlükten büyük olamaz." : undefined;
-  const invalid = Boolean(dailyError || hourlyError);
+  const consentMissing = warm && !mailbox.warmupConsentAt && !consent;
+  const invalid = Boolean(dailyError || hourlyError || consentMissing);
 
   async function save() {
     if (invalid || busy) return;
     setBusy(true);
     const r = await api<{ mailbox: Mailbox }>(`/api/outreach/mailboxes/${mailbox.id}`, {
       method: "PATCH",
-      body: JSON.stringify({ fromName: fromName.trim() || null, signature, dailyLimit: d, hourlyLimit: h, ...(password ? { password } : {}) }),
+      body: JSON.stringify({ fromName: fromName.trim() || null, signature, dailyLimit: d, hourlyLimit: h, ...(password ? { password } : {}), ...(warm !== mailbox.warmupEnabled ? { warmupEnabled: warm, warmupConsent: consent } : {}) }),
     });
     setBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });
@@ -91,6 +107,44 @@ export function MailboxEdit({ mailbox, onSaved, onCancel }: { mailbox: Mailbox; 
         <NumberField label="Saatlik limit" hint="Önerilen: saatte en çok 6." value={hourly} onChange={setHourly} error={hourlyError} />
       </div>
       {!dailyError && d > 50 && <p className="-mt-2 rounded-control bg-pollen/50 px-3 py-2 text-sm">Günde 50&apos;den fazla e-posta, özellikle yeni bir kutuda, spam&apos;e düşme riskini belirgin artırır.</p>}
+
+      <section aria-label="Isındırma" className="grid gap-3 rounded-row p-4 ring-1 ring-line">
+        <Switch
+          checked={warm}
+          onChange={setWarm}
+          label="Isındırma"
+          hint="Havuzdaki diğer adreslerle kısa, doğal e-postalar alıp verir; adresinizin itibarını ve gelen kutusuna ulaşma oranını artırır."
+        />
+        {warm && !mailbox.warmupConsentAt && (
+          <label className="flex items-start gap-3 rounded-control bg-sunken/60 p-3 text-sm">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-[var(--color-forest)]" />
+            <span>Isındırma havuzuna katılıyorum: bu adres, havuzdaki diğer Adspine kullanıcılarının gönderici adresleriyle kısa ve zararsız e-postalar alıp verecek; bu adreslerin sahipleri adresimi görebilir.</span>
+          </label>
+        )}
+        {warm && (
+          <p className="text-sm text-muted">
+            Isınırken kampanya limitiniz de kademeli artar (ilk günler 5, sonra 10, 20…). Havuzda en az iki adres olmalı; yalnızca sizin adresiniz varsa başka kullanıcılar katıldıkça başlar. Google ile bağlı adreslerde spam&apos;e düşen
+            iletiler ölçülür ama gelen kutusuna taşınamaz.
+          </p>
+        )}
+        {mailbox.warmupEnabled && stats && (
+          <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            {[
+              ["Gün", String(stats.days + 1)],
+              ["Bugün", `${stats.sentToday} / ${stats.quota}`],
+              ["Skor", stats.score === null ? "Veri toplanıyor" : `%${stats.score}`],
+              ["Ulaşan", String(stats.inbox)],
+              ["Spam'e düşen", String(stats.spam)],
+              ["Yanıtlanan", String(stats.replied)],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-muted">{k}</dt>
+                <dd className="font-medium tabular-nums">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </section>
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={busy || invalid}>

@@ -151,6 +151,21 @@ export async function newInboxMessageIds(refreshToken: string, historyId: string
   return { ids: [...ids], historyId: latest };
 }
 
+/**
+ * Son 3 günde spam klasörüne düşen Adspine ısındırma iletilerinin jetonları. Yalnızca okuma izniyle çalışır (taşıma için
+ * gmail.modify gerekir ve bu izin istenmez); bu yüzden ölçülür ama kurtarılamaz.
+ */
+export async function listSpamTokens(refreshToken: string): Promise<string[]> {
+  const list = await call<{ messages?: { id: string }[] }>(refreshToken, `/messages?${new URLSearchParams({ q: "in:spam newer_than:3d", maxResults: "25" })}`);
+  const tokens: string[] = [];
+  for (const m of list.messages ?? []) {
+    const meta = await call<{ payload?: { headers?: { name: string; value: string }[] } }>(refreshToken, `/messages/${m.id}?format=metadata&metadataHeaders=X-Adspine-Warmup`);
+    const t = meta.payload?.headers?.find((h) => h.name.toLowerCase() === "x-adspine-warmup")?.value?.trim();
+    if (t) tokens.push(t);
+  }
+  return tokens;
+}
+
 export async function getRaw(refreshToken: string, id: string): Promise<GmailMessage | null> {
   try {
     const m = await call<{ id: string; raw?: string; sizeEstimate?: number }>(refreshToken, `/messages/${id}?format=raw`);

@@ -40,6 +40,7 @@ type Row = {
   warmup_enabled: boolean;
   warmup_started_at: string | null;
   warmup_score: number | null;
+  warmup_consent_at: string | null;
   dns_check: DnsReport | null;
   dns_checked_at: string | null;
   created_at: string;
@@ -47,7 +48,7 @@ type Row = {
 
 /** Şifre (`secret_enc`) bilinçli olarak bu listede yok: istemciye giden türler onu hiç görmez. */
 const columns =
-  "id, email, from_name, signature, provider, smtp_host, smtp_port, smtp_secure, imap_host, imap_port, imap_secure, username, status, last_error, daily_limit, hourly_limit, warmup_enabled, warmup_started_at, warmup_score, dns_check, dns_checked_at, created_at";
+  "id, email, from_name, signature, provider, smtp_host, smtp_port, smtp_secure, imap_host, imap_port, imap_secure, username, status, last_error, daily_limit, hourly_limit, warmup_enabled, warmup_started_at, warmup_score, warmup_consent_at, dns_check, dns_checked_at, created_at";
 
 const toMailbox = (r: Row): Mailbox => ({
   id: r.id,
@@ -65,6 +66,7 @@ const toMailbox = (r: Row): Mailbox => ({
   warmupEnabled: r.warmup_enabled,
   warmupStartedAt: r.warmup_started_at,
   warmupScore: r.warmup_score,
+  warmupConsentAt: r.warmup_consent_at,
   dnsCheck: r.dns_check,
   dnsCheckedAt: r.dns_checked_at,
   createdAt: r.created_at,
@@ -127,7 +129,7 @@ export async function createMailbox(uid: string, input: MailboxInput, dns: DnsRe
 export async function updateMailbox(
   uid: string,
   id: string,
-  patch: { fromName?: string | null; signature?: string; dailyLimit?: number; hourlyLimit?: number; status?: Mailbox["status"]; password?: string; lastError?: string | null },
+  patch: { fromName?: string | null; signature?: string; dailyLimit?: number; hourlyLimit?: number; status?: Mailbox["status"]; password?: string; lastError?: string | null; warmupEnabled?: boolean; warmupConsent?: boolean },
 ): Promise<Mailbox | null> {
   const update: Record<string, unknown> = {};
   if (patch.fromName !== undefined) update.from_name = patch.fromName || null;
@@ -137,6 +139,18 @@ export async function updateMailbox(
   if (patch.status !== undefined) update.status = patch.status;
   if (patch.password !== undefined) update.secret_enc = encryptSecret(patch.password);
   if (patch.lastError !== undefined) update.last_error = patch.lastError;
+  if (patch.warmupEnabled !== undefined) {
+    if (patch.warmupEnabled) {
+      const cur = await getMailbox(uid, id);
+      if (!cur) return null;
+      if (!cur.warmupConsentAt && !patch.warmupConsent) throw new Error("Isındırmayı açmak için havuz onayını verin.");
+      update.warmup_enabled = true;
+      if (!cur.warmupConsentAt) update.warmup_consent_at = new Date().toISOString();
+      if (!cur.warmupStartedAt) update.warmup_started_at = new Date().toISOString();
+    } else {
+      update.warmup_enabled = false;
+    }
+  }
   if (Object.keys(update).length === 0) return getMailbox(uid, id);
   const { data, error } = await db().from("outreach_mailboxes").update(update).eq("user_uid", uid).eq("id", id).select(columns).maybeSingle<Row>();
   check("Gönderici adresi güncellenemedi", error);

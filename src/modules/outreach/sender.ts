@@ -7,6 +7,7 @@ import { addSuppression, OutreachUnavailableError, getContact } from "./contacts
 import { decryptSecret, signToken } from "./crypto";
 import { addEvent, claimDue, finishContactEnrollments, isSuppressedIn, suppressionSets, updateEnrollment, type EnrollmentRow, type FinishReason } from "./enrollments";
 import { mailboxCapacity, campaignCapacity, type Counts } from "./limits";
+import { effectiveDailyLimit } from "./warmup-rules";
 import { buildOutgoing, newMessageId, threadSubject } from "./mime";
 import { buildVars, renderTemplate, type RenderVars } from "./render";
 import { isWithinWindow, jitter, nextRunAt, nextWindowStart } from "./schedule";
@@ -86,6 +87,7 @@ async function loadMailboxes(uid: string, ctx: Ctx) {
       warmupEnabled: r.warmup_enabled,
       warmupStartedAt: r.warmup_started_at,
       warmupScore: r.warmup_score,
+      warmupConsentAt: r.warmup_consent_at ?? null,
       dnsCheck: r.dns_check,
       dnsCheckedAt: r.dns_checked_at,
       createdAt: r.created_at,
@@ -202,7 +204,7 @@ async function runEmailStep(en: EnrollmentRow, seq: Sequence, active: Step[], st
   const all = await loadMailboxes(uid, ctx);
   const allowed = all.filter((m) => seq.settings.mailboxIds.length === 0 || seq.settings.mailboxIds.includes(m.mailbox.id));
   const sticky = en.mailbox_id ? allowed.find((m) => m.mailbox.id === en.mailbox_id) : undefined;
-  const capOf = (m: { mailbox: Mailbox }) => mailboxCapacity(m.mailbox, ctx.counts.get(m.mailbox.id) ?? { lastHour: 0, last24h: 0 });
+  const capOf = (m: { mailbox: Mailbox }) => mailboxCapacity({ dailyLimit: effectiveDailyLimit(m.mailbox), hourlyLimit: m.mailbox.hourlyLimit }, ctx.counts.get(m.mailbox.id) ?? { lastHour: 0, last24h: 0 });
   // Takip e-postaları aynı konuşmada kalsın diye ilk adımın gönderici adresi korunur; ilk adımda en boş kutu seçilir.
   const chosen = en.thread_root ? sticky : allowed.map((m) => ({ m, cap: capOf(m) })).sort((a, b) => b.cap - a.cap)[0]?.m;
   const campaignCap = campaignCapacity(seq.settings.maxPer24h, await campaignSent24h(seq.id, ctx));

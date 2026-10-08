@@ -26,7 +26,7 @@ import { starters } from "./starters";
 const step = (over: Partial<Step> = {}): Step => ({ id: "s", position: 0, kind: "email", delayMinutes: 0, enabled: true, variants: [{ ...blankVariant(), subject: "Konu", body: "Mesaj" }], task: { title: "", notes: "" }, ...over });
 const mailbox = (over: Partial<Mailbox> = {}): Mailbox => ({
   id: "m1", email: "a@firma.com", fromName: null, signature: "", provider: "gmail", smtp: { host: "h", port: 465, secure: true }, imap: { host: "h", port: 993, secure: true }, username: "a@firma.com",
-  status: "bagli", lastError: null, dailyLimit: 20, hourlyLimit: 6, warmupEnabled: false, warmupStartedAt: null, warmupScore: null,
+  status: "bagli", lastError: null, dailyLimit: 20, hourlyLimit: 6, warmupEnabled: false, warmupStartedAt: null, warmupScore: null, warmupConsentAt: null,
   dnsCheck: { domain: "firma.com", managed: false, ready: true, checks: [] }, dnsCheckedAt: null, createdAt: "", ...over,
 });
 

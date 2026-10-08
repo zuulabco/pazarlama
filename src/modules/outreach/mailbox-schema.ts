@@ -20,6 +20,8 @@ export type Mailbox = {
   warmupEnabled: boolean;
   warmupStartedAt: string | null;
   warmupScore: number | null;
+  /** Isındırma havuzuna katılma onayının verildiği an (yoksa null). */
+  warmupConsentAt: string | null;
   dnsCheck: DnsReport | null;
   dnsCheckedAt: string | null;
   createdAt: string;
@@ -61,6 +63,9 @@ export const mailboxPatchSchema = z
     dailyLimit: z.number().int().min(1, "En az 1.").max(500, "En çok 500."),
     hourlyLimit: z.number().int().min(1, "En az 1.").max(100, "En çok 100."),
     status: z.enum(["bagli", "duraklatildi"]),
+    /** Isındırmayı aç/kapat. İlk açılışta havuz onayı (`warmupConsent`) gerekir. */
+    warmupEnabled: z.boolean(),
+    warmupConsent: z.boolean(),
     /** Şifre değiştirilirse bağlantı yeniden sınanır. */
     password: z.string().min(4).max(200),
   })

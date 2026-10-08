@@ -33,6 +33,8 @@ export function healthScore(report: DnsReport | null): number | null {
   return Math.round((report.checks.filter((c) => c.status === "ok").length / report.checks.length) * 100);
 }
 
+const warmupDay = (startedAt: string | null) => (startedAt ? Math.floor((Date.now() - Date.parse(startedAt)) / 86_400_000) + 1 : 1);
+
 function CopyButton({ text }: { text: string }) {
   return (
     <button
@@ -241,7 +243,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
                           <span className={`text-xs ${dnsStyle[dns.tone]}`}>{score === null ? "Denetlenmedi" : `%${score} · ${dns.label}`}</span>
                         </button>
                       </td>
-                      <td className="px-4 py-3 tabular-nums">{m.warmupEnabled ? (m.warmupScore !== null ? `%${m.warmupScore}` : "Başladı") : <span className="text-muted">Kapalı</span>}</td>
+                      <td className="px-4 py-3 tabular-nums">{m.warmupEnabled ? <span title="Isındırma açık">{m.warmupScore !== null ? `%${m.warmupScore}` : "Başladı"}<span className="block text-xs text-muted">Gün {warmupDay(m.warmupStartedAt)}</span></span> : <span className="text-muted">Kapalı</span>}</td>
                       <td className="px-4 py-3 tabular-nums">
                         {m.dailyLimit} <span className="text-muted">/ gün · {m.hourlyLimit} / saat</span>
                       </td>

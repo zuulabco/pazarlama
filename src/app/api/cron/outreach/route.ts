@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { runBounceGuard } from "@/modules/outreach/guard";
+import { runWarmupTick } from "@/modules/outreach/warmup";
 import { purgeOldBrowses } from "@/modules/outreach/lead-browse";
 import { finalizeOpenLeadJobs } from "@/modules/outreach/lead-search";
 import { runSendTick } from "@/modules/outreach/sender";
@@ -31,13 +32,18 @@ async function run(req: NextRequest) {
     const send = await runSendTick({ batch: 20, deadlineMs: 150_000 });
     const scan = await scanDueMailboxes(3, Math.max(20_000, 250_000 - (Date.now() - started)));
     const paused = await runBounceGuard();
+    // Isındırma: havuzdaki adresler birbirine doğal e-posta gönderir; kayıplar işaretlenir, skorlar güncellenir.
+    const warmup = await runWarmupTick().catch((e) => {
+      console.error("Isındırma hatası:", e instanceof Error ? e.message : e);
+      return null;
+    });
     // Kişi bul: tarayıcı kapalıyken biten aramaların sonuçlarını aktarır (sağlayıcı yapılandırılmamışsa sessizce atlanır).
     const leadJobs = await finalizeOpenLeadJobs().catch((e) => {
       console.error("Kişi bul işleri kapatılamadı:", e instanceof Error ? e.message : e);
       return 0;
     });
     await purgeOldBrowses().catch(() => undefined);
-    return NextResponse.json({ ok: true, ms: Date.now() - started, send, scan, paused, leadJobs });
+    return NextResponse.json({ ok: true, ms: Date.now() - started, send, scan, paused, warmup, leadJobs });
   } catch (e) {
     console.error("Cron hatası:", e);
     return NextResponse.json({ error: e instanceof Error ? e.message : "Hata" }, { status: 500 });
