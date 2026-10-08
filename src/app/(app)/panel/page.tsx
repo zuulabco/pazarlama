@@ -7,6 +7,7 @@ import styles from "@/components/showcase/showcase.module.css";
 import { requireUser } from "@/lib/auth/session";
 import { getProfile } from "@/modules/profile/repository";
 import { appModules } from "@/modules/registry";
+import { DashboardSkeleton } from "../_components/skeletons";
 
 export const metadata: Metadata = { title: "Panel" };
 
@@ -34,7 +35,11 @@ const upcoming = appModules.filter((m) => m.status === "soon");
 
 const idx = (i: number) => ({ "--i": i }) as CSSProperties;
 
-async function PanelHeading() {
+/**
+ * Kurulumu bitirmemiş kullanıcı, panelin hiçbir parçasını görmeden kuruluma yönlenir: kartlar ancak profil
+ * doğrulandıktan sonra çizilir (o ana kadar iskelet görünür).
+ */
+async function PanelContent() {
   const user = await requireUser();
   const profile = await getProfile(user.uid);
   if (!profile) redirect("/onboarding");
@@ -46,6 +51,7 @@ async function PanelHeading() {
         {firstName ? `Merhaba ${firstName}` : "Merhaba"}
       </h1>
       <p className="mt-2 max-w-prose text-muted">{profile.businessName} için neyle başlamak istersiniz?</p>
+      <Features />
     </>
   );
 }
@@ -58,13 +64,9 @@ function Arrow() {
   );
 }
 
-export default function PanelPage() {
+function Features() {
   return (
     <>
-      <Suspense fallback={<div className="h-16 w-64 rounded-control bg-sunken" />}>
-        <PanelHeading />
-      </Suspense>
-
       <ul className="mt-10 grid gap-6 lg:grid-cols-2">
         {features.map((f, i) => (
           <li key={f.id} style={idx(i)} className={styles.item}>
@@ -113,5 +115,13 @@ export default function PanelPage() {
         </ul>
       </section>
     </>
+  );
+}
+
+export default function PanelPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <PanelContent />
+    </Suspense>
   );
 }

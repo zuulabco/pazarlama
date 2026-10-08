@@ -20,7 +20,7 @@ export type Weights = Record<CriterionKey, number>;
 export type WeightInput = {
   services?: readonly string[];
   targetSectors?: readonly string[];
-  targetSize?: string;
+  targetSizes?: readonly string[];
   signals?: readonly string[];
   channels?: readonly string[];
   dealValue?: string;
@@ -43,8 +43,9 @@ export function computeWeights(p: WeightInput): Weights {
   const sectorCount = p.targetSectors?.length ?? 0;
   if (sectorCount > 0 && sectorCount <= 2) w.sectorFit += 0.5;
 
-  // Net bir büyüklük hedefi varsa büyüklük daha önemlidir.
-  if (p.targetSize && p.targetSize !== "farketmez") w.companySize += 0.5;
+  // Dar bir büyüklük hedefi (en çok iki dilim) varsa büyüklük daha önemlidir.
+  const sizes = p.targetSizes ?? [];
+  if (sizes.length > 0 && sizes.length <= 2 && !sizes.includes("farketmez")) w.companySize += 0.5;
 
   // Yüksek proje bedeli: bütçesi olan, daha büyük firmalar öne çıkar.
   if (p.dealValue === "50k-150k" || p.dealValue === "150k-ustu") {

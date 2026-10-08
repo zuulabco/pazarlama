@@ -3,19 +3,28 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { RotatingTips } from "@/components/ui/rotating-tips";
+import { ShapeLoader } from "@/components/ui/shape-loader";
 import { Wordmark } from "@/components/ui/wordmark";
+import { normalizeSiteUrl } from "@/lib/url";
 import { StepFields, type FieldErrors } from "@/components/profile/step-fields";
 import { draftFrom, type Draft } from "@/modules/profile/draft";
 import { profileSchema, stepSchemas } from "@/modules/profile/schema";
-import { completeOnboarding } from "../actions";
+import { analyzeSiteAction, completeOnboarding } from "../actions";
+import { SiteField } from "./site-field";
 import { SummaryCard, type EditableStage } from "./summary-card";
 import styles from "./wizard.module.css";
 
-const stages = ["intro", "about", "target", "reach", "fit", "review"] as const;
+const stages = ["intro", "site", "about", "target", "reach", "fit", "review"] as const;
 type Stage = (typeof stages)[number];
-const steps = ["about", "target", "reach", "fit", "review"] as const;
+const steps = ["site", "about", "target", "reach", "fit", "review"] as const;
 
 const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text: string }> = {
+  site: {
+    short: "Web siteniz",
+    title: "Web siteniz var mı?",
+    text: "Varsa bilgilerinizi siteden okuyup sonraki soruları sizin için dolduralım. Yine de her adımı siz kontrol edeceksiniz.",
+  },
   about: { short: "Sizi tanıyalım", title: "Sizi tanıyalım", text: "Kısa sorular. Hepsini sonradan profilinizden değiştirebilirsiniz." },
   target: {
     short: "Hizmet ve hedef",
@@ -39,6 +48,21 @@ const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text
   },
 };
 
+/** Her adımın alanları: sitenizden doldurulanlar bu adımda "kontrol edin" notuyla işaretlenir. */
+const stageFields: Record<Exclude<Stage, "intro" | "site" | "review">, (keyof Draft)[]> = {
+  about: ["businessName", "workType", "businessDescription"],
+  target: ["services", "targetSectors", "targetSizes"],
+  reach: ["cityScope", "targetCities", "channels"],
+  fit: [],
+};
+
+const setupTips = [
+  "Bilgileriniz kaydediliyor…",
+  "Puanlama önceliklerinizi hesaplıyoruz…",
+  "Müşteri aramanız için hazırlık yapıyoruz…",
+  "Neredeyse bitti…",
+];
+
 export function Wizard({ defaultName, initial }: { defaultName: string; initial: Partial<Draft> }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("intro");
@@ -51,6 +75,14 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
   const [saveError, setSaveError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
+  // Web sitesinden ön doldurma (isteğe bağlı)
+  const [siteUrl, setSiteUrl] = useState("");
+  const [siteTouched, setSiteTouched] = useState(false);
+  const [siteError, setSiteError] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzedUrl, setAnalyzedUrl] = useState<string | null>(null);
+  /** Siteden doldurulan ve kullanıcı henüz değiştirmemiş alanlar. */
+  const [prefilled, setPrefilled] = useState<ReadonlySet<keyof Draft>>(new Set());
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const index = stages.indexOf(stage);
@@ -59,6 +91,7 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
   function update<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
     setErrors((e) => ({ ...e, [key]: undefined }));
+    setPrefilled((p) => (p.has(key) ? new Set([...p].filter((k) => k !== key)) : p));
   }
 
   function goTo(next: Stage, keepEditing = false) {
@@ -85,7 +118,7 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
   }
 
   function validate(): boolean {
-    if (stage === "intro" || stage === "review") return true;
+    if (stage === "intro" || stage === "site" || stage === "review") return true;
     const result = stepSchemas[stage].safeParse(draft);
     if (result.success) return true;
     collect(result.error.issues);
@@ -93,7 +126,7 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
   }
 
   /** Kaydetmeden önce tüm adımları kontrol eder; ilk hatalı adıma döner. */
-  function firstInvalidStage(): Exclude<Stage, "intro" | "review"> | null {
+  function firstInvalidStage(): Exclude<Stage, "intro" | "site" | "review"> | null {
     for (const s of ["about", "target", "reach", "fit"] as const) {
       const result = stepSchemas[s].safeParse(draft);
       if (!result.success) {
@@ -110,9 +143,36 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
     router.refresh();
   }
 
+  const normalizedSite = normalizeSiteUrl(siteUrl);
+  const siteProblem = siteTouched && siteUrl.trim() && !normalizedSite ? "Geçerli bir site adresi yazın (örn. firmaniz.com)." : undefined;
+
+  /** Site adımı: adres varsa önce analiz edilir, sonra ilk soruya geçilir. Adres boşsa doğrudan geçilir. */
+  async function submitSite() {
+    if (analyzing) return;
+    if (!siteUrl.trim() || (normalizedSite && normalizedSite === analyzedUrl)) return goTo("about");
+    setSiteTouched(true);
+    if (!normalizedSite) return;
+
+    setAnalyzing(true);
+    setSiteError(null);
+    try {
+      const result = await analyzeSiteAction(normalizedSite);
+      if (!result.ok) return setSiteError(result.error);
+      setDraft((d) => draftFrom({ ...d, ...result.draft }));
+      setPrefilled(new Set(result.filled));
+      setAnalyzedUrl(normalizedSite);
+      goTo("about");
+    } catch {
+      setSiteError("Bağlantı kurulamadı. İnternet bağlantınızı kontrol edin ya da bilgileri kendiniz girerek devam edin.");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (stage === "intro") return goTo("about");
+    if (stage === "intro") return goTo("site");
+    if (stage === "site") return void submitSite();
 
     if (stage === "review") {
       const invalid = firstInvalidStage();
@@ -191,6 +251,15 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                 Panele geç
               </Button>
             </div>
+          ) : pending && stage === "review" ? (
+            <div className={`${styles.forward} grid justify-items-center gap-9 text-center`} role="status">
+              <ShapeLoader />
+              <div className="grid gap-2">
+                <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">Hesabınız hazırlanıyor</h1>
+                <p className="max-w-[28rem] text-lg text-muted">Bilgilerinizi kaydediyor ve puanlama profilinizi oluşturuyoruz.</p>
+              </div>
+              <RotatingTips tips={setupTips} label={null} />
+            </div>
           ) : stage === "intro" ? (
             <div className={`${styles.stagger} grid justify-items-center gap-6 text-center`}>
               <h1 style={{ "--i": 0 } as React.CSSProperties} className="text-display font-semibold tracking-display">
@@ -206,12 +275,51 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                 </Button>
               </div>
             </div>
+          ) : stage === "site" ? (
+            <div key={stage} className={animation}>
+              <h1 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold tracking-display outline-none sm:text-4xl">
+                {copy.site.title}
+              </h1>
+              <p className="mt-3 mb-8 max-w-[34rem] text-lg text-muted">{copy.site.text}</p>
+              <div className="rounded-panel bg-surface p-6 shadow-float ring-1 ring-line sm:p-9">
+                <SiteField
+                  value={siteUrl}
+                  onChange={(v) => {
+                    setSiteUrl(v);
+                    setSiteError(null);
+                  }}
+                  onBlur={() => setSiteTouched(true)}
+                  busy={analyzing}
+                  error={siteProblem ?? siteError ?? undefined}
+                />
+              </div>
+              <div className="mt-8 flex items-center justify-between gap-3">
+                <Button variant="quiet" size="lg" onClick={() => goTo("intro")} disabled={analyzing}>
+                  Geri
+                </Button>
+                <div className="flex items-center gap-3">
+                  {siteError && !analyzing && (
+                    <Button variant="quiet" size="lg" onClick={() => goTo("about")}>
+                      Elle devam et
+                    </Button>
+                  )}
+                  <Button type="submit" size="lg" disabled={analyzing}>
+                    {analyzing ? "Site okunuyor…" : siteUrl.trim() && normalizedSite !== analyzedUrl ? "Siteyi analiz et" : "Devam"}
+                  </Button>
+                </div>
+              </div>
+            </div>
           ) : (
             <div key={stage} className={animation}>
               <h1 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold tracking-display outline-none sm:text-4xl">
                 {copy[stage].title}
               </h1>
               <p className="mt-3 mb-8 max-w-[34rem] text-lg text-muted">{copy[stage].text}</p>
+              {stage !== "review" && stageFields[stage].some((k) => prefilled.has(k)) && (
+                <p role="status" className="-mt-4 mb-8 max-w-[34rem] rounded-control bg-sunken px-4 py-3 text-sm text-muted">
+                  Bu adımdaki bazı bilgileri sitenizden doldurduk. Lütfen kontrol edip gerekirse düzeltin.
+                </p>
+              )}
 
               {stage === "review" ? (
                 <SummaryCard draft={draft} onEdit={(s: EditableStage) => goTo(s, true)} />

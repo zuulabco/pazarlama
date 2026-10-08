@@ -66,7 +66,7 @@ const sections: SectionDef[] = [
           <Chips items={d.targetSectors.map((s) => labelOf(sectors, s))} />
         </Field>
         <Field title="Hedef firma büyüklüğü">
-          <Chips items={[labelOf(companySizes, d.targetSize)]} />
+          <Chips items={d.targetSizes.map((s) => labelOf(companySizes, s))} />
         </Field>
       </>
     ),

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { capitalize, fold } from "@/lib/text";
 import styles from "./combo-field.module.css";
 import popover from "./popover.module.css";
 
-export type Option = { readonly value: string; readonly label: string; readonly hint?: string };
+export type Option = { readonly value: string; readonly label: string; readonly hint?: string; readonly group?: string };
 
 type Props = {
   legend: string;
@@ -279,35 +279,47 @@ export function ComboField({
           className={`${popover.popover} absolute inset-x-0 top-full z-20 mt-2 rounded-row bg-surface p-1.5 shadow-float ring-1 ring-line-strong`}
         >
           {items.length > 0 && (
-            <ul id={listId} role="listbox" aria-label={legend} aria-multiselectable={!single} className="max-h-64 overflow-auto">
+            <ul id={listId} role="listbox" aria-label={legend} aria-multiselectable={!single} className="max-h-72 overflow-auto">
               {items.map((item, i) => {
                 const selected = item.kind === "option" && single && value.includes(item.option.value);
+                // Yazı yokken liste gruplara ayrılır; aramada sıra uygunluğa göre olduğundan başlık yerine grup adı yazılır.
+                const group = item.kind === "option" ? item.option.group : undefined;
+                const prev = items[i - 1];
+                const heading = !query && group && (prev?.kind !== "option" || prev.option.group !== group) ? group : null;
                 return (
-                  <li
-                    key={item.kind === "option" ? item.option.value : "custom"}
-                    id={`${id}-opt-${i}`}
-                    role="option"
-                    aria-selected={selected}
-                    data-active={i === current}
-                    onPointerDown={(e) => e.preventDefault()} // girdi odağını kaybetmesin
-                    onClick={() => pick(item)}
-                    onMouseMove={() => setActive(i)}
-                    className="flex cursor-pointer items-start justify-between gap-3 rounded-control px-3 py-2.5 data-[active=true]:bg-sunken"
-                  >
-                    {item.kind === "option" ? (
-                      <span className="grid gap-0.5">
-                        <span className="leading-snug">{item.option.label}</span>
-                        {item.option.hint && <span className="text-sm leading-snug text-muted">{item.option.hint}</span>}
-                      </span>
-                    ) : (
-                      <span className="font-medium text-forest">&ldquo;{item.text}&rdquo; ekle</span>
+                  <Fragment key={item.kind === "option" ? item.option.value : "custom"}>
+                    {heading && (
+                      <li role="presentation" className={`px-3 pb-1 text-xs font-medium tracking-wide text-muted ${i === 0 ? "pt-1.5" : "pt-3.5"}`}>
+                        {heading}
+                      </li>
                     )}
-                    {selected && (
-                      <svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" className="mt-1 shrink-0 text-forest">
-                        <path d="m2.5 6.2 2.2 2.2 4.8-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </li>
+                    <li
+                      id={`${id}-opt-${i}`}
+                      role="option"
+                      aria-selected={selected}
+                      data-active={i === current}
+                      onPointerDown={(e) => e.preventDefault()} // girdi odağını kaybetmesin
+                      onClick={() => pick(item)}
+                      onMouseMove={() => setActive(i)}
+                      className="flex cursor-pointer items-start justify-between gap-3 rounded-control px-3 py-2.5 data-[active=true]:bg-sunken"
+                    >
+                      {item.kind === "option" ? (
+                        <span className="grid gap-0.5">
+                          <span className="leading-snug">{item.option.label}</span>
+                          {(item.option.hint || (query && group)) && (
+                            <span className="text-sm leading-snug text-muted">{item.option.hint ?? group}</span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="font-medium text-forest">&ldquo;{item.text}&rdquo; ekle</span>
+                      )}
+                      {selected && (
+                        <svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" className="mt-1 shrink-0 text-forest">
+                          <path d="m2.5 6.2 2.2 2.2 4.8-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </li>
+                  </Fragment>
                 );
               })}
             </ul>

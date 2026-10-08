@@ -6,8 +6,8 @@ import { Select } from "@/components/ui/select";
 import type { FacetKey, Facets } from "@/modules/leads/facets";
 import { leadSorts, type LeadSort } from "@/modules/leads/sorts";
 import { AskBox } from "./ask-box";
-import { RotatingTips } from "./rotating-tips";
-import { ShapeLoader } from "./shape-loader";
+import { RotatingTips, searchTips } from "@/components/ui/rotating-tips";
+import { ShapeLoader } from "@/components/ui/shape-loader";
 import { filterKeys, isActiveStatus, type Navigate, type ResultFilters, type SearchView } from "./types";
 
 const dateFormat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
@@ -128,7 +128,7 @@ export function ResultsArea({
         <div className="grid justify-items-center gap-9">
           <ShapeLoader />
           <Message title={title} text={text} />
-          <RotatingTips />
+          <RotatingTips tips={searchTips} />
         </div>
       </div>
     );

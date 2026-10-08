@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SESSION_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/auth/constants";
 import { isSameOrigin } from "@/lib/auth/origin";
 import { adminAuth } from "@/lib/firebase/admin";
+import { getProfile } from "@/modules/profile/repository";
 
 /** Session cookie yalnızca yeni yapılmış bir girişten üretilir. */
 const MAX_SIGN_IN_AGE_S = 5 * 60;
@@ -37,7 +38,10 @@ export async function POST(req: NextRequest) {
       path: "/",
       maxAge: SESSION_MAX_AGE_MS / 1000,
     });
-    return NextResponse.json({ ok: true });
+    // Giriş formu, kurulumu bitirmemiş kullanıcıyı panele hiç uğratmadan doğrudan kuruluma götürsün diye söylenir.
+    // Profil okunamazsa panele gidilir; panel kendi denetimini yapar.
+    const onboarded = await getProfile(decoded.uid).then(Boolean, () => true);
+    return NextResponse.json({ ok: true, onboarded });
   } catch {
     return NextResponse.json({ error: "Oturum açılamadı, tekrar deneyin." }, { status: 401 });
   }

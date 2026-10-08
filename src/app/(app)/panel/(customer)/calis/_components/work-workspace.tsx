@@ -10,7 +10,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
 import { toast, Toaster } from "@/components/ui/toast";
 import { goals, tones, whatsappHref, type Draft, type Goal, type Tone, type WorkFirm, type WorkKind } from "@/modules/work/context";
-import { ShapeLoader } from "../../musteri-bul/_components/shape-loader";
+import { ShapeLoader } from "@/components/ui/shape-loader";
 
 type PickerItem = { id: string; name: string; district: string | null; category: string | null };
 type Service = { value: string; label: string };

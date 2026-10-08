@@ -25,7 +25,8 @@ function nextPath() {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/panel";
 }
 
-async function startSession(user: User) {
+/** Oturum açar; kullanıcının hesap kurulumunu tamamlayıp tamamlamadığını döndürür. */
+async function startSession(user: User): Promise<boolean> {
   const idToken = await user.getIdToken();
   const res = await fetch("/api/auth/session", {
     method: "POST",
@@ -36,6 +37,8 @@ async function startSession(user: User) {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;
     throw new Error(body?.error ?? "Oturum açılamadı, tekrar deneyin.");
   }
+  const body = (await res.json().catch(() => null)) as { onboarded?: boolean } | null;
+  return body?.onboarded !== false;
 }
 
 export function AuthForm({ mode }: { mode: Mode }) {
@@ -48,8 +51,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
     setError(null);
     try {
       const user = await action();
-      await startSession(user);
-      router.replace(nextPath());
+      const onboarded = await startSession(user);
+      // Kurulumu bitirmemiş kullanıcı panele uğramadan doğrudan kuruluma gider (panel bir an görünmesin).
+      router.replace(onboarded ? nextPath() : "/onboarding");
       router.refresh();
     } catch (e) {
       setError(authErrorMessage(e));

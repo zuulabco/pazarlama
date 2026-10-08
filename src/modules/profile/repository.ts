@@ -35,7 +35,7 @@ function toDraft(row: Row) {
     businessDescription: extra.businessDescription,
     services: row.services,
     targetSectors: row.target_sectors,
-    targetSize: row.target_size ?? undefined,
+    targetSizes: row.target_size ? row.target_size.split(",") : undefined,
     cityScope: extra.cityScope,
     targetCities: row.target_cities,
     channels: extra.channels,
@@ -82,7 +82,7 @@ export async function saveProfile(user: SessionUser, input: ProfileInput, comple
         services: input.services,
         target_sectors: input.targetSectors,
         target_cities: input.targetCities,
-        target_size: input.targetSize,
+        target_size: input.targetSizes.join(","),
         deal_value: input.dealValue,
         extra: {
           businessDescription: input.businessDescription,

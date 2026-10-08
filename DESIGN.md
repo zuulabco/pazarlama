@@ -30,6 +30,7 @@ Bu kurallar sitenin tamamı için geçerlidir. Yeni bir ekran eklerken önce bur
 
 - Beklemeyi hissettiren tek bir animasyon (dört şekil) + **değişen** metin (ipuçları). Sabit "yükleniyor" yazısı kullanılmaz.
 - Sonuçlar geldikçe liste dolar; kullanıcı işin bitmesini beklemez.
+- Tek bir girdinin beklediği işlerde (örn. site analizi) kurulum ekranı kaplanmaz: girdinin çerçevesi yumuşak bir renk geçişiyle akar, altında dönen ifadeler görünür. Sayfayı bekleten işlerde (örn. hesap kaydı) dört şekilli animasyon kullanılır (`ShapeLoader` + `RotatingTips`, `src/components/ui`).
 
 ## 5. Tekrar yok
 

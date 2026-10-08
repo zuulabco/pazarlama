@@ -58,7 +58,7 @@ export function SummaryCard({ draft, onEdit }: { draft: Draft; onEdit: (stage: E
         <Chips items={draft.services.map((s) => labelOf(services, s))} />
       </Section>
       <Section title="Hedef müşteri" onEdit={() => onEdit("target")}>
-        <Chips items={[...draft.targetSectors.map((s) => labelOf(sectors, s)), labelOf(companySizes, draft.targetSize)]} />
+        <Chips items={[...draft.targetSectors.map((s) => labelOf(sectors, s)), ...draft.targetSizes.map((s) => labelOf(companySizes, s))]} />
       </Section>
       <Section title="Bölge" onEdit={() => onEdit("reach")}>
         <Chips items={place} />

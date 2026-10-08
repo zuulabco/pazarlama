@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import styles from "./rotating-tips.module.css";
 
-/** Yükleme sırasında dönen kısa ipuçları. Sırası sabittir (sunucu ve istemci aynı ilk ipucunu çizer). */
-const tips = [
+/** Müşteri aramasında dönen ipuçları. */
+export const searchTips = [
   "Web sitesi olmayan firmalar, web tasarım teklifleri için en sıcak adaylardır.",
   "Çok yorumu olup dijitalde zayıf kalan firmalar, genellikle hızlı karar verir.",
   "İlk mesajda hizmetinizi değil, firmanın kaçırdığı fırsatı anlatmak daha çok ilgi çeker.",
@@ -16,17 +16,18 @@ const tips = [
 
 const INTERVAL_MS = 3800;
 
-export function RotatingTips() {
+/** Yükleme sırasında dönen kısa metinler. Sırası sabittir (sunucu ve istemci aynı ilkini çizer). */
+export function RotatingTips({ tips, label = "İpucu" }: { tips: readonly string[]; label?: string | null }) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => setIndex((i) => (i + 1) % tips.length), INTERVAL_MS);
     return () => clearInterval(timer);
-  }, []);
+  }, [tips.length]);
 
   return (
     <div className="grid max-w-[28rem] justify-items-center gap-1.5 text-center" aria-live="off">
-      <p className="text-xs font-medium tracking-wide text-forest">İpucu</p>
+      {label && <p className="text-xs font-medium tracking-wide text-forest">{label}</p>}
       {/* key değişince animasyon yeniden başlar */}
       <p key={index} className={`${styles.tip} min-h-12 text-balance text-muted`}>
         {tips[index]}

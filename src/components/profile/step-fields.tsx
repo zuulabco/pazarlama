@@ -20,7 +20,6 @@ import {
 export type FieldStage = "about" | "target" | "reach" | "fit";
 export type FieldErrors = Partial<Record<keyof Draft, string>>;
 
-const sizeOptions = companySizes.map((s) => ({ value: s.value, label: s.label }));
 const cityOptions = provinces.map((c) => ({ value: c, label: c }));
 
 /**
@@ -38,6 +37,12 @@ export function StepFields({
   update: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
   errors: FieldErrors;
 }) {
+  /** "Fark etmez" diğer büyüklüklerle birlikte seçilemez: seçilince diğerleri kalkar, başka biri seçilince o kalkar. */
+  function pickSizes(next: string[]) {
+    const added = next.find((v) => !draft.targetSizes.includes(v));
+    update("targetSizes", added === "farketmez" ? ["farketmez"] : next.filter((v) => v !== "farketmez"));
+  }
+
   if (stage === "about") {
     return (
       <>
@@ -81,6 +86,7 @@ export function StepFields({
           onChange={(v) => update("services", v)}
           allowCustom
           placeholder="Hizmet seçin ya da yazın"
+          hint="Mesleğinize uygun olanı listeden seçin; bulamazsanız kendi ifadenizi yazın."
           error={errors.services}
         />
         <ComboField
@@ -94,12 +100,12 @@ export function StepFields({
         />
         <ComboField
           legend="Hedef firma büyüklüğü"
-          options={sizeOptions}
-          value={draft.targetSize ? [draft.targetSize] : []}
-          onChange={([v]) => update("targetSize", v ?? "")}
-          single
-          placeholder="Seçin"
-          error={errors.targetSize}
+          hint="Birden fazla seçebilirsiniz."
+          options={companySizes}
+          value={draft.targetSizes}
+          onChange={pickSizes}
+          placeholder="Büyüklük seçin"
+          error={errors.targetSizes}
         />
       </>
     );

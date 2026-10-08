@@ -3,6 +3,7 @@ import { noul, score, TypeSafeClient, type JsonValue } from "@typesafe-ai/sdk";
 import type { Profile } from "../profile/repository";
 import type { Place } from "./apify";
 import { jevConcurrency } from "./config";
+import { channels, services, sectors, signals, workTypes } from "../profile/options";
 
 /**
  * JEV (TypeSafe System One): her firma için tek istekte yedi kriteri puanlar.
@@ -100,9 +101,11 @@ const en: Record<string, string> = {
   insaat: "construction and architecture",
   spor: "sports and fitness",
   diger: "other",
-  mikro: "micro (1-9 people)",
+  "tek-kisi": "single-person business (1 person)",
+  mikro: "micro (2-9 people)",
   kucuk: "small (10-49 people)",
-  orta: "medium (50+ people)",
+  orta: "medium (50-249 people)",
+  buyuk: "large (250+ people)",
   farketmez: "any size",
   "15k-alti": "under 15 thousand TRY",
   "15k-50k": "15-50 thousand TRY",
@@ -121,7 +124,9 @@ const en: Record<string, string> = {
   "no-booking": "cannot take online bookings or orders",
   "new-business": "is newly opened or growing",
 };
-const t = (v: string) => en[v] ?? v;
+/** Çevirisi olmayan seçenekler Türkçe etiketiyle geçer; kullanıcının yazdığı metinler olduğu gibi kalır. */
+const labels = new Map<string, string>([...workTypes, ...services, ...sectors, ...signals, ...channels].map((o) => [o.value, o.label]));
+const t = (v: string) => en[v] ?? labels.get(v) ?? v;
 
 /** JSON'da undefined olamaz: boş alanları çıkarır. */
 const compact = (o: Record<string, unknown>) =>
@@ -133,7 +138,7 @@ function sellerState(p: Profile) {
     description: p.businessDescription || undefined,
     offered_services: p.services.map(t),
     target_sectors: p.targetSectors.map(t),
-    target_company_size: t(p.targetSize),
+    target_company_size: p.targetSizes.map(t),
     target_region: p.cityScope === "turkey" ? "all of Turkey" : p.targetCities,
     average_project_value: t(p.dealValue),
     outreach_channels: p.channels.map(t),

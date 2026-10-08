@@ -59,3 +59,67 @@
     stroke-dashoffset: 30;
   }
 }
+
+/*
+ * Web sitesi girişi: durağanken ince halka, odakta orman yeşili. Site analiz edilirken çerçeve
+ * yumuşak bir renk geçişiyle akar (soru kutusundaki yükleme çerçevesiyle aynı dil).
+ */
+.siteFrame {
+  position: relative;
+  border-radius: var(--radius-row);
+  padding: 2px;
+  background: var(--color-line-strong);
+  transition: background-color 0.3s ease;
+}
+.siteFrame:focus-within {
+  background: var(--color-forest);
+}
+.siteFrame[data-invalid] {
+  background: var(--color-danger);
+}
+.siteFrame[data-busy="true"] {
+  background: linear-gradient(
+    100deg,
+    var(--color-forest) 0%,
+    var(--color-pollen) 22%,
+    var(--color-score-mid) 44%,
+    var(--color-forest) 66%,
+    var(--color-pollen) 88%,
+    var(--color-forest) 100%
+  );
+  background-size: 300% 100%;
+}
+.siteFrame[data-busy="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: inherit;
+  background: inherit;
+  background-size: 300% 100%;
+  filter: blur(16px);
+  opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .siteFrame[data-busy="true"],
+  .siteFrame[data-busy="true"]::before {
+    animation: flow 7s linear infinite;
+  }
+  .siteFrame[data-busy="true"]::before {
+    animation:
+      flow 7s linear infinite,
+      breathe 4.5s ease-in-out infinite;
+  }
+}
+
+@keyframes flow {
+  to {
+    background-position: -300% 0;
+  }
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.18;
+  }
+}

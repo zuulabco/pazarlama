@@ -13,7 +13,7 @@ const field = {
   businessDescription: z.string().trim().max(500, "En fazla 500 karakter.").default(""),
   services: z.array(tag).min(1, "En az bir hizmet seçin ya da yazın.").max(12, "En fazla 12 hizmet ekleyebilirsiniz."),
   targetSectors: z.array(tag).min(1, "En az bir sektör seçin ya da yazın.").max(12, "En fazla 12 sektör ekleyebilirsiniz."),
-  targetSize: z.enum(values(companySizes), "Bir seçenek belirleyin."),
+  targetSizes: z.array(z.enum(values(companySizes))).min(1, "En az bir büyüklük seçin."),
   cityScope: z.enum(values(cityScopes), "Bir seçenek belirleyin."),
   targetCities: z.array(tag).max(12, "En fazla 12 şehir ekleyebilirsiniz."),
   channels: z.array(tag).min(1, "En az bir kanal seçin ya da yazın.").max(8, "En fazla 8 kanal ekleyebilirsiniz."),
@@ -41,7 +41,7 @@ export const stepSchemas = {
     workType: field.workType,
     businessDescription: field.businessDescription,
   }),
-  target: z.object({ services: field.services, targetSectors: field.targetSectors, targetSize: field.targetSize }),
+  target: z.object({ services: field.services, targetSectors: field.targetSectors, targetSizes: field.targetSizes }),
   reach: z
     .object({
       cityScope: field.cityScope,

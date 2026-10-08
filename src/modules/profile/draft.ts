@@ -4,7 +4,7 @@ export type Draft = {
   businessDescription: string;
   services: string[];
   targetSectors: string[];
-  targetSize: string;
+  targetSizes: string[];
   cityScope: string;
   targetCities: string[];
   channels: string[];
@@ -19,7 +19,7 @@ export const emptyDraft: Draft = {
   businessDescription: "",
   services: [],
   targetSectors: [],
-  targetSize: "",
+  targetSizes: [],
   cityScope: "",
   targetCities: [],
   channels: [],
