@@ -1,0 +1,72 @@
+/* Tanıtım sayfası hareketleri. Hareketi azaltma tercihinde hepsi durur. */
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+.floatSlow {
+  animation: float 8s ease-in-out infinite reverse;
+}
+.glow {
+  animation: glow 9s ease-in-out infinite;
+}
+.drift {
+  animation: drift 14s linear infinite;
+}
+.ping::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0.35;
+  animation: ping 2.4s var(--ease-out) infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+@keyframes drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 48px 48px;
+  }
+}
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  80%,
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float,
+  .floatSlow,
+  .glow,
+  .drift,
+  .ping::after {
+    animation: none;
+  }
+}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { site } from "@/lib/site";
-import { Ask, Faq, FinalCta, Hero, HowItWorks, Modules, Scoring, faqs } from "./_components/sections";
+import { AiSection, Faq, FinalCta, Features, Find, Hero, Pricing, Principles, Reach, faqs } from "./_components/sections";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -37,10 +37,12 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <Hero />
-      <HowItWorks />
-      <Scoring />
-      <Ask />
-      <Modules />
+      <Principles />
+      <Find />
+      <Reach />
+      <AiSection />
+      <Features />
+      <Pricing />
       <Faq />
       <FinalCta />
     </>

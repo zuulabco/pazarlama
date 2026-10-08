@@ -39,3 +39,23 @@ export function attention(f: HomeFacts): Attention[] {
   if (f.credits <= 10) list.push({ key: "kredi", tone: "warn", text: f.credits === 0 ? "Krediniz bitti; yeni kişi eklemek için paketinizi yükseltin." : `Yalnızca ${f.credits} krediniz kaldı.`, href: "/panel/kisi-bul", cta: "Kişi bul" });
   return list;
 }
+
+export type Focus = { tone: "danger" | "warn" | "info" | "ok"; title: string; text: string; href: string; cta: string; progress: { done: number; total: number } | null };
+
+/**
+ * Ana sayfanın tek odak kartı: şimdi yapılması en yararlı şey. Sıra: sorunlar (bağlantı, geri dönen) → yanıt bekleyenler →
+ * kurulumun sıradaki adımı → düşük kredi → "yeni kişi bul".
+ */
+export function focusOf(f: HomeFacts): Focus {
+  const steps = setupSteps(f);
+  const done = steps.filter((s) => s.done).length;
+  const progress = done < steps.length ? { done, total: steps.length } : null;
+  const problem = attention(f).find((a) => a.tone === "danger");
+  if (problem) return { tone: "danger", title: "Önce bunu çözelim", text: problem.text, href: problem.href, cta: problem.cta, progress };
+  if (f.unread > 0) return { tone: "info", title: `${f.unread} yeni yanıtınız var`, text: "Yanıt veren kişilere dönmek, sonucu en çok etkileyen adımdır.", href: "/panel/gelen-kutusu", cta: "Yanıtla", progress };
+  const next = steps.find((s) => !s.done);
+  if (next) return { tone: "info", title: next.title, text: next.hint, href: next.href, cta: next.cta, progress };
+  const low = attention(f).find((a) => a.key === "kredi" || a.key === "geri");
+  if (low) return { tone: "warn", title: "Dikkat edilecek bir şey var", text: low.text, href: low.href, cta: low.cta, progress };
+  return { tone: "ok", title: "Her şey yolunda", text: "Yeni kişiler bulup otomasyonlarınıza ekleyerek devam edin.", href: "/panel/kisi-bul", cta: "Kişi bul", progress };
+}

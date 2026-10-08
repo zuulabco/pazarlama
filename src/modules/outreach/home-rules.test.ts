@@ -27,3 +27,19 @@ describe("dikkat edilecekler", () => {
     expect(attention({ ...base, sent: 30, bounceRate: 4 })[0].tone).toBe("warn");
   });
 });
+
+import { focusOf } from "./home-rules";
+
+describe("odak kartı", () => {
+  const ready: HomeFacts = { ...base, connectedMailboxes: 1, warmupOn: 1, contacts: 5, campaigns: 1, sent: 30, replies: 2 };
+  it("önce sorunu gösterir", () => {
+    expect(focusOf({ ...ready, unread: 3, brokenMailboxes: [{ email: "a@x.com" }] })).toMatchObject({ tone: "danger", href: "/panel/posta-kutulari" });
+  });
+  it("sonra okunmamış yanıtı, sonra kurulum adımını", () => {
+    expect(focusOf({ ...ready, unread: 2 }).title).toBe("2 yeni yanıtınız var");
+    expect(focusOf({ ...base, connectedMailboxes: 1 })).toMatchObject({ href: "/panel/posta-kutulari", progress: { done: 1, total: 5 } });
+  });
+  it("her şey tamamsa kişi bulmaya yönlendirir", () => {
+    expect(focusOf(ready)).toMatchObject({ tone: "ok", href: "/panel/kisi-bul", progress: null });
+  });
+});

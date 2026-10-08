@@ -182,65 +182,37 @@ export function ComposerSkeleton() {
   );
 }
 
-/** Ana sayfa: karşılama, Adspine AI soru çubuğu, Bul/Ulaş kartları, performans ve yan kartlar. */
+/** Ana sayfa: karşılama, odak kartı, Adspine AI soru çubuğu, özellik kutuları ve etkinlik. */
 export function DashboardSkeleton() {
+  const tile = (i: number) => (
+    <div key={i} className={`${panel} grid gap-3 p-5`}>
+      <div className="flex items-center justify-between">
+        <Skeleton className="size-10" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <Skeleton className="h-5 w-28" />
+      <Skeleton className="h-4 w-full" />
+    </div>
+  );
   return (
     <SkeletonRegion>
-      <div className="grid gap-2">
-        <Skeleton className="h-3.5 w-28" />
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-4 w-64" />
-      </div>
-      <div className={`${panel} grid gap-3 p-4`}>
-        <Skeleton className="h-10 w-full" />
-        <div className="flex gap-2">
-          <Skeleton className="h-7 w-44 rounded-full" />
-          <Skeleton className="h-7 w-44 rounded-full" />
+      <div className="grid w-full gap-10">
+        <div className="grid gap-2">
+          <Skeleton className="h-3.5 w-28" />
+          <Skeleton className="h-9 w-56" />
+          <Skeleton className="h-4 w-40" />
         </div>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        {Array.from({ length: 2 }, (_, i) => (
-          <div key={i} className={`${panel} grid gap-4 p-5`}>
-            <Skeleton className="h-5 w-16" />
-            <div className="grid grid-cols-3 gap-3">
-              {Array.from({ length: 3 }, (_, j) => (
-                <div key={j} className="grid gap-2">
-                  <Skeleton className="h-3.5 w-16" />
-                  <Skeleton className="h-7 w-10" />
-                </div>
-              ))}
-            </div>
-            <Skeleton className="h-9 w-40" />
+        <Skeleton className="h-32 w-full rounded-panel" />
+        <Skeleton className="h-24 w-full rounded-panel" />
+        {[2, 4].map((n) => (
+          <div key={n} className="grid gap-4">
+            <Skeleton className="h-6 w-16" />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: n }, (_, i) => tile(i))}</div>
           </div>
         ))}
-      </div>
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-        <div className="grid gap-5">
-          <div className={`${panel} grid gap-4 p-5`}>
-            <Skeleton className="h-5 w-24" />
-            <div className="grid grid-cols-4 gap-3">
-              {Array.from({ length: 4 }, (_, j) => (
-                <Skeleton key={j} className="h-10 w-full" />
-              ))}
-            </div>
-            <Skeleton className="h-24 w-full" />
-          </div>
-          <div className={`${panel} grid gap-3 p-5`}>
-            <Skeleton className="h-5 w-28" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </div>
-        <div className="grid gap-5">
-          <div className={`${panel} grid gap-3 p-5`}>
-            <Skeleton className="h-5 w-36" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-2 w-full" />
-          </div>
-          <div className={`${panel} grid gap-3 p-5`}>
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <Skeleton className="h-56 w-full rounded-panel" />
+          <Skeleton className="h-32 w-full rounded-panel" />
         </div>
       </div>
     </SkeletonRegion>
