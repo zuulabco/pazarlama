@@ -52,6 +52,7 @@ export function AutomationBar() {
   const path = usePathname();
   if (path.startsWith("/panel/kisi-bul") || path.startsWith("/panel/kisiler")) return <SectionTabs title="Kişiler" tabs={leadsTabs} />;
   if (path.startsWith("/panel/kampanyalar")) return <SectionTabs title="Kampanyalar" />;
+  if (path.startsWith("/panel/gelen-kutusu")) return <SectionTabs title="Gelen kutusu" />;
   if (path.startsWith("/panel/posta-kutulari")) return <SectionTabs title="Gönderici adresleri" />;
   return <SectionTabs title="Otomasyon" />;
 }

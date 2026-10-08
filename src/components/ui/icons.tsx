@@ -147,6 +147,13 @@ export const LockIcon = ({ size }: P) => (
   </Svg>
 );
 
+export const InboxIcon = ({ size }: P) => (
+  <Svg size={size}>
+    <path d="M3.4 11.2 5.6 5a1.2 1.2 0 0 1 1.1-.8h6.6a1.2 1.2 0 0 1 1.1.8l2.2 6.2" />
+    <path d="M3.4 11.2v4a1 1 0 0 0 1 1h11.2a1 1 0 0 0 1-1v-4h-3.4a2.2 2.2 0 0 1-4.4 0H3.4Z" />
+  </Svg>
+);
+
 export const HomeIcon = ({ size }: P) => (
   <Svg size={size}>
     <path d="M3.5 9.2 10 3.8l6.5 5.4V16a.8.8 0 0 1-.8.8H4.3a.8.8 0 0 1-.8-.8V9.2Z" />

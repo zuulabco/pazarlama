@@ -5,6 +5,7 @@ import { addSuppression } from "./contacts";
 import { decryptSecret } from "./crypto";
 import { companyDomain } from "./company";
 import { addEvent, finishContactEnrollments } from "./enrollments";
+import { storeReply } from "./unibox";
 import { getProfile, getRaw, newInboxMessageIds } from "./gmail";
 import { withImap, type ImapConfig } from "./imap";
 import { classifyInbound, messageIds, parseBounce } from "./inbound";
@@ -149,6 +150,39 @@ async function onBounce(uid: string, mailboxId: string, raw: string) {
 type InboundItem = { from: string; fromName: string; subject: string; h: Record<string, string>; source: () => Promise<Buffer | null> };
 
 /** Tek bir gelen iletiyi sınıflandırıp (yanıt / ofis dışı / bounce) kampanya kayıtlarına işler. IMAP ve Gmail API taramaları ortak kullanır. */
+type Parsed = { text: string; messageId: string | null; inReplyTo: string | null };
+
+async function parseSource(item: InboundItem): Promise<Parsed> {
+  const src = await item.source();
+  if (!src) return { text: "", messageId: null, inReplyTo: null };
+  const m = await simpleParser(src);
+  return { text: m.text ?? "", messageId: m.messageId ?? null, inReplyTo: typeof m.inReplyTo === "string" ? m.inReplyTo : null };
+}
+
+/** Yanıtı Gelen kutusu için saklar (en iyi çaba: saklanamazsa kampanya işleme etkilenmez). */
+async function keepReply(row: Pick<MailboxRow, "id" | "user_uid">, sent: SentRow, item: InboundItem, kind: "yanit" | "ooo", parsed?: Parsed) {
+  if (!sent.enrollment_id) return;
+  try {
+    const p = parsed ?? (await parseSource(item));
+    await storeReply({
+      uid: row.user_uid,
+      mailboxId: row.id,
+      enrollmentId: sent.enrollment_id,
+      sequenceId: sent.sequence_id,
+      contactId: sent.contact_id,
+      messageId: p.messageId ?? `${crypto.randomUUID()}@gelen.adspine`,
+      inReplyTo: p.inReplyTo ?? item.h["in-reply-to"] ?? null,
+      fromEmail: item.from,
+      fromName: item.fromName || null,
+      subject: item.subject,
+      body: p.text,
+      kind,
+    });
+  } catch (e) {
+    console.error("Yanıt saklanamadı:", e instanceof Error ? e.message : e);
+  }
+}
+
 async function handleInbound(row: Pick<MailboxRow, "id" | "user_uid">, item: InboundItem, ours: Set<string>, sentMap: Map<string, SentRow>, res: ScanResult) {
   const { h } = item;
   try {
@@ -165,11 +199,12 @@ async function handleInbound(row: Pick<MailboxRow, "id" | "user_uid">, item: Inb
       if (src && (await onBounce(row.user_uid, row.id, src.toString("utf8")))) res.bounces++;
     } else if (kind === "ooo" && sent) {
       await onAutoReply(row.user_uid, sent, item.subject);
+      await keepReply(row, sent, item, "ooo");
       res.ooo++;
     } else if (kind === "yanit" && sent) {
-      const src = await item.source();
-      const text = src ? ((await simpleParser(src)).text ?? "") : "";
-      await onReply(row.user_uid, sent, { subject: item.subject, from: item.from, snippet: replySnippet(text) });
+      const parsed = await parseSource(item);
+      await onReply(row.user_uid, sent, { subject: item.subject, from: item.from, snippet: replySnippet(parsed.text) });
+      await keepReply(row, sent, item, "yanit", parsed);
       res.replies++;
     }
   } catch (e) {
