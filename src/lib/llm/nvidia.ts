@@ -10,7 +10,7 @@ const models = ["nvidia/nemotron-3-super-120b-a12b", "meta/muse-glimmer-30b"] as
 
 export class LlmUnavailableError extends Error {}
 
-type Message = { role: "system" | "user"; content: string };
+type Message = { role: "system" | "user" | "assistant"; content: string };
 
 /** Modelin metninden ilk JSON nesnesini çıkarır (``` işaretlerini ve önsözü yok sayar). */
 export function extractJson(text: string): unknown {
