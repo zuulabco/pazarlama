@@ -9,6 +9,8 @@ import {
   goalValues,
   lengthValues,
   parseDraft,
+  refineProblem,
+  shortenFallback,
   refinements,
   refinementValues,
   refineMessages,
@@ -103,13 +105,29 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const ask = (temperature: number) => chatJson(messages, { maxTokens: 1800, timeoutMs: 40_000, thinking: false, temperature });
-    let draft = parseDraft(kind, await ask(refine ? 0.3 : 0.15));
+    const ask = (temperature: number, extra: { role: "assistant" | "user"; content: string }[] = []) =>
+      chatJson([...messages, ...extra], { maxTokens: 1800, timeoutMs: 40_000, thinking: false, temperature });
+    let raw = await ask(refine ? 0.3 : 0.15);
+    let draft = parseDraft(kind, raw);
     if (refine) {
-      // Model bazen isteği yok sayıp metni aynen döndürür: bir kez daha, daha yaratıcı denenir.
-      const squash = (t: string) => t.replace(/\s+/g, " ").trim();
-      const same = (a: string, b: string) => squash(a) === squash(b);
-      if (same(draft.body, refine.draft.body) && !refine.custom) draft = parseDraft(kind, await ask(0.7));
+      // Model bazen isteği yok sayıp metni aynen (ya da yeterince kısaltmadan) döndürür: sorun belirtilerek en çok iki kez daha denenir.
+      let problem = refineProblem(refine.action, refine.draft.body, draft.body);
+      for (let attempt = 0; problem && attempt < 2; attempt++) {
+        raw = await ask(0.6 + attempt * 0.2, [
+          { role: "assistant", content: JSON.stringify(raw) },
+          { role: "user", content: `Bu yanıt isteği uygulamadı: ${problem}. İsteği açıkça uygulayarak taslağı yeniden yaz; aynı JSON biçimini kullan.` },
+        ]);
+        draft = parseDraft(kind, raw);
+        problem = refineProblem(refine.action, refine.draft.body, draft.body);
+      }
+      if (problem && refine.action === "kisalt") {
+        const short = shortenFallback(refine.draft.body);
+        if (short) {
+          draft = { ...draft, body: short };
+          problem = null;
+        }
+      }
+      if (problem) return error("Bu düzeltmeyi uygulayamadım. İsteği başka sözcüklerle yazıp tekrar deneyin.", 422);
       draft = { ...draft, body: applyToneGreeting(draft.body, refine.action) };
     }
     return NextResponse.json(await proofread(kind, draft));

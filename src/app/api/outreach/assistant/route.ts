@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { chatText } from "@/lib/llm/nvidia";
-import { assistantMessages, contextText, fallbackReply, toAnswer } from "@/modules/outreach/assistant-rules";
+import { assistantMessages, contextText, fallbackReply, isSmallTalk, toAnswer } from "@/modules/outreach/assistant-rules";
 import { knowledgeFor } from "@/modules/outreach/assistant-data";
 import { runAgent } from "@/modules/outreach/assistant-agent";
 import { fail, guard, outreachFailure, rateLimiter } from "@/modules/outreach/http";
@@ -32,12 +32,15 @@ export async function POST(req: NextRequest) {
     });
     if (done) return NextResponse.json(done);
 
+    const lastText = body.data.messages.at(-1)!.content;
+    const chatty = isSmallTalk(lastText);
+    const firstName = g.user.name?.split(" ")[0] ?? null;
     const [reports, account, knowledge] = await Promise.all([loadReports(g.user.uid, 30), accountSummary(g.user.uid), knowledgeFor(g.user.uid, body.data.messages).catch(() => "")]);
     const summary = contextText(reports, { planName: account.plan.label, credits: account.credits, senders: account.senders, campaigns: account.campaigns }, 30);
-    const context = knowledge ? `${summary}\n\n${knowledge}` : summary;
+    const context = chatty ? "" : knowledge ? `${summary}\n\n${knowledge}` : summary;
     const question = body.data.messages.at(-1)!.content;
     try {
-      const text = await chatText(assistantMessages(body.data.messages, context), { maxTokens: 900, timeoutMs: 45_000, temperature: 0.2 });
+      const text = await chatText(assistantMessages(body.data.messages, context, { mode: chatty ? "sohbet" : "veri", name: firstName }), { maxTokens: chatty ? 300 : 900, timeoutMs: 45_000, temperature: chatty ? 0.7 : 0.25 });
       return NextResponse.json(toAnswer(text, question));
     } catch (e) {
       // Model geçici olarak yanıt vermiyorsa kullanıcıya hata değil, elimizdeki rakamların özeti gösterilir.

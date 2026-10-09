@@ -166,7 +166,7 @@ export async function startLeadSearch(uid: string, q: LeadSearchInput): Promise<
     await refundCredits(uid, q.count, job.id).catch(() => undefined);
     await db().from("outreach_lead_jobs").update({ status: "hata", refunded: q.count, error: "Arama başlatılamadı.", finished_at: new Date().toISOString() }).eq("id", job.id);
     console.error("Kişi bulma başlatılamadı:", e instanceof Error ? e.message : e);
-    throw new LeadSearchError("Arama şu an başlatılamadı. Adspine Krediniz iade edildi; biraz sonra tekrar deneyin.", 503);
+    throw new LeadSearchError("Arama şu an başlatılamadı. Krediniz iade edildi; biraz sonra tekrar deneyin.", 503);
   }
 }
 
@@ -323,7 +323,7 @@ export async function finalizeLeadJob(job: JobRow): Promise<{ job: JobRow; listN
 
   if (run.status !== "SUCCEEDED") {
     await refundCredits(job.user_uid, job.requested, job.id);
-    return { job: await finish(job, { status: "hata", refunded: job.requested, error: "Arama tamamlanamadı. Adspine Krediniz iade edildi." }), listName: null };
+    return { job: await finish(job, { status: "hata", refunded: job.requested, error: "Arama tamamlanamadı. Krediniz iade edildi." }), listName: null };
   }
 
   try {
@@ -336,7 +336,7 @@ export async function finalizeLeadJob(job: JobRow): Promise<{ job: JobRow; listN
   } catch (e) {
     console.error("Kişi bulma sonuçları aktarılamadı:", e instanceof Error ? e.message : e);
     await refundCredits(job.user_uid, job.requested, job.id).catch(() => undefined);
-    return { job: await finish(job, { status: "hata", refunded: job.requested, error: "Sonuçlar aktarılamadı. Adspine Krediniz iade edildi." }), listName: null };
+    return { job: await finish(job, { status: "hata", refunded: job.requested, error: "Sonuçlar aktarılamadı. Krediniz iade edildi." }), listName: null };
   }
 }
 
@@ -366,13 +366,13 @@ export async function finalizeOpenLeadJobs(limit = 10): Promise<number> {
         if (r.job.status !== "calisiyor") done++;
         else if (age > 45 * 60_000) {
           await refundCredits(j.user_uid, j.requested, j.id);
-          await finish(j, { status: "hata", refunded: j.requested, error: "Arama zaman aşımına uğradı. Adspine Krediniz iade edildi." });
+          await finish(j, { status: "hata", refunded: j.requested, error: "Arama zaman aşımına uğradı. Krediniz iade edildi." });
           done++;
         }
       } else if (age > 15 * 60_000) {
         // Aktarım sırasında süreç kesildi: kullanıcı aleyhine kalmaması için tamamı iade edilir.
         await refundCredits(j.user_uid, j.requested, j.id);
-        await finish(j, { status: "hata", refunded: j.requested, error: "Aktarım yarım kaldı. Adspine Krediniz iade edildi." });
+        await finish(j, { status: "hata", refunded: j.requested, error: "Aktarım yarım kaldı. Krediniz iade edildi." });
         done++;
       }
     } catch (e) {

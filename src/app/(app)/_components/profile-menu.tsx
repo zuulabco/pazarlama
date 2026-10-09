@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import popover from "@/components/ui/popover.module.css";
+import { closeAccountDialog, openAccountDialog, useAccountDialog } from "@/lib/account-dialog";
 import { setTheme, useTheme } from "@/lib/theme";
+import { PlansDialog } from "./plans-dialog";
+import { SettingsDialog } from "./settings-dialog";
 
 const itemClass = "flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left text-sm transition-colors";
 
@@ -25,6 +28,7 @@ export function ProfileMenu({ name, email }: { name: string | null; email: strin
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const dark = useTheme() === "dark";
+  const dialog = useAccountDialog();
 
   useEffect(() => {
     if (!open) return;
@@ -88,21 +92,19 @@ export function ProfileMenu({ name, email }: { name: string | null; email: strin
           </Icon>
           Profil
         </Link>
-        <div className={`${itemClass} cursor-default text-muted`} aria-disabled="true">
+        <button type="button" onClick={() => { setOpen(false); openAccountDialog("planlar"); }} className={`${itemClass} hover:bg-sunken`}>
           <Icon>
             <path d="m10 3 2 4.5 4.8.600-3.5 3.3.900 4.800L10 13.8 5.8 16.200l.9-4.800L3.2 8.1 8 7.5 10 3Z" />
           </Icon>
           <span className="flex-1">Planı yükselt</span>
-          <span className="rounded-full bg-sunken px-2 py-0.5 text-xs">Yakında</span>
-        </div>
-        <div className={`${itemClass} cursor-default text-muted`} aria-disabled="true">
+        </button>
+        <button type="button" onClick={() => { setOpen(false); openAccountDialog("ayarlar"); }} className={`${itemClass} hover:bg-sunken`}>
           <Icon>
             <circle cx="10" cy="10" r="2.5" />
             <path d="M10 2.800v2m0 10.400v2M2.8 10h2m10.4 0h2M5 5l1.4 1.400m7.2 7.200L15 15M15 5l-1.4 1.400M6.4 13.6 5 15" />
           </Icon>
           <span className="flex-1">Ayarlar</span>
-          <span className="rounded-full bg-sunken px-2 py-0.5 text-xs">Yakında</span>
-        </div>
+        </button>
 
         <button
           type="button"
@@ -128,6 +130,9 @@ export function ProfileMenu({ name, email }: { name: string | null; email: strin
           {signingOut ? "Çıkış yapılıyor…" : "Oturumu kapat"}
         </button>
       </div>
+
+      <PlansDialog open={dialog === "planlar"} onClose={closeAccountDialog} email={email} />
+      <SettingsDialog open={dialog === "ayarlar"} onClose={closeAccountDialog} name={name} email={email} />
     </div>
   );
 }

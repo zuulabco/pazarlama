@@ -36,7 +36,7 @@ export function attention(f: HomeFacts): Attention[] {
   for (const m of f.brokenMailboxes.slice(0, 2)) list.push({ key: `hata-${m.email}`, tone: "danger", text: `${m.email} adresine bağlanılamıyor; bu adresten gönderim durdu.`, href: "/panel/posta-kutulari", cta: "Düzelt" });
   if (f.sent >= 20 && f.bounceRate >= 5.5) list.push({ key: "geri", tone: "danger", text: `Geri dönen oranınız %${f.bounceRate.toFixed(1).replace(".", ",")}: güvenli sınırın üzerinde. Listeyi temizleyin, gönderimi azaltın.`, href: "/panel/raporlar", cta: "Raporlara bak" });
   else if (f.sent >= 20 && f.bounceRate >= 3) list.push({ key: "geri", tone: "warn", text: `Geri dönen oranınız %${f.bounceRate.toFixed(1).replace(".", ",")}; %2 altı hedeflenir.`, href: "/panel/raporlar", cta: "Raporlara bak" });
-  if (f.credits <= 10) list.push({ key: "kredi", tone: "warn", text: f.credits === 0 ? "Adspine Krediniz bitti; yeni kişi eklemek için paketinizi yükseltin." : `Yalnızca ${f.credits} Adspine Krediniz kaldı.`, href: "/panel/kisi-bul", cta: "Müşteri bul" });
+  if (f.credits <= 10) list.push({ key: "kredi", tone: "warn", text: f.credits === 0 ? "Krediniz bitti; yeni kişi eklemek için paketinizi yükseltin." : `Yalnızca ${f.credits} Krediniz kaldı.`, href: "/panel/kisi-bul", cta: "Müşteri bul" });
   return list;
 }
 

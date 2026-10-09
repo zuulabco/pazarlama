@@ -330,7 +330,7 @@ export function StepCard({
                         </Field>
                       )}
                       <Button onClick={() => void writeWithAi()} className="w-fit">
-                        <AdspineAiIcon size={18} tone="mono" eye="var(--color-forest)" />
+                        <AdspineAiIcon size={18} tone="mono" />
                         {v.body ? "Yeniden yaz" : "Adspine AI ile yaz"}
                       </Button>
                     </>

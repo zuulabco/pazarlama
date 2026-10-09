@@ -18,7 +18,7 @@ type Result = { added: number; skipped: Record<string, number>; listName: string
 
 /**
  * "Kişileri ekle ve e-posta bul" penceresi (Instantly'nin "Find Emails & Enrich" penceresinin karşılığı):
- * ne alınacağı, sonuçların hangi listeye gideceği, Adspine Kredi özeti ve onay. Başarıdan sonra otomasyona ekleme önerilir.
+ * ne alınacağı, sonuçların hangi listeye gideceği, Kredi özeti ve onay. Başarıdan sonra otomasyona ekleme önerilir.
  */
 export function LeadAddModal({
   open,
@@ -106,7 +106,7 @@ export function LeadAddModal({
                 <span className="font-medium">İş e-postası</span>
                 <span className="text-muted">Alan adı denetlenir; geçersiz olanlar eklenmez.</span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1.5 font-medium tabular-nums text-accent"><CreditIcon size={16} />1 Adspine Kredi / kişi</span>
+              <span className="inline-flex shrink-0 items-center gap-1.5 font-medium tabular-nums text-accent"><CreditIcon size={16} />1 Kredi / kişi</span>
             </li>
             <li className="flex items-center justify-between gap-4 rounded-row bg-sunken/60 px-4 py-3">
               <span className="grid gap-0.5">
@@ -133,19 +133,19 @@ export function LeadAddModal({
               <span className="font-medium tabular-nums">{num(need)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">En çok düşecek Adspine Kredi</span>
+              <span className="text-muted">En çok düşecek Kredi</span>
               <span className="font-medium tabular-nums">{num(need)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">Kalan Adspine Krediniz</span>
+              <span className="text-muted">Kalan Krediniz</span>
               <span className={`font-medium tabular-nums ${enough ? "" : "text-danger"}`}>{num(credits)}</span>
             </div>
           </div>
-          <p className="text-sm text-muted">Yalnızca gerçekten eklenen kişiler için Adspine Kredi düşer; e-postası geçersiz ya da zaten kayıtlı olanlar için düşmez.</p>
+          <p className="text-sm text-muted">Yalnızca gerçekten eklenen kişiler için Kredi düşer; e-postası geçersiz ya da zaten kayıtlı olanlar için düşmez.</p>
 
           {!enough && (
             <p role="alert" className="text-sm text-danger">
-              Adspine Krediniz yetmiyor. Daha az kişi seçin; Adspine Krediniz ay başında yenilenir.
+              Krediniz yetmiyor. Daha az kişi seçin; Krediniz ay başında yenilenir.
             </p>
           )}
           {error && (
@@ -159,7 +159,7 @@ export function LeadAddModal({
               Vazgeç
             </Button>
             <Button onClick={() => void confirm()} disabled={busy || !enough}>
-              {busy ? "Ekleniyor…" : `${num(need)} kişiyi ekle · ${num(need)} Adspine Kredi`}
+              {busy ? "Ekleniyor…" : `${num(need)} kişiyi ekle · ${num(need)} Kredi`}
             </Button>
           </div>
         </div>
@@ -168,7 +168,7 @@ export function LeadAddModal({
           <div className="grid gap-1">
             <p className="text-xl font-semibold tracking-tight">{result.added > 0 ? `${num(result.added)} kişi eklendi` : "Yeni kişi eklenmedi"}</p>
             <p className="text-sm text-muted">
-              {result.listName ? `Kişiler “${result.listName}” listesine konuldu. ` : ""}Kalan Adspine Krediniz: {num(result.credits)}.
+              {result.listName ? `Kişiler “${result.listName}” listesine konuldu. ` : ""}Kalan Krediniz: {num(result.credits)}.
               {skipped.length > 0 ? ` Atlananlar: ${skipped.map(([k, n]) => `${n} ${skippedLabels[k as keyof typeof skippedLabels]}`).join(", ")}.` : ""}
             </p>
           </div>

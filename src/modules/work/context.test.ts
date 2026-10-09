@@ -180,6 +180,29 @@ describe("refineMessages", () => {
     const [system, user] = refineMessages({ kind: "email", draft: { subject: "Konu", body: "Merhaba, ben Deniz." }, instruction: "daha kısa yap", sender });
     expect(system.content).toContain("hiçbir bilgi, rakam");
     expect(system.content).toContain("Deniz\nPikselatölye");
-    expect(user.content).toBe('<taslak>{"konu":"Konu","metin":"Merhaba, ben Deniz."}</taslak>');
+    expect(user.content).toContain('<taslak>{"konu":"Konu","metin":"Merhaba, ben Deniz."}</taslak>');
+    expect(user.content).toContain("İstek:");
+  });
+});
+
+describe("yeniden yazdırma doğrulaması", () => {
+  it("taslak aynı kaldıysa ya da yeterince kısalmadıysa sorun bildirir", async () => {
+    const { refineProblem } = await import("./context");
+    const body = "Merhaba, ben Elif. Web siteniz üzerine kısa bir değerlendirme paylaşmak isterim. Sektörünüzdeki örnekleri de gösterebilirim. Uygun bir zamanda kısa bir görüşme yapabilir miyiz?";
+    expect(refineProblem("kisalt", body, body)).toMatch(/değişmedi/);
+    expect(refineProblem("kisalt", body, body.replace("Sektörünüzdeki örnekleri de gösterebilirim. ", ""))).toMatch(/kısalmadı/);
+    expect(refineProblem("kisalt", body, "Merhaba, ben Elif. Kısa bir görüşme yapabilir miyiz?")).toBeNull();
+    expect(refineProblem("samimi", body, body.replace("Merhaba", "Selam"))).toBeNull();
+  });
+  it("kısaltma yedeği selamlama, ilk cümle, çağrı ve imzayı korur", async () => {
+    const { shortenFallback } = await import("./context");
+    const body = "Merhaba,\n\nBen Elif, Pixel Ajans adına yazıyorum. Web siteniz üzerine kısa bir değerlendirme paylaşmak isterim. Sektörünüzdeki örnekleri de gösterebilirim. Uygun bir zamanda kısa bir görüşme yapabilir miyiz?\n\nSelamlar,\nElif";
+    const out = shortenFallback(body)!;
+    expect(out).toContain("Merhaba,");
+    expect(out).toContain("Ben Elif, Pixel Ajans adına yazıyorum.");
+    expect(out).toContain("görüşme yapabilir miyiz?");
+    expect(out).toContain("Selamlar,\nElif");
+    expect(out).not.toContain("Sektörünüzdeki");
+    expect(shortenFallback("Merhaba, kısa bir mesaj. Uygun musunuz?")).toBeNull();
   });
 });

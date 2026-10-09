@@ -324,7 +324,9 @@ export function refineMessages(input: { kind: WorkKind; draft: Draft; instructio
   const body = kind === "email" ? { konu: draft.subject ?? "", metin: draft.body } : { metin: draft.body };
   return [
     { role: "system" as const, content: system },
-    { role: "user" as const, content: `<taslak>${JSON.stringify(body)}</taslak>` },
+    { role: "user" as const, content: `<taslak>${JSON.stringify(body)}</taslak>
+İstek: ${instruction.slice(0, 300)}
+Taslağı bu isteğe göre BELİRGİN biçimde değiştirerek yeniden yaz; aynısını döndürme.` },
   ];
 }
 
@@ -353,4 +355,33 @@ export function acceptProofread(original: Draft, fixed: Draft): boolean {
 export function applyToneGreeting(body: string, action: Refinement | null | undefined): string {
   const to = action === "resmi" ? greetings.profesyonel : action === "samimi" ? greetings.samimi : null;
   return to ? body.replace(/^(Merhaba|İyi günler|Selam),/, to) : body;
+}
+
+const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+const squash = (t: string) => t.replace(/\s+/g, " ").trim();
+
+/**
+ * Yeniden yazılan metin isteği gerçekten uyguladı mı? Model sık sık taslağı aynen geri verir; bu kodla yakalanır.
+ * Sorun varsa kısa bir açıklama (modele geri bildirim olarak verilir), yoksa null döner.
+ */
+export function refineProblem(action: Refinement | null | undefined, before: string, after: string): string | null {
+  if (squash(before) === squash(after)) return "Metin hiç değişmedi";
+  if (action === "kisalt" && wordCount(after) > wordCount(before) * 0.75) return `Yeterince kısalmadı (${wordCount(after)} kelime; en çok ${Math.max(Math.floor(wordCount(before) * 0.7), 10)} kelime olmalı)`;
+  return null;
+}
+
+/**
+ * "Daha kısa" isteği modelle olmadıysa kodla kısaltır: selamlama, ilk cümle, sondaki soru/çağrı ve imza korunur; aradaki cümleler çıkarılır.
+ * Kısaltılacak yeterli cümle yoksa null döner.
+ */
+export function shortenFallback(body: string): string | null {
+  const paras = body.trim().split(/\n{2,}/);
+  const isSign = (p: string) => p.split("\n").length <= 3 && wordCount(p) <= 8 && !/[.?!]\s*$/.test(p);
+  const sign = paras.length > 2 && isSign(paras[paras.length - 1]) ? paras.pop()! : null;
+  const greet = paras.length > 1 && wordCount(paras[0]) <= 4 && /,\s*$/.test(paras[0]) ? paras.shift()! : null;
+  const sentences = paras.join(" ").split(/(?<=[.?!])\s+/).filter(Boolean);
+  if (sentences.length < 3) return null;
+  const kept = [sentences[0], sentences[sentences.length - 1]];
+  const out = [greet, kept.join(" "), sign].filter(Boolean).join("\n\n");
+  return squash(out) === squash(body) ? null : out;
 }

@@ -12,7 +12,7 @@ const account = { planName: "Başlangıç", credits: 120, senders: { used: 1, li
 describe("yardımcı bağlamı", () => {
   it("yalnızca kullanıcının rakamlarını içerir", () => {
     const c = contextText(reports, account, 30);
-    expect(c).toContain("Kalan Adspine Kredi: 120");
+    expect(c).toContain("Kalan Kredi: 120");
     expect(c).toContain("Ajanslara teklif");
     expect(c).toContain("info@x.com");
     expect(c).toContain("ısınma skoru yok");
@@ -38,8 +38,8 @@ describe("yanıt metni", () => {
     expect(toAnswer("Merhaba!", "selam").links).toEqual([]);
   });
   it("model yanıt vermezse rakam özeti döner", () => {
-    const f = fallbackReply("Paket: Ücretsiz. Kalan Adspine Kredi: 25.\nSon 30 gün: 0 e-posta.\nKampanyalar: x");
-    expect(f).toContain("Kalan Adspine Kredi: 25");
+    const f = fallbackReply("Paket: Ücretsiz. Kalan Kredi: 25.\nSon 30 gün: 0 e-posta.\nKampanyalar: x");
+    expect(f).toContain("Kalan Kredi: 25");
     expect(f).toContain("0 e-posta");
     expect(f).not.toContain("Kampanyalar: x");
   });
@@ -118,5 +118,16 @@ describe("ajan: niyet kapısı ve plan girdisi", () => {
     expect(noTime.allDay).toBe(true);
     expect(noTime.startsAt).toBe("2026-10-11T21:00:00.000Z");
     expect(() => planInputSchema.parse(noTime)).not.toThrow();
+  });
+});
+
+describe("sohbet kipi ve öneri", () => {
+  it("selamlaşma ve kısa sohbet mesajlarını veri gerektirmeyen olarak ayırır", async () => {
+    const { isSmallTalk, wantsAdvice } = await import("./assistant-rules");
+    for (const x of ["naber", "naber sen nasılsın", "Günaydın!", "teşekkürler", "sen kimsin", "ne yapabilirsin", "çok sıkıldım", "iyi geceler"]) expect(isSmallTalk(x), x).toBe(true);
+    for (const x of ["kayıtlı kişilerimde reklam var mı?", "takvimimde plan var mı", "bugün ne yapmalıyım", "geri dönen oranım neden önemli", "otomasyonlarım nasıl gidiyor?"]) expect(isSmallTalk(x), x).toBe(false);
+    expect(wantsAdvice("bugün ne yapmalıyım")).toBe(true);
+    expect(wantsAdvice("nereden başlamalıyım?")).toBe(true);
+    expect(wantsAdvice("takvimimde plan var mı")).toBe(false);
   });
 });

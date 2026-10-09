@@ -30,7 +30,7 @@ type Stage = { kind: "idle" } | { kind: "running" } | { kind: "results"; search:
 
 /**
  * Kişi bul (Instantly SuperSearch yapısı): solda filtreler, sağda başlangıç ekranı / sonuç tablosu.
- * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 Adspine Kredi) → otomasyona ekle.
+ * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 Kredi) → otomasyona ekle.
  */
 export function LeadSearchWorkspace({ initialAccount, defaultCountry, initialAsk = null }: { initialAccount: AccountSummary; defaultCountry: string; initialAsk?: string | null }) {
   const [account, setAccount] = useState(initialAccount);
@@ -196,11 +196,11 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry, initialAsk
     <p className="text-sm text-muted">
       {unlimited ? (
         <>
-          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> kişi listelediniz · Listeleme ve Adspine Kredi sınırsız ({account.plan.label} planı).
+          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> kişi listelediniz · Listeleme ve Kredi sınırsız ({account.plan.label} planı).
         </>
       ) : (
         <>
-          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · <span className="inline-flex items-center gap-1 align-middle"><CreditIcon size={14} />Kalan Adspine Kredi:</span> <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} planı).
+          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · <span className="inline-flex items-center gap-1 align-middle"><CreditIcon size={14} />Kalan Kredi:</span> <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} planı).
         </>
       )}
     </p>

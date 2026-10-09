@@ -8,7 +8,7 @@ export const searchTips = [
   "Aynı şirketten tek kişi seçmek, hem çeşitlilik hem de spam riski açısından daha güvenlidir.",
   "Dar bir unvan ve sektör seçimi, daha ilgili ve daha yanıt veren bir liste çıkarır.",
   "İlk e-postada hizmetinizi değil, alıcının işine bağlanan tek bir fayda cümlesini yazmak daha çok ilgi çeker.",
-  "Listelemek Adspine Kredi harcamaz; yalnızca gizli bilgilerini açıp eklediğiniz kişiler harcar.",
+  "Listelemek Kredi harcamaz; yalnızca gizli bilgilerini açıp eklediğiniz kişiler harcar.",
   "Kaydettiğiniz aramalar, filtrelerinizi tek tıkla geri getirir.",
 ];
 

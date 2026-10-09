@@ -148,7 +148,7 @@ export function Find() {
         </ScrollReveal>
         <ScrollReveal delay={120}>
           <h3 className="text-lg font-semibold tracking-tight">Müşteri bul</h3>
-          <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin ya da ne aradığınızı Adspine AI&apos;a yazın. Listelemek serbest; yalnızca gizli bilgilerini açıp eklediğiniz kişiler için Adspine Kredi harcanır.</p>
+          <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin ya da ne aradığınızı Adspine AI&apos;a yazın. Listelemek serbest; yalnızca gizli bilgilerini açıp eklediğiniz kişiler için Kredi harcanır.</p>
           <Points items={["Aynı şirketten tek kişi, zaten kayıtlı olanları atla", "İş e-postaları doğrulanır", "Aramalarınızı kaydedip tekrar kullanın"]} />
         </ScrollReveal>
       </div>
@@ -260,7 +260,7 @@ export function Pricing() {
   const paid = planList.filter((p) => p.key !== "ucretsiz");
   const features = (p: (typeof planList)[number]) => [
     { text: `${p.senders} gönderici adresi`, on: true },
-    { text: `Ayda ${num(p.monthlyCredits)} Adspine Kredi`, on: true },
+    { text: `Ayda ${num(p.monthlyCredits)} Kredi`, on: true },
     { text: `${p.campaigns} otomasyon`, on: true },
     { text: "Isındırma ve gelen kutusu", on: p.warmupAndInbox },
     { text: "Adspine AI", on: p.ai },
@@ -327,7 +327,7 @@ export function Pricing() {
       </ScrollReveal>
 
       <p className="mx-auto mt-8 max-w-3xl text-center text-sm text-muted">
-        1 Adspine Kredi = gizli bilgileri açılıp eklenen 1 kişi/firma. Adspine Krediler her ay başında yenilenir; listelemek ayrı bir haktır (ücretsiz planda günde 25, ayda 75 kişi). Ücretli planların hepsinde 7 gün ücretsiz deneme vardır (kart bilgisi gerekir). Fiyatlar aylıktır ve ABD doları ile gösterilir.
+        1 Kredi = gizli bilgileri açılıp eklenen 1 kişi/firma. Krediler her ay başında yenilenir; listelemek ayrı bir haktır (ücretsiz planda günde 25, ayda 75 kişi). Ücretli planların hepsinde 7 gün ücretsiz deneme vardır (kart bilgisi gerekir). Fiyatlar aylıktır ve ABD doları ile gösterilir.
       </p>
     </Section>
   );

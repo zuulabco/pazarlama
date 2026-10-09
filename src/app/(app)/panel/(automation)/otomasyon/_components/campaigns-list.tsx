@@ -151,7 +151,7 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={busy}>
-          {method === "ai" && <AdspineAiIcon size={18} tone="mono" eye="var(--color-forest)" />}
+          {method === "ai" && <AdspineAiIcon size={18} tone="mono" />}
           {busy ? "Oluşturuluyor…" : method === "ai" ? "Adspine AI ile yaz" : "Otomasyonu oluştur"}
         </Button>
         <Button variant="quiet" onClick={onCancel} disabled={busy}>

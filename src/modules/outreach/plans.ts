@@ -7,7 +7,7 @@ export type Plan = {
   label: string;
   /** Aynı anda bağlanabilecek gönderici adresi sayısı: gönderim hacminin ana ölçüsü. */
   senders: number;
-  /** Her ay yenilenen Adspine Kredi. 1 Adspine Kredi = listeden açılıp Kişiler'e eklenen, gizli bilgisi (e-posta) açılan 1 kişi/firma. */
+  /** Her ay yenilenen Kredi. 1 Kredi = listeden açılıp Kişiler'e eklenen, gizli bilgisi (e-posta) açılan 1 kişi/firma. */
   monthlyCredits: number;
   /** Açılabilecek en çok otomasyon (arşivlenenler hariç). */
   campaigns: number;
@@ -32,7 +32,7 @@ export const plans: Record<Exclude<PlanKey, "kurucu">, Plan> & Partial<Record<"k
 };
 
 /**
- * Kurucu hesabı: hiçbir plan sınırı yoktur (gönderici adresi, otomasyon, Adspine Kredi, listeleme). Tanıtım sayfasında listelenmez ve
+ * Kurucu hesabı: hiçbir plan sınırı yoktur (gönderici adresi, otomasyon, Kredi, listeleme). Tanıtım sayfasında listelenmez ve
  * veritabanındaki plan sütununa yazılmaz; yalnızca `founderEmails` içindeki oturum e-postaları için kodda uygulanır.
  */
 const UNLIMITED = 1_000_000;

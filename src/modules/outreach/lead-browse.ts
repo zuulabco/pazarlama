@@ -24,7 +24,7 @@ import {
 import { getProfile } from "../profile/repository";
 
 /**
- * Kişi bul v2: önce listele (Adspine Kredi düşmez, günlük/aylık listeleme hakkıyla sınırlı), sonra seçilenleri ekle (kişi başına 1 Adspine Kredi).
+ * Kişi bul v2: önce listele (Kredi düşmez, günlük/aylık listeleme hakkıyla sınırlı), sonra seçilenleri ekle (kişi başına 1 Kredi).
  * Sağlayıcı kayıtları sunucuda saklanır; istemciye soyadı, e-posta ve LinkedIn gizlenmiş hâli gider. Bu yüzden
  * listelemek, ücretsiz kişi bilgisi almanın bir yolu olamaz.
  *
@@ -271,7 +271,7 @@ export async function getLeadBrowse(uid: string, id: string): Promise<LeadBrowse
 export type RevealResult = { added: number; skipped: Skipped; listName: string | null; credits: number };
 
 /**
- * Seçilen satırları Kişiler'e ekler. Adspine Kredi yalnızca gerçekten eklenen (geçerli ve yeni) kişi için düşer; yetmezse hiçbir şey eklenmez.
+ * Seçilen satırları Kişiler'e ekler. Kredi yalnızca gerçekten eklenen (geçerli ve yeni) kişi için düşer; yetmezse hiçbir şey eklenmez.
  * Eklenen kişiler ortak havuza da yazılır (sonraki aramalarda sağlayıcıya yeniden ödeme yapılmaz).
  */
 export async function revealLeads(uid: string, id: string, rids: number[], listId: string | null): Promise<RevealResult> {

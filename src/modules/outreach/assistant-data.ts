@@ -3,7 +3,9 @@ import { db } from "@/lib/supabase/server";
 import { listPlan } from "@/modules/plan/repository";
 import { kindLabel } from "@/modules/plan/types";
 import { listLists, listSuppressions } from "./contacts";
-import { contactsSection, planSection, routeTopics, searchTerms, type ChatTurn, type ContactRow, type Topic } from "./assistant-rules";
+import { contactsSection, isSmallTalk, planSection, routeTopics, searchTerms, wantsAdvice, type ChatTurn, type ContactRow, type Topic } from "./assistant-rules";
+import { loadHome } from "./home";
+import { attention, focusOf, setupSteps } from "./home-rules";
 import { statusLabel } from "./unibox-options";
 
 /**
@@ -60,16 +62,34 @@ async function suppressions(uid: string): Promise<string> {
   return [`Kara liste: ${list.length} kayıt.`, ...list.slice(0, 10).map((s) => `- ${s.email ?? s.domain}: ${s.reason}`)].join("\n");
 }
 
+/** "Ne yapmalıyım" soruları için: hesabın gerçek durumundan sıradaki adım, bekleyen uyarılar ve kurulum ilerlemesi. */
+async function advice(uid: string): Promise<string> {
+  const home = await loadHome(uid);
+  const f = focusOf(home.facts);
+  const steps = setupSteps(home.facts);
+  const out = [`Önerilen sıradaki adım: ${f.title} — ${f.text}`];
+  const alerts = attention(home.facts);
+  if (alerts.length) out.push("Dikkat edilecekler:", ...alerts.map((a) => `- ${a.text}`));
+  const todo = steps.filter((s) => !s.done);
+  out.push(todo.length ? `Kurulumda eksik adımlar: ${todo.map((s) => s.title).join("; ")}.` : "Kurulum adımlarının hepsi tamam.");
+  out.push(`Özet: ${home.facts.contacts} kayıtlı kişi, ${home.facts.campaigns} otomasyon (${home.activeCampaigns} aktif), bağlı gönderici adresi ${home.facts.connectedMailboxes}, ısındırması açık adres ${home.facts.warmupOn}, okunmamış yanıt ${home.facts.unread}, son 30 günde ${home.facts.sent} e-posta gönderildi.`);
+  return out.join("\n");
+}
+
 /** Soruya uygun veri bölümlerini tek metinde birleştirir. Konu bulunamazsa kişi ve takvimin kısa özeti verilir. */
 export async function knowledgeFor(uid: string, history: ChatTurn[]): Promise<string> {
   const question = history.at(-1)?.content ?? "";
   const previous = [...history].reverse().find((t, i) => i > 0 && t.role === "user")?.content ?? "";
+  // Selamlaşma ve "kimsin / ne yapabilirsin" gibi mesajlara hesap verisi eklenmez (rakam dökmesin).
+  if (isSmallTalk(question)) return "";
   const topics: Set<Topic> = routeTopics(question, previous);
-  if (topics.size === 0) {
+  const jobs: Promise<string>[] = [];
+  if (wantsAdvice(question)) jobs.push(advice(uid));
+  if (topics.size === 0 && !wantsAdvice(question)) {
+    // Konu belli değilse yalnızca kısa bir özet (ayrıntılı liste dökülmez).
     topics.add("kisiler");
     topics.add("plan");
   }
-  const jobs: Promise<string>[] = [];
   if (topics.has("kisiler")) jobs.push(contacts(uid, question));
   if (topics.has("plan")) jobs.push(plan(uid));
   if (topics.has("gelen")) jobs.push(replies(uid));

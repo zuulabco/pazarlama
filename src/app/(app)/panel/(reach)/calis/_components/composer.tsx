@@ -217,7 +217,7 @@ export function Composer({
         {/* Düğme, uzun formda aşağı kaydırmadan hep görünür kalır. */}
         <div className="sticky bottom-0 z-10 -mx-5 -mb-5 rounded-b-panel bg-surface/95 px-5 pt-3 pb-5 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 sm:pb-6">
           <Button onClick={() => run({})} disabled={busy !== null} size="lg" className="w-full">
-            <AdspineAiIcon size={20} tone="mono" eye="var(--color-forest)" />
+            <AdspineAiIcon size={20} tone="mono" />
             {busy === "write" ? "Yazılıyor…" : draft ? "Yeniden oluştur" : "Mesajı oluştur"}
           </Button>
         </div>
