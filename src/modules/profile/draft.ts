@@ -8,7 +8,6 @@ export type Draft = {
   cityScope: string;
   targetCities: string[];
   channels: string[];
-  dealValue: string;
   signals: string[];
   signalNotes: string;
 };
@@ -23,7 +22,6 @@ export const emptyDraft: Draft = {
   cityScope: "",
   targetCities: [],
   channels: [],
-  dealValue: "",
   signals: [],
   signalNotes: "",
 };

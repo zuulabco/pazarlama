@@ -83,7 +83,7 @@ export async function saveProfile(user: SessionUser, input: ProfileInput, comple
         target_sectors: input.targetSectors,
         target_cities: input.targetCities,
         target_size: input.targetSizes.join(","),
-        deal_value: input.dealValue,
+        deal_value: input.dealValue ?? null,
         extra: {
           businessDescription: input.businessDescription,
           cityScope: input.cityScope,

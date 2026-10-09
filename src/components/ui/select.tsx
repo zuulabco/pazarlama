@@ -135,6 +135,7 @@ export function Select<T extends string>({
                 aria-selected={selected}
                 data-active={i === highlight}
                 onPointerDown={(e) => e.preventDefault()} // düğme odağını kaybetmesin
+                onMouseDown={(e) => e.preventDefault()} // dokunmatikte sonradan gelen fare olayı da odağı çalmasın
                 onClick={() => choose(i)}
                 onMouseMove={() => setActive(i)}
                 className="flex cursor-pointer items-center justify-between gap-6 rounded-control px-3 py-2.5 whitespace-nowrap data-[active=true]:bg-sunken"

@@ -299,6 +299,7 @@ export function ComboField({
                       aria-selected={selected}
                       data-active={i === current}
                       onPointerDown={(e) => e.preventDefault()} // girdi odağını kaybetmesin
+                      onMouseDown={(e) => e.preventDefault()} // dokunmatikte sonradan gelen fare olayı da odağı çalmasın; yoksa liste tıklamadan önce kapanır
                       onClick={() => pick(item)}
                       onMouseMove={() => setActive(i)}
                       className="flex cursor-pointer items-start justify-between gap-3 rounded-control px-3 py-2.5 data-[active=true]:bg-sunken"

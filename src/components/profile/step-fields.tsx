@@ -10,7 +10,6 @@ import {
   channels,
   cityScopes,
   companySizes,
-  dealValues,
   sectors,
   services,
   signals,
@@ -147,15 +146,6 @@ export function StepFields({
           max={8}
           placeholder="Kanal seçin ya da yazın"
           error={errors.channels}
-        />
-        <ComboField
-          legend="Bir projeden ortalama ne kazanırsınız?"
-          options={dealValues}
-          value={draft.dealValue ? [draft.dealValue] : []}
-          onChange={([v]) => update("dealValue", v ?? "")}
-          single
-          placeholder="Seçin"
-          error={errors.dealValue}
         />
       </>
     );

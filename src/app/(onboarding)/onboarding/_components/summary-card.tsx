@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { channels, companySizes, dealValues, labelOf, sectors, services, signals, workTypes } from "@/modules/profile/options";
+import { channels, companySizes, labelOf, sectors, services, signals, workTypes } from "@/modules/profile/options";
 import { computeWeights, criteria } from "@/modules/profile/weights";
 import type { Draft } from "@/modules/profile/draft";
 import styles from "./wizard.module.css";
@@ -63,8 +63,8 @@ export function SummaryCard({ draft, onEdit }: { draft: Draft; onEdit: (stage: E
       <Section title="Bölge" onEdit={() => onEdit("reach")}>
         <Chips items={place} />
       </Section>
-      <Section title="İletişim kanalları ve proje bedeli" onEdit={() => onEdit("reach")}>
-        <Chips items={[...draft.channels.map((c) => labelOf(channels, c)), labelOf(dealValues, draft.dealValue)]} />
+      <Section title="İletişim kanalları" onEdit={() => onEdit("reach")}>
+        <Chips items={draft.channels.map((c) => labelOf(channels, c))} />
       </Section>
       <Section title="İyi aday işaretleri" onEdit={() => onEdit("fit")}>
         <Chips items={signalItems} />

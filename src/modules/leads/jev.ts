@@ -140,7 +140,7 @@ function sellerState(p: Profile) {
     target_sectors: p.targetSectors.map(t),
     target_company_size: p.targetSizes.map(t),
     target_region: p.cityScope === "turkey" ? "all of Turkey" : p.targetCities,
-    average_project_value: t(p.dealValue),
+    average_project_value: p.dealValue ? t(p.dealValue) : undefined,
     outreach_channels: p.channels.map(t),
     good_prospect_signals: p.signals.map(t),
     good_prospect_notes: p.signalNotes || undefined,

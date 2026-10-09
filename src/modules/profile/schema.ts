@@ -17,7 +17,8 @@ const field = {
   cityScope: z.enum(values(cityScopes), "Bir seçenek belirleyin."),
   targetCities: z.array(tag).max(12, "En fazla 12 şehir ekleyebilirsiniz."),
   channels: z.array(tag).min(1, "En az bir kanal seçin ya da yazın.").max(8, "En fazla 8 kanal ekleyebilirsiniz."),
-  dealValue: z.enum(values(dealValues), "Bir seçenek belirleyin."),
+  /** Artık sorulmuyor; eski profillerde kayıtlı olabilir. */
+  dealValue: z.enum(values(dealValues)).optional(),
   signals: z.array(tag).max(8, "En fazla 8 işaret ekleyebilirsiniz."),
   signalNotes: z.string().trim().max(500, "En fazla 500 karakter.").default(""),
 };
@@ -47,7 +48,6 @@ export const stepSchemas = {
       cityScope: field.cityScope,
       targetCities: field.targetCities,
       channels: field.channels,
-      dealValue: field.dealValue,
     })
     .refine(...citiesWhenScoped),
   fit: z.object({ signals: field.signals, signalNotes: field.signalNotes }).refine(...signalOrNotes),

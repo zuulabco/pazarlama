@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { StepFields, type FieldErrors, type FieldStage } from "@/components/profile/step-fields";
 import { draftFrom, type Draft } from "@/modules/profile/draft";
-import { channels, companySizes, dealValues, labelOf, sectors, services, signals, workTypes } from "@/modules/profile/options";
+import { channels, companySizes, labelOf, sectors, services, signals, workTypes } from "@/modules/profile/options";
 import { stepSchemas } from "@/modules/profile/schema";
 import { saveProfileSection } from "../actions";
 
@@ -82,9 +82,6 @@ const sections: SectionDef[] = [
         </Field>
         <Field title="İletişim kanalları">
           <Chips items={d.channels.map((c) => labelOf(channels, c))} />
-        </Field>
-        <Field title="Ortalama proje bedeli">
-          <Chips items={[labelOf(dealValues, d.dealValue)]} />
         </Field>
       </>
     ),
