@@ -1,0 +1,43 @@
+/*
+ * Ana sayfa "sıradaki adım" kartı: marka mavisinden koyuya yumuşak bir gradyan ve köşede nefes alan bir ışık.
+ * Sorun varsa kırmızıya, dikkat gerektiriyorsa kehribara döner. Hareket azaltma tercihinde ışık durur.
+ */
+.hero {
+  background: linear-gradient(135deg, var(--hero-from), var(--hero-to));
+  box-shadow: 0 20px 50px -28px var(--hero-from);
+}
+.heroInfo {
+  --hero-from: #0b7cf0;
+  --hero-to: #0a3f9e;
+}
+.heroWarn {
+  --hero-from: #b26a00;
+  --hero-to: #7a4400;
+}
+.heroDanger {
+  --hero-from: #d1352b;
+  --hero-to: #8f1d16;
+}
+.glow {
+  position: absolute;
+  z-index: -1;
+  top: -35%;
+  right: -10%;
+  width: 26rem;
+  height: 26rem;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.28), transparent);
+  animation: breathe 7s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes breathe {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.7;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow {
+    animation: none;
+  }
+}

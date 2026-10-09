@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { sectionOf } from "./nav-config";
+import { hrefFor, matches, sectionOf, sections } from "./nav-config";
 import { toggleSection, useSectionCollapsed } from "./section-state";
 
 /**
  * Sayfanın üst çubuğu (Instantly düzeni): solda bölüm başlığı, yanında alt görünümlerin sekmeleri. Sayfa kaydırılırken üstte kalır.
  * Sekme yoksa yalnızca başlık görünür.
  */
-export function SectionTabs({ title, tabs = [] }: { title: string; tabs?: readonly { href: string; label: string }[] }) {
+export function SectionTabs({ title, tabs = [] }: { title: string; tabs?: readonly { href: string; label: string; active?: boolean }[] }) {
   const path = usePathname();
   const inSection = sectionOf(path) !== null;
   const collapsed = useSectionCollapsed();
@@ -36,7 +36,7 @@ export function SectionTabs({ title, tabs = [] }: { title: string; tabs?: readon
       {tabs.length > 0 && (
         <nav aria-label={`${title} bölümleri`} className="flex h-full min-w-0 gap-1 overflow-x-auto [scrollbar-width:none]">
           {tabs.map((t) => {
-            const active = path === t.href || path.startsWith(`${t.href}/`);
+            const active = t.active ?? (path === t.href || path.startsWith(`${t.href}/`));
             return (
               <Link
                 key={t.href}
@@ -54,22 +54,21 @@ export function SectionTabs({ title, tabs = [] }: { title: string; tabs?: readon
   );
 }
 
-/** Yerel firmalar bölümünün sekmeleri: bul → kayıtlı firmalar. */
-export const customerTabs = [
-  { href: "/panel/musteri-bul", label: "Firma bul" },
-  { href: "/panel/firmalar", label: "Kayıtlı firmalar" },
-] as const;
-
-/** Kişiler uygulamasının sekmeleri (Instantly: SuperSearch · Leads). */
-export const leadsTabs = [
-  { href: "/panel/kisi-bul", label: "Kişi bul" },
-  { href: "/panel/kisiler", label: "Kayıtlı kişiler" },
-] as const;
+/**
+ * Bul bölümünün tek üst çubuğu: "Potansiyel müşterilerimi bul" başlığı ve iki sekme (Ara · Kaydedilenler).
+ * Kişiler ve yerel işletmeler ayrı bölümler değil, aynı işin iki modudur; sekmeler geçerli moda göre doğru sayfaya gider.
+ */
+export function FindBar() {
+  const path = usePathname();
+  const bul = sections.find((s) => s.key === "bul")!;
+  const tabs = bul.links.map((l) => ({ href: hrefFor(l, path), label: l.label === "Kaydedilenler" ? "Kaydedilenler" : "Ara", active: matches(path, l.prefixes) }));
+  return <SectionTabs title="Potansiyel müşterilerimi bul" tabs={tabs} />;
+}
 
 /** Otomasyon sayfalarının üst çubuğu: yola göre başlığı ve (varsa) sekmeleri seçer. */
 export function AutomationBar() {
   const path = usePathname();
-  if (path.startsWith("/panel/kisi-bul") || path.startsWith("/panel/kisiler")) return <SectionTabs title="Kişiler" tabs={leadsTabs} />;
+  if (path.startsWith("/panel/kisi-bul") || path.startsWith("/panel/kisiler")) return <FindBar />;
   if (path.startsWith("/panel/otomasyon")) return <SectionTabs title="Otomasyon" />;
   if (path.startsWith("/panel/raporlar")) return <SectionTabs title="Raporlar" />;
   if (path.startsWith("/panel/gelen-kutusu")) return <SectionTabs title="Gelen kutusu" />;

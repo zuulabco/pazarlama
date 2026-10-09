@@ -1,8 +1,15 @@
-import { BoltIcon, ChartIcon, InboxIcon, MapPinIcon, PenIcon, SearchIcon, SendIcon, UsersIcon } from "@/components/ui/icons";
+import { BoltIcon, BookmarkIcon, ChartIcon, InboxIcon, PenIcon, SearchIcon, SendIcon } from "@/components/ui/icons";
 
 type Icon = typeof SearchIcon;
 
-export type SectionLink = { label: string; href: string; icon: Icon; prefixes: readonly string[] };
+export type SectionLink = {
+  label: string;
+  href: string;
+  /** Yerel işletmeler modundayken gidilecek adres (Bul bölümünde "Kişiler" ve "Yerel işletmeler" aynı sayfa grubunun iki modudur). */
+  firmsHref?: string;
+  icon: Icon;
+  prefixes: readonly string[];
+};
 export type Section = { key: "bul" | "ulas"; label: string; hint: string; icon: Icon; href: string; links: readonly SectionLink[] };
 
 /**
@@ -17,8 +24,8 @@ export const sections: readonly Section[] = [
     icon: SearchIcon,
     href: "/panel/kisi-bul",
     links: [
-      { label: "Kişiler", href: "/panel/kisi-bul", icon: UsersIcon, prefixes: ["/panel/kisi-bul", "/panel/kisiler"] },
-      { label: "Firmalar", href: "/panel/musteri-bul", icon: MapPinIcon, prefixes: ["/panel/musteri", "/panel/musteri-bul", "/panel/firmalar"] },
+      { label: "Müşteri bul", href: "/panel/kisi-bul", firmsHref: "/panel/musteri-bul", icon: SearchIcon, prefixes: ["/panel/kisi-bul", "/panel/musteri-bul", "/panel/musteri"] },
+      { label: "Kaydedilenler", href: "/panel/kisiler", firmsHref: "/panel/firmalar", icon: BookmarkIcon, prefixes: ["/panel/kisiler", "/panel/firmalar"] },
     ],
   },
   {
@@ -35,6 +42,12 @@ export const sections: readonly Section[] = [
     ],
   },
 ];
+
+/** Yerel işletmeler modundaki sayfalar (Kişiler modunun karşısı). */
+export const onFirms = (path: string) => matches(path, ["/panel/musteri-bul", "/panel/musteri", "/panel/firmalar"]);
+
+/** Bölüm bağlantısının, geçerli moda göre gidilecek adresi. */
+export const hrefFor = (l: SectionLink, path: string) => (l.firmsHref && onFirms(path) ? l.firmsHref : l.href);
 
 export const matches = (path: string, prefixes: readonly string[]) => prefixes.some((p) => path === p || path.startsWith(`${p}/`));
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { matches, sectionOf } from "./nav-config";
+import { hrefFor, matches, sectionOf } from "./nav-config";
 import { useSectionCollapsed } from "./section-state";
 
 /**
@@ -36,7 +36,7 @@ export function SectionShell({ children }: { children: ReactNode }) {
               return (
                 <Link
                   key={l.href}
-                  href={l.href}
+                  href={hrefFor(l, path)}
                   aria-current={active ? "page" : undefined}
                   className="flex items-center gap-2.5 rounded-control px-3 py-2 text-sm text-muted transition-colors hover:bg-sunken hover:text-ink aria-[current=page]:bg-forest-soft aria-[current=page]:font-medium aria-[current=page]:text-accent"
                 >
@@ -54,7 +54,7 @@ export function SectionShell({ children }: { children: ReactNode }) {
           {section.links.map((l) => (
             <Link
               key={l.href}
-              href={l.href}
+              href={hrefFor(l, path)}
               aria-current={matches(path, l.prefixes) ? "page" : undefined}
               className="shrink-0 rounded-full px-3.5 py-1.5 text-sm text-muted aria-[current=page]:bg-forest-soft aria-[current=page]:font-medium aria-[current=page]:text-accent"
             >

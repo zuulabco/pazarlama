@@ -1,5 +1,6 @@
 "use client";
 
+import { FindSources } from "../../../../_components/find-sources";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode, type RefObject } from "react";
@@ -144,26 +145,27 @@ export function ResultsArea({
     const presets = ["Diş kliniği", "Kafe", "Restoran", "Kuaför", "Emlak ofisi", "Oto servis"];
     return (
       <div ref={bodyRef} className={`${bodyPlace} scroll-mt-6 rounded-panel bg-surface p-5 ring-1 ring-line`}>
-        <div className="grid gap-6">
-          <div className="grid gap-1.5">
-            <h2 className="text-2xl font-semibold tracking-tight">{hasHistory ? "Yeni arama başlatın" : "İlk aramanızı başlatın"}</h2>
-            <p className="max-w-[40rem] text-muted">
-              Soldan firma türünü ve bölgeyi seçin; firmaları bulup hedef profilinize göre puanlayalım.
-              {hasHistory ? " Önceki aramalarınıza soldaki “Son aramalar” bölümünden ulaşabilirsiniz." : ""}
+        <div className="mx-auto grid w-full max-w-3xl gap-7 py-6 sm:py-10">
+          <div className="grid gap-2 text-center">
+            <h2 className="text-2xl font-semibold tracking-tight">Hangi işletmeleri bulmak istiyorsunuz?</h2>
+            <p className="text-muted">
+              Soldan işletme türünü ve bölgeyi seçin; işletmeleri bulup hedef profilinize göre puanlayalım.
+              {hasHistory ? " Önceki aramalarınız soldaki “Son aramalar” bölümünde." : ""}
             </p>
           </div>
-          <div className="grid gap-2.5">
-            <h3 className="text-sm font-medium">Hazır aramalar</h3>
-            <ul className="grid gap-2 sm:grid-cols-2">
+          <FindSources active="maps" />
+          <div className="grid justify-items-center gap-3">
+            <p className="text-sm text-muted">Ya da hazır bir aramayla başlayın ({il})</p>
+            <ul className="flex flex-wrap justify-center gap-2">
               {presets.map((p) => (
                 <li key={p}>
                   <Link
                     href={`/panel/musteri-bul?tur=${encodeURIComponent(p)}&il=${encodeURIComponent(il)}`}
                     scroll={false}
-                    className="grid w-full gap-0.5 rounded-row p-3.5 text-left ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50"
+                    title={`${il} · tüm ilçeler`}
+                    className="inline-flex h-9 items-center rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50"
                   >
-                    <span className="font-medium">{p}</span>
-                    <span className="text-sm text-muted">{il} · tüm ilçeler</span>
+                    {p}
                   </Link>
                 </li>
               ))}

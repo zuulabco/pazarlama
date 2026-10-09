@@ -8,7 +8,7 @@ import { getProfile } from "@/modules/profile/repository";
 import { LeadsSkeleton } from "../../../_components/skeletons";
 import { LeadSearchWorkspace } from "./_components/lead-search-workspace";
 
-export const metadata: Metadata = { title: "Kişi bul" };
+export const metadata: Metadata = { title: "Potansiyel müşterilerimi bul" };
 
 async function Content() {
   const user = await requireUser();

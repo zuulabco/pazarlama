@@ -1,10 +1,12 @@
-import { customerTabs, SectionTabs } from "../../_components/section-tabs";
+import { FindBar } from "../../_components/section-tabs";
+import { FindModeSwitch } from "../../_components/find-mode-switch";
 
-/** Müşteri bölümü (Müşteri bul, Takip et, İletişim kur): başlık ve sekmeler sayfa geçişlerinde sabit kalır. */
+/** Yerel işletmeler modu (Ara, Kaydedilenler): ortak "Potansiyel müşterilerimi bul" çubuğu ve mod seçici sayfa geçişlerinde sabit kalır. */
 export default function CustomerLayout({ children }: LayoutProps<"/panel">) {
   return (
     <>
-      <SectionTabs title="Firmalar" tabs={customerTabs} />
+      <FindBar />
+      <FindModeSwitch />
       {children}
     </>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
@@ -12,6 +11,7 @@ import { Toaster, toast } from "@/components/ui/toast";
 import { browseSizes, emptySearch, leadPresets, type LeadBrowse, type LeadPreset, type LeadSearchInput, type SavedSearch } from "@/modules/outreach/lead-options";
 import type { AccountSummary } from "@/modules/outreach/usage";
 import { api } from "../../kisiler/_components/contact-ui";
+import { FindSources } from "../../../../_components/find-sources";
 import { LeadAddModal } from "./lead-add-modal";
 import { LeadFilters } from "./lead-filters";
 import { LeadResults } from "./lead-results";
@@ -144,6 +144,13 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
   }
 
   const searching = stage.kind === "running";
+  /** Eylem çubuğu (kaç kişi, Ara) yalnızca filtre seçilince ya da arama başlayınca görünür; başlangıç ekranı sade kalır. */
+  const showBar = ready || stage.kind !== "idle";
+  const usage = (
+    <p className="text-sm text-muted">
+      Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan Spine Kredi: <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} planı).
+    </p>
+  );
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
@@ -169,6 +176,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
 
       <section aria-label="Arama" className="order-first grid min-h-[28rem] content-start gap-5 rounded-panel bg-surface p-5 ring-1 ring-line sm:p-6 lg:order-none">
         {/* Eylem çubuğu: kaç kişi listelensin ve ara. */}
+        {showBar && (
         <div className="grid gap-2 border-b border-line pb-5">
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <div className="grid gap-1.5 text-sm font-medium">
@@ -180,68 +188,50 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
               {searching ? "Aranıyor…" : "Ara"}
             </Button>
           </div>
-          <p className="text-sm text-muted">
-            Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan Spine Kredi:{" "}
-            <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} paketi).
-          </p>
-          {!ready && stage.kind === "idle" && <p className="text-sm text-muted">Aramak için soldan bir unvan, kişi türü, sektör ya da anahtar kelime seçin.</p>}
+          {usage}
         </div>
+        )}
 
         <div aria-live="polite">
           {stage.kind === "idle" && (
-            <div className="grid gap-7">
-              <div className="grid gap-4">
-                <h2 className="text-2xl font-semibold tracking-tight">Yeni arama başlatın</h2>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void askAi();
-                  }}
-                  className="flex flex-wrap gap-2"
-                >
-                  <label className="sr-only" htmlFor="ai-arama">
-                    Kimi aradığınızı yazın
-                  </label>
-                  <input id="ai-arama" value={aiText} onChange={(e) => setAiText(e.target.value)} maxLength={400} placeholder="Örn. İstanbul'daki 10-50 çalışanlı ajansların kurucuları" className={`${inputClass} min-w-[16rem] flex-1`} />
-                  <Button type="submit" variant="secondary" disabled={aiBusy || aiText.trim().length < 4}>
-                    <SparkleIcon size={16} />
-                    {aiBusy ? "Hazırlanıyor…" : "Adspine AI ile ara"}
-                  </Button>
-                </form>
+            <div className="mx-auto grid w-full max-w-3xl gap-7 py-6 sm:py-10">
+              <div className="grid gap-2 text-center">
+                <h2 className="text-2xl font-semibold tracking-tight">Kimi bulmak istiyorsunuz?</h2>
+                <p className="text-muted">Aradığınız kişileri kendi cümlelerinizle yazın ya da soldan filtre seçin. Listelemek Spine Kredi harcamaz.</p>
               </div>
-
-              <ul className="grid gap-3 sm:grid-cols-3">
-                <li className="grid gap-1 rounded-row bg-forest-soft/50 p-4 ring-1 ring-forest/30">
-                  <span className="font-medium">Veritabanında ara</span>
-                  <span className="text-sm text-muted">Unvan, kıdem, konum ve şirket filtreleriyle ya da Adspine AI ile.</span>
-                </li>
-                <li>
-                  <Link href="/panel/musteri-bul" className="grid h-full gap-1 rounded-row p-4 ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken/60">
-                    <span className="font-medium">Şirketlerden başla</span>
-                    <span className="text-sm text-muted">Google Haritalar&apos;dan işletmeleri bulun, sonra e-postalarını edinin.</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/panel/kisiler" className="grid h-full gap-1 rounded-row p-4 ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken/60">
-                    <span className="font-medium">Kendi listenizi getirin</span>
-                    <span className="text-sm text-muted">CSV yükleyin, kayıtlı firmalarınızdan ekleyin ya da elle yazın.</span>
-                  </Link>
-                </li>
-              </ul>
-
-              <div className="grid gap-2.5">
-                <h3 className="text-sm font-medium">Hazır aramalar</h3>
-                <ul className="grid gap-2 sm:grid-cols-2">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void askAi();
+                }}
+                className="flex items-center gap-2 rounded-panel bg-surface p-1.5 pl-4 ring-1 ring-line-strong transition-shadow focus-within:ring-2 focus-within:ring-forest"
+              >
+                <span className="text-muted">
+                  <SearchIcon size={18} />
+                </span>
+                <label className="sr-only" htmlFor="ai-arama">
+                  Kimi aradığınızı yazın
+                </label>
+                <input id="ai-arama" value={aiText} onChange={(e) => setAiText(e.target.value)} maxLength={400} placeholder="Örn. İstanbul'daki 10-50 çalışanlı ajansların kurucuları" className="h-11 min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" />
+                <Button type="submit" disabled={aiBusy || aiText.trim().length < 4}>
+                  <SparkleIcon size={16} />
+                  {aiBusy ? "Hazırlanıyor…" : "Adspine AI ile ara"}
+                </Button>
+              </form>
+              <FindSources active="db" />
+              <div className="grid justify-items-center gap-3">
+                <p className="text-sm text-muted">Ya da hazır bir aramayla başlayın</p>
+                <ul className="flex flex-wrap justify-center gap-2">
                   {leadPresets.map((p) => (
                     <li key={p.id}>
-                      <button type="button" onClick={() => preset(p)} disabled={busy || sizes.length === 0} className="grid w-full gap-0.5 rounded-row p-3.5 text-left ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50 disabled:opacity-50">
-                        <span className="font-medium">{p.label}</span>
-                        <span className="text-sm text-muted">{p.hint}</span>
+                      <button type="button" title={p.hint} onClick={() => preset(p)} disabled={busy || sizes.length === 0} className="h-9 rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50 disabled:opacity-50">
+                        {p.label}
                       </button>
                     </li>
                   ))}
                 </ul>
               </div>
+              <div className="grid justify-items-center">{usage}</div>
             </div>
           )}
 

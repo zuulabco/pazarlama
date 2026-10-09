@@ -21,7 +21,7 @@ import { LeadList } from "./_components/lead-list";
 import { LeadsWorkspace } from "./_components/leads-workspace";
 import type { ResultFilters, SearchView } from "./_components/types";
 
-export const metadata: Metadata = { title: "Müşteri bul" };
+export const metadata: Metadata = { title: "Potansiyel müşterilerimi bul" };
 
 type Params = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);

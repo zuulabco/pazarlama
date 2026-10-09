@@ -182,37 +182,32 @@ export function ComposerSkeleton() {
   );
 }
 
-/** Ana sayfa: karşılama, odak kartı, Adspine AI soru çubuğu, özellik kutuları ve etkinlik. */
+/** Ana sayfa: karşılama, soru çubuğu, dört gösterge kartı, grafik ve iki sütunlu etkinlik. */
 export function DashboardSkeleton() {
-  const tile = (i: number) => (
-    <div key={i} className={`${panel} grid gap-3 p-5`}>
-      <div className="flex items-center justify-between">
-        <Skeleton className="size-10" />
-        <Skeleton className="h-4 w-16" />
-      </div>
-      <Skeleton className="h-5 w-28" />
-      <Skeleton className="h-4 w-full" />
-    </div>
-  );
   return (
     <SkeletonRegion>
-      <div className="grid w-full gap-10">
-        <div className="grid gap-2">
-          <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-9 w-56" />
-          <Skeleton className="h-4 w-40" />
-        </div>
-        <Skeleton className="h-32 w-full rounded-panel" />
-        <Skeleton className="h-24 w-full rounded-panel" />
-        {[2, 4].map((n) => (
-          <div key={n} className="grid gap-4">
-            <Skeleton className="h-6 w-16" />
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: n }, (_, i) => tile(i))}</div>
+      <div className="grid w-full gap-6">
+        <div className="flex items-end justify-between gap-4">
+          <div className="grid gap-2">
+            <Skeleton className="h-8 w-52" />
+            <Skeleton className="h-4 w-64" />
           </div>
-        ))}
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <Skeleton className="hidden h-10 w-56 sm:block" />
+        </div>
+        <Skeleton className="h-14 w-full rounded-panel" />
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className={`${panel} grid gap-2 p-5`}>
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-64 w-full rounded-panel" />
+        <div className="grid gap-6 lg:grid-cols-2">
           <Skeleton className="h-56 w-full rounded-panel" />
-          <Skeleton className="h-32 w-full rounded-panel" />
+          <Skeleton className="h-56 w-full rounded-panel" />
         </div>
       </div>
     </SkeletonRegion>
