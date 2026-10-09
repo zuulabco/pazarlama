@@ -5,7 +5,14 @@ import { capitalize, fold } from "@/lib/text";
 import styles from "./combo-field.module.css";
 import popover from "./popover.module.css";
 
-export type Option = { readonly value: string; readonly label: string; readonly hint?: string; readonly group?: string };
+export type Option = {
+  readonly value: string;
+  readonly label: string;
+  readonly hint?: string;
+  readonly group?: string;
+  /** Aramada eşleşen ama görünmeyen eş anlamlılar (örn. İngilizce karşılıklar): "marketing" yazınca "Pazarlama Müdürü" çıkar. */
+  readonly aliases?: readonly string[];
+};
 
 type Props = {
   legend: string;
@@ -18,6 +25,8 @@ type Props = {
    * öncekinin yerine geçer. Çoklu seçimde seçilenler etiket olarak birikir. (bkz. DESIGN.md)
    */
   single?: boolean;
+  /** Tekli seçimde seçimi temizleyen çarpıyı gösterir (varsayılan açık). Zorunlu alanlarda (örn. ülke) kapatılır. */
+  clearable?: boolean;
   /** Listede olmayanı yazıp eklemeye izin verir. */
   allowCustom?: boolean;
   placeholder?: string;
@@ -51,6 +60,7 @@ export function ComboField({
   value,
   onChange,
   single = false,
+  clearable = true,
   allowCustom = false,
   placeholder,
   disabled = false,
@@ -79,7 +89,7 @@ export function ComboField({
 
   // Önce yazılanla başlayanlar, sonra içinde geçenler. Arama Türkçe karakterlere duyarsızdır.
   const matches = options
-    .filter((o) => (single || !value.includes(o.value)) && (!query || fold(o.label).includes(query)))
+    .filter((o) => (single || !value.includes(o.value)) && (!query || fold(o.label).includes(query) || (o.aliases ?? []).some((a) => fold(a).includes(query))))
     .sort((a, b) => Number(!fold(a.label).startsWith(query)) - Number(!fold(b.label).startsWith(query)));
 
   // "Ekle" yalnızca yazılan, bir seçeneğin adıyla ya da seçili bir etiketle birebir aynı değilse çıkar.
@@ -190,7 +200,7 @@ export function ComboField({
           }}
           data-invalid={error || showInvalid ? "" : undefined}
           aria-disabled={disabled || undefined}
-          className={`relative flex min-h-13 cursor-text flex-wrap items-center gap-2 rounded-row bg-surface py-2 pl-3 ring-1 ring-line-strong transition-shadow ring-inset focus-within:ring-2 focus-within:ring-forest data-[invalid]:ring-danger ${single && value.length > 0 ? "pr-[4.75rem]" : "pr-11"} ${disabled ? "pointer-events-none opacity-55" : ""}`}
+          className={`relative flex min-h-13 cursor-text flex-wrap items-center gap-2 rounded-row bg-surface py-2 pl-3 ring-1 ring-line-strong transition-shadow ring-inset focus-within:ring-2 focus-within:ring-forest data-[invalid]:ring-danger ${single && clearable && value.length > 0 ? "pr-[4.75rem]" : "pr-11"} ${disabled ? "pointer-events-none opacity-55" : ""}`}
         >
           {!single &&
             value.map((v) => (
@@ -239,7 +249,7 @@ export function ComboField({
             className="min-w-16 flex-1 bg-transparent py-1 outline-none placeholder:text-muted"
           />
 
-          {single && value.length > 0 && (
+          {single && clearable && value.length > 0 && (
             <button
               type="button"
               tabIndex={-1}

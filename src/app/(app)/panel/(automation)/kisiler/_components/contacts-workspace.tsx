@@ -197,13 +197,6 @@ export function ContactsWorkspace({
   }
 
   // ─── Toplu işlemler ─────────────────────────────────────────────────────────
-  async function importFromFollow() {
-    const r = await api<{ added: number; skipped: number }>("/api/outreach/contacts/import", { method: "POST", body: JSON.stringify({ source: "takip" }) });
-    if (!r.ok) return toast(r.error, { kind: "error" });
-    toast(r.data.added > 0 ? `${r.data.added} firma kayıtlı firmalarınızdan eklendi` : "Tüm kayıtlı firmalar zaten kişilerinizde");
-    refetch();
-  }
-
   async function removeSelected() {
     const ids = [...selected];
     const r = await api<{ ok: true }>("/api/outreach/contacts", { method: "DELETE", body: JSON.stringify({ ids }) });
@@ -280,12 +273,9 @@ export function ContactsWorkspace({
             {account && (
               <ButtonLink href="/panel/kisi-bul">
                 <SparkleIcon size={16} />
-                Kişi bul
+                Müşteri bul
               </ButtonLink>
             )}
-            <Button variant="secondary" onClick={() => void importFromFollow()}>
-              Kayıtlı firmalardan ekle
-            </Button>
             <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
               CSV içe aktar
             </Button>
@@ -429,19 +419,16 @@ export function ContactsWorkspace({
                 <p className="max-w-[30rem] text-muted">
                   {filtered
                     ? "Filtreleri gevşetmeyi deneyin."
-                    : "Kişi bul ile unvana göre iş e-postalarını bulun, Kayıtlı firmalarınızı ekleyin, CSV yükleyin ya da elle kişi ekleyin."}
+                    : "Müşteri bul ile unvana göre iş e-postalarını bulun, CSV yükleyin ya da elle kişi ekleyin."}
                 </p>
                 {!filtered && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {account && (
                       <ButtonLink href="/panel/kisi-bul">
                         <SparkleIcon size={16} />
-                        Kişi bul
+                        Müşteri bul
                       </ButtonLink>
                     )}
-                    <Button variant={account ? "secondary" : "primary"} onClick={() => void importFromFollow()}>
-                      Kayıtlı firmalardan ekle
-                    </Button>
                     <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
                       CSV içe aktar
                     </Button>

@@ -15,7 +15,7 @@ import {
   toneValues,
   type WorkFirm,
 } from "@/modules/work/context";
-import { loadSender, loadWorkFirm } from "@/modules/work/load";
+import { loadSender } from "@/modules/work/load";
 import { proofread } from "@/modules/work/proofread";
 
 export const maxDuration = 60;
@@ -32,9 +32,7 @@ const bodySchema = z.object({
   service: text(80),
   /** Mesajda olmasını istedikleri. */
   extra: text(300),
-  /** Takipteki bir firma seçildiyse; yoksa genel mesaj yazılır. */
-  favoriteId: z.uuid().nullish(),
-  /** Genel mesaj için alıcı hakkında kullanıcının verdiği bilgiler. */
+  /** Alıcı hakkında kullanıcının verdiği bilgiler (kayıtlı kişiden doldurulabilir). */
   recipient: z.object({ name: text(80), category: text(80), about: text(500) }).nullish(),
   /** Hazır taslağı yeniden yazdırma. */
   refine: z
@@ -57,7 +55,7 @@ function tooFast(uid: string) {
   return hits.length > 10;
 }
 
-/** Takipte olmayan, kullanıcının anlattığı bir alıcı için bağlam. Gözlem üretilmez; yalnızca verilenler kullanılır. */
+/** Kullanıcının anlattığı alıcı için bağlam. Gözlem üretilmez; yalnızca verilenler kullanılır. */
 function genericFirm(r: z.infer<typeof bodySchema>["recipient"]): WorkFirm {
   return {
     known: false,
@@ -89,7 +87,7 @@ export async function POST(req: NextRequest) {
 
   const body = bodySchema.safeParse(await req.json().catch(() => null));
   if (!body.success) return error("Geçersiz istek.", 400);
-  const { favoriteId, kind, goal, tone, length, service, extra, recipient, refine } = body.data;
+  const { kind, goal, tone, length, service, extra, recipient, refine } = body.data;
 
   const sender = await loadSender(user.uid, user.name);
   if (!sender) return error("Önce hesap kurulumunu tamamlayın.", 409);
@@ -101,9 +99,7 @@ export async function POST(req: NextRequest) {
     if (!instruction) return error("Bir düzeltme seçin ya da isteğinizi yazın.", 400);
     messages = refineMessages({ kind, draft: { subject: refine.draft.subject ?? null, body: refine.draft.body }, instruction, sender });
   } else {
-    const firm = favoriteId ? await loadWorkFirm(user.uid, favoriteId) : genericFirm(recipient);
-    if (!firm) return error("Müşteri bulunamadı.", 404);
-    messages = buildMessages({ kind, goal, tone, length, service: service || null, extra: extra || null, firm, sender });
+    messages = buildMessages({ kind, goal, tone, length, service: service || null, extra: extra || null, firm: genericFirm(recipient), sender });
   }
 
   try {

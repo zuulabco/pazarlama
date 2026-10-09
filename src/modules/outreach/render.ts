@@ -12,7 +12,7 @@ export const variableCatalog = [
   { key: "last_name", label: "Soyad", example: "Demir" },
   { key: "name", label: "Ad soyad", example: "Ayşe Demir" },
   { key: "company", label: "Firma", example: "Lale Diş Kliniği" },
-  { key: "city", label: "Şehir", example: "Kadıköy" },
+  { key: "city", label: "Şehir", example: "İstanbul" },
   { key: "job_title", label: "Unvan", example: "Pazarlama Müdürü" },
   { key: "website", label: "Web sitesi", example: "lale.com.tr" },
   { key: "sender_first_name", label: "Benim adım", example: "Elif" },

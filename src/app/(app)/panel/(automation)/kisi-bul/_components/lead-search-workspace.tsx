@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Segmented } from "@/components/ui/segmented";
@@ -11,12 +11,11 @@ import { Toaster, toast } from "@/components/ui/toast";
 import { browseSizes, emptySearch, leadPresets, type LeadBrowse, type LeadPreset, type LeadSearchInput, type SavedSearch } from "@/modules/outreach/lead-options";
 import type { AccountSummary } from "@/modules/outreach/usage";
 import { api } from "../../kisiler/_components/contact-ui";
-import { FindSources } from "../../../../_components/find-sources";
 import { LeadAddModal } from "./lead-add-modal";
 import { LeadFilters } from "./lead-filters";
 import { LeadResults } from "./lead-results";
 
-const tips = ["Filtrelerinize uyan kişiler taranıyor…", "Unvan, şirket ve konum bilgileri toplanıyor…", "Aynı şirketten tekrarlar ayıklanıyor…", "Sonuçlar hazırlanıyor…"];
+const tips = ["Filtrelerinize uyan kişiler aranıyor…", "Daha önce kaydedilen kişiler öne alınıyor…", "Kişiler profilinize göre puanlanıyor…", "Liste skora göre sıralanıyor…"];
 const num = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const inputClass =
@@ -28,12 +27,11 @@ type Stage = { kind: "idle" } | { kind: "running" } | { kind: "results"; search:
  * Kişi bul (Instantly SuperSearch yapısı): solda filtreler, sağda başlangıç ekranı / sonuç tablosu.
  * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 Spine Kredi) → otomasyona ekle.
  */
-export function LeadSearchWorkspace({ initialAccount }: { initialAccount: AccountSummary }) {
+export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initialAccount: AccountSummary; defaultCountry: string }) {
   const [account, setAccount] = useState(initialAccount);
-  const [q, setQ] = useState<LeadSearchInput>(emptySearch);
+  const [q, setQ] = useState<LeadSearchInput>(() => emptySearch(defaultCountry));
+  const aiInput = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>({ kind: "idle" });
-  const [skipOwned, setSkipOwned] = useState(true);
-  const [oneLead, setOneLead] = useState(true);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState(false);
   const [aiText, setAiText] = useState("");
@@ -59,9 +57,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
   const sizes = browseSizes.filter((s) => s <= left);
   const size = sizes.includes(q.count as (typeof browseSizes)[number]) ? q.count : (sizes.at(-1) ?? browseSizes[0]);
   const activeCount =
-    (q.roles.length ? 1 : 0) + (q.titles.length ? 1 : 0) + (q.notTitles.length ? 1 : 0) + (q.city?.trim() ? 1 : 0) + (q.country !== "turkey" ? 1 : 0) + (q.industries.length ? 1 : 0) + (q.sizes.length ? 1 : 0) + (q.keywords.length ? 1 : 0) + (q.notKeywords.length ? 1 : 0);
-
-  const params = (o = skipOwned, l = oneLead) => `skipOwned=${o ? 1 : 0}&oneLead=${l ? 1 : 0}`;
+    (q.roles.length ? 1 : 0) + (q.titles.length ? 1 : 0) + (q.notTitles.length ? 1 : 0) + (q.city?.trim() ? 1 : 0) + (q.country !== defaultCountry ? 1 : 0) + (q.industries.length ? 1 : 0) + (q.sizes.length ? 1 : 0) + (q.keywords.length ? 1 : 0) + (q.notKeywords.length ? 1 : 0);
 
   async function refreshAccount() {
     const r = await api<{ account: AccountSummary }>("/api/outreach/account");
@@ -83,7 +79,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
     for (let i = 0; i < 150 && alive.current; i++) {
       await sleep(i < 4 ? 2000 : 3000);
       if (!alive.current || searchId.current !== r.data.search.id) return;
-      const s = await api<{ search: LeadBrowse }>(`/api/outreach/leads/browse/${r.data.search.id}?${params()}`);
+      const s = await api<{ search: LeadBrowse }>(`/api/outreach/leads/browse/${r.data.search.id}`);
       if (!s.ok || s.data.search.status === "calisiyor") continue;
       setBusy(false);
       void refreshAccount();
@@ -93,33 +89,23 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
     setStage({ kind: "failed", message: "Arama beklenenden uzun sürdü. Biraz sonra tekrar deneyin." });
   }
 
-  /** Anahtarlar değişince aynı arama yeniden süzülür (sağlayıcıya gidilmez, hızlıdır). */
-  async function reload(o: boolean, l: boolean) {
-    if (stage.kind !== "results") return;
-    const s = await api<{ search: LeadBrowse }>(`/api/outreach/leads/browse/${stage.search.id}?${params(o, l)}`);
-    if (s.ok) {
-      setStage({ kind: "results", search: s.data.search });
-      setSelected(new Set());
-    }
-  }
-
   async function askAi() {
     if (aiBusy || aiText.trim().length < 4) return;
     setAiBusy(true);
     const r = await api<{ filters: Partial<LeadSearchInput> }>("/api/outreach/leads/ai", { method: "POST", body: JSON.stringify({ text: aiText }) });
     setAiBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });
-    const next = { ...emptySearch(), ...r.data.filters, count: size };
+    const next = { ...emptySearch(defaultCountry), ...r.data.filters, count: size };
     setQ(next);
-    toast("Filtreler hazırlandı");
-    if (next.roles.length + next.titles.length + next.industries.length + next.keywords.length > 0) void run(next);
+    // Arama kendiliğinden başlamaz: kullanıcı filtreleri gözden geçirir, kaç kişi listeleneceğini seçer ve "Ara"ya basar.
+    if (next.roles.length + next.titles.length + next.industries.length + next.keywords.length > 0) toast("Filtreler hazırlandı. Kaç kişi listeleneceğini seçip Ara'ya basın.");
     else toast("İsteğinizden bir filtre çıkarılamadı. Filtreleri soldan seçin.", { kind: "error" });
   }
 
+  /** Hazır aramaya tıklamak yalnızca metni kutuya yazar; göndermek (Enter) kullanıcıya kalır. */
   function preset(p: LeadPreset) {
-    const next = { ...emptySearch(), ...p.query, count: size };
-    setQ(next);
-    void run(next);
+    setAiText(p.prompt);
+    aiInput.current?.focus();
   }
 
   async function openLoad() {
@@ -158,17 +144,8 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
       <LeadFilters
         q={q}
         set={set}
-        skipOwned={skipOwned}
-        oneLead={oneLead}
-        onSkipOwned={(v) => {
-          setSkipOwned(v);
-          void reload(v, oneLead);
-        }}
-        onOneLead={(v) => {
-          setOneLead(v);
-          void reload(skipOwned, v);
-        }}
-        onClear={() => setQ({ ...emptySearch(), count: q.count })}
+        defaultCountry={defaultCountry}
+        onClear={() => setQ({ ...emptySearch(defaultCountry), count: q.count })}
         onSave={() => setSaveOpen(true)}
         onLoad={() => void openLoad()}
         activeCount={activeCount}
@@ -194,43 +171,49 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
 
         <div aria-live="polite">
           {stage.kind === "idle" && (
-            <div className="mx-auto grid w-full max-w-3xl gap-7 py-6 sm:py-10">
-              <div className="grid gap-2 text-center">
-                <h2 className="text-2xl font-semibold tracking-tight">Kimi bulmak istiyorsunuz?</h2>
-                <p className="text-muted">Aradığınız kişileri kendi cümlelerinizle yazın ya da soldan filtre seçin. Listelemek Spine Kredi harcamaz.</p>
-              </div>
+            <div className="mx-auto grid w-full max-w-3xl gap-6 py-8 sm:py-16">
+              <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Kimi bulmak istiyorsunuz?</h2>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   void askAi();
                 }}
-                className="flex items-center gap-2 rounded-panel bg-surface p-1.5 pl-4 ring-1 ring-line-strong transition-shadow focus-within:ring-2 focus-within:ring-forest"
+                className="flex items-center gap-2 rounded-full bg-surface p-2 pl-5 shadow-sm ring-1 ring-line-strong transition-shadow focus-within:shadow-float focus-within:ring-2 focus-within:ring-forest"
               >
-                <span className="text-muted">
-                  <SearchIcon size={18} />
+                <span className="shrink-0 text-accent">
+                  <SparkleIcon size={20} />
                 </span>
                 <label className="sr-only" htmlFor="ai-arama">
                   Kimi aradığınızı yazın
                 </label>
-                <input id="ai-arama" value={aiText} onChange={(e) => setAiText(e.target.value)} maxLength={400} placeholder="Örn. İstanbul'daki 10-50 çalışanlı ajansların kurucuları" className="h-11 min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" />
-                <Button type="submit" disabled={aiBusy || aiText.trim().length < 4}>
-                  <SparkleIcon size={16} />
-                  {aiBusy ? "Hazırlanıyor…" : "Adspine AI ile ara"}
-                </Button>
+                <input
+                  ref={aiInput}
+                  id="ai-arama"
+                  value={aiText}
+                  onChange={(e) => setAiText(e.target.value)}
+                  maxLength={400}
+                  placeholder="Örn. İstanbul'daki 10-50 çalışanlı ajansların kurucuları"
+                  className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted"
+                />
+                <button
+                  type="submit"
+                  disabled={aiBusy || aiText.trim().length < 4}
+                  aria-label={aiBusy ? "Filtreler hazırlanıyor" : "Filtreleri hazırla"}
+                  title="Adspine AI ile filtreleri hazırla"
+                  className="grid size-11 shrink-0 place-items-center rounded-full bg-forest text-white transition-colors hover:bg-forest-hover disabled:opacity-40"
+                >
+                  {aiBusy ? <span aria-hidden="true" className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <ArrowRightIcon size={18} />}
+                </button>
               </form>
-              <FindSources active="db" />
-              <div className="grid justify-items-center gap-3">
-                <p className="text-sm text-muted">Ya da hazır bir aramayla başlayın</p>
-                <ul className="flex flex-wrap justify-center gap-2">
-                  {leadPresets.map((p) => (
-                    <li key={p.id}>
-                      <button type="button" title={p.hint} onClick={() => preset(p)} disabled={busy || sizes.length === 0} className="h-9 rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50 disabled:opacity-50">
-                        {p.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="flex flex-wrap justify-center gap-2">
+                {leadPresets.map((p) => (
+                  <li key={p.id}>
+                    <button type="button" onClick={() => preset(p)} className="h-9 rounded-full px-4 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft/60 hover:ring-forest/50">
+                      {p.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
               <div className="grid justify-items-center">{usage}</div>
             </div>
           )}
@@ -274,10 +257,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
       {stage.kind === "results" && (
         <LeadAddModal
           open={addOpen}
-          onClose={() => {
-            setAddOpen(false);
-            void reload(skipOwned, oneLead);
-          }}
+          onClose={() => setAddOpen(false)}
           searchId={stage.search.id}
           rids={[...selected]}
           credits={account.credits}
@@ -321,7 +301,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
                 <button
                   type="button"
                   onClick={() => {
-                    setQ({ ...emptySearch(), ...s.query });
+                    setQ({ ...emptySearch(defaultCountry), ...s.query });
                     setStage({ kind: "idle" });
                     setLoadOpen(false);
                     toast(`“${s.name}” yüklendi`);

@@ -4,7 +4,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ db: () => ({}) }));
 
 const { buildActorInput, estimateUsd, mapLead } = await import("./lead-search");
-const { expandNotTitles, expandTitles, leadSearchSchema } = await import("./lead-options");
+const { expandKeywords, expandNotTitles, expandTitles, leadSearchSchema, resolveTitle } = await import("./lead-options");
 const { monthlyCapacity, planOf, plans } = await import("./plans");
 
 const base = { titles: ["CEO"], country: "turkey", count: 25 };
@@ -12,7 +12,7 @@ const base = { titles: ["CEO"], country: "turkey", count: 25 };
 describe("kişi bul: sağlayıcı girdisi", () => {
   it("yalnızca doğrulanmış e-posta ister, cep telefonu istemez", () => {
     const input = buildActorInput(leadSearchSchema.parse(base));
-    expect(input).toMatchObject({ max_result: 25, include_mobile: false, email_status: ["verified"], contact_job_titles: ["CEO"], contact_location: ["turkey"] });
+    expect(input).toMatchObject({ max_result: 25, include_mobile: false, email_status: ["verified"], contact_job_titles: ["CEO", "Chief Executive Officer"], contact_location: ["turkey"] });
     // Varsayılan olarak stajyer ve asistanlar hariç tutulur.
     expect(input.contact_job_not_titles).toEqual(["Intern", "Stajyer", "Assistant", "Asistan", "Student"]);
     expect(input).not.toHaveProperty("company_industry");
@@ -88,5 +88,22 @@ describe("kişi türleri", () => {
   });
   it("şirket başına varsayılan 1 kişidir", () => {
     expect(leadSearchSchema.parse(base).perCompany).toBe(1);
+  });
+});
+
+describe("unvan ve kelime sözlüğü (Türkçe ↔ İngilizce)", () => {
+  it("Türkçe seçilen unvan sağlayıcıya iki dilde gider", () => {
+    expect(resolveTitle("Pazarlama Müdürü")).toEqual(["Pazarlama Müdürü", "Marketing Manager"]);
+    expect(expandTitles({ roles: [], titles: ["Genel Müdür"] })).toEqual(expect.arrayContaining(["Genel Müdür", "General Manager", "Managing Director"]));
+  });
+  it("İngilizce yazılan unvan da sözlükle eşleşir; sözlükte olmayan olduğu gibi gider", () => {
+    expect(resolveTitle("marketing manager")).toContain("Pazarlama Müdürü");
+    expect(resolveTitle("Mağaza Sorumlusu")).toEqual(["Mağaza Sorumlusu"]);
+  });
+  it("hariç tutulan unvanlar da iki dilde genişler", () => {
+    expect(expandNotTitles({ notTitles: ["Mimar"], excludeJunior: false })).toEqual(["Mimar", "Architect"]);
+  });
+  it("anahtar kelimeler sağlayıcının diline çevrilir, tekrarsızdır", () => {
+    expect(expandKeywords(["e-ticaret", "E-Commerce", "yazılım", "boya"])).toEqual(["e-commerce", "software", "boya"]);
   });
 });

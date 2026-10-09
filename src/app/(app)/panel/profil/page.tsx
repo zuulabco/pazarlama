@@ -6,7 +6,6 @@ import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
 import { draftFrom } from "@/modules/profile/draft";
 import { getProfile } from "@/modules/profile/repository";
-import { computeWeights, criteria } from "@/modules/profile/weights";
 import { ProfileSections } from "./_components/profile-sections";
 
 export const metadata: Metadata = { title: "Profilim" };
@@ -18,9 +17,6 @@ async function ProfileContent() {
   const profile = await getProfile(user.uid);
   if (!profile) redirect("/onboarding");
 
-  const weights = computeWeights(profile);
-  const top = Math.max(...Object.values(weights));
-  const emphasize = top - Math.min(...Object.values(weights)) >= 3;
   const initials = profile.businessName.trim().slice(0, 2).toLocaleUpperCase("tr");
 
   return (
@@ -39,37 +35,13 @@ async function ProfileContent() {
         </div>
       </header>
       <p className="mt-6 mb-8 max-w-prose text-muted">
-        Hedef profiliniz, her aramada firmaları puanlamak için kullanılır. Burada yaptığınız değişiklikler bundan sonraki
-        aramalara yansır; önceki aramaların puanları değişmez.
+        Hedef profiliniz, Adspine AI&apos;nın size uygun mesajlar yazması ve arama önerileri vermesi için kullanılır.
       </p>
 
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <ProfileSections profile={draftFrom(profile)} />
 
         <aside className="grid gap-5 lg:sticky lg:top-6">
-          <section aria-labelledby="weights-title" className="rounded-panel bg-surface p-6 ring-1 ring-line">
-            <h2 id="weights-title" className="text-base font-semibold tracking-tight">
-              Puanlama öncelikleriniz
-            </h2>
-            <p className="mt-1 mb-5 text-sm text-muted">Profilinize göre otomatik hesaplanır.</p>
-            <dl className="grid gap-3.5">
-              {criteria.map((c) => (
-                <div key={c.key} className="grid gap-1.5 text-sm">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-muted">{c.label}</dt>
-                    <dd className="font-medium tabular-nums">{weights[c.key]}</dd>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden="true">
-                    <div
-                      className={`h-full rounded-full ${emphasize && weights[c.key] === top ? "bg-forest" : "bg-score-mid"}`}
-                      style={{ width: `${(weights[c.key] / top) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </dl>
-          </section>
-
           <section aria-labelledby="account-title" className="rounded-panel bg-surface p-6 ring-1 ring-line">
             <h2 id="account-title" className="text-base font-semibold tracking-tight">
               Hesap

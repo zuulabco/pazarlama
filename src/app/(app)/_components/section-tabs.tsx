@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { hrefFor, matches, sectionOf, sections } from "./nav-config";
+import { matches, sectionOf, sections } from "./nav-config";
 import { toggleSection, useSectionCollapsed } from "./section-state";
 
 /**
@@ -54,15 +54,12 @@ export function SectionTabs({ title, tabs = [] }: { title: string; tabs?: readon
   );
 }
 
-/**
- * Bul bölümünün tek üst çubuğu: "Potansiyel müşterilerimi bul" başlığı ve iki sekme (Ara · Kaydedilenler).
- * Kişiler ve yerel işletmeler ayrı bölümler değil, aynı işin iki modudur; sekmeler geçerli moda göre doğru sayfaya gider.
- */
+/** Bul bölümünün üst çubuğu: "Müşteri bul" başlığı ve iki sekme (Ara · Kayıtlı kişiler). */
 export function FindBar() {
   const path = usePathname();
   const bul = sections.find((s) => s.key === "bul")!;
-  const tabs = bul.links.map((l) => ({ href: hrefFor(l, path), label: l.label === "Kaydedilenler" ? "Kaydedilenler" : "Ara", active: matches(path, l.prefixes) }));
-  return <SectionTabs title="Potansiyel müşterilerimi bul" tabs={tabs} />;
+  const tabs = bul.links.map((l) => ({ href: l.href, label: l.label === "Müşteri bul" ? "Ara" : l.label, active: matches(path, l.prefixes) }));
+  return <SectionTabs title="Müşteri bul" tabs={tabs} />;
 }
 
 /** Otomasyon sayfalarının üst çubuğu: yola göre başlığı ve (varsa) sekmeleri seçer. */

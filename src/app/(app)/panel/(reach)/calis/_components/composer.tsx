@@ -9,14 +9,12 @@ import { Select } from "@/components/ui/select";
 import { ShapeLoader } from "@/components/ui/shape-loader";
 import { TextArea } from "@/components/ui/text-fields";
 import { toast } from "@/components/ui/toast";
-import { goals, lengths, refinements, tones, type Draft, type Goal, type Length, type Refinement, type Tone, type WorkFirm, type WorkKind } from "@/modules/work/context";
+import { goals, lengths, refinements, tones, type Draft, type Goal, type Length, type Refinement, type Tone, type WorkKind } from "@/modules/work/context";
 import Link from "next/link";
 import type { ContactPick } from "@/modules/outreach/contacts";
-import { FirmInfo } from "./firm-info";
 import { SendBox } from "./send-box";
 
 type Service = { value: string; label: string };
-export type PickerItem = { id: string; name: string; district: string | null; category: string | null };
 
 const writingTips = [
   "İşletme bilgileriniz ve amacınız birleştiriliyor…",
@@ -44,28 +42,22 @@ type RunRequest = {
  * Sonuç düzenlenebilir, tek tıkla yeniden yazdırılabilir ve oradan WhatsApp'a ya da e-postaya gönderilir.
  */
 export function Composer({
-  favorites,
   contacts,
   initialContactId,
-  firm,
-  onPickFirm,
   initialKind,
   services,
   suggestedService,
 }: {
-  favorites: PickerItem[];
   contacts: ContactPick[];
   initialContactId: string | null;
-  firm: WorkFirm | null;
-  onPickFirm: (id: string) => void;
   initialKind: WorkKind;
   services: Service[];
   suggestedService: string | null;
 }) {
   const pickedInit = contacts.find((c) => c.id === initialContactId) ?? null;
   const [kind, setKind] = useState<WorkKind>(pickedInit?.email ? "email" : initialKind);
-  /** Alıcı türü: kayıtlı firma (ya da elle yazılan) ya da kayıtlı kişi. */
-  const [target, setTarget] = useState<"firma" | "kisi">(pickedInit ? "kisi" : "firma");
+  /** Alıcı: kayıtlı bir kişi ya da elle yazılan bilgiler. */
+  const [target, setTarget] = useState<"kisi" | "elle">(pickedInit ? "kisi" : "elle");
   const [contactId, setContactId] = useState(pickedInit?.id ?? "");
   const contact = contacts.find((c) => c.id === contactId) ?? null;
   const [goal, setGoal] = useState<Goal>("ilk-temas");
@@ -80,14 +72,6 @@ export function Composer({
   /** Her kanal için sürüm geçmişi; sonuncusu görünendir ("Geri al" bir öncekine döner). */
   const [history, setHistory] = useState<Record<WorkKind, Draft[]>>({ message: [], email: [] });
   const [busy, setBusy] = useState<"write" | "refine" | null>(null);
-
-  // Alıcı değişince eski alıcıya yazılmış taslaklar temizlenir; ayarlar (amaç, ton…) korunur.
-  const [recipientId, setRecipientId] = useState(firm?.id ?? "");
-  if ((firm?.id ?? "") !== recipientId) {
-    setRecipientId(firm?.id ?? "");
-    setHistory({ message: [], email: [] });
-    setService(suggestedService ?? "");
-  }
 
   const versions = history[kind];
   const draft = versions.at(-1) ?? null;
@@ -111,8 +95,7 @@ export function Composer({
           length,
           service: service || null,
           extra: extra.trim() || null,
-          favoriteId: target === "firma" ? firm?.id || null : null,
-          recipient: target === "firma" && firm ? null : { name: name.trim() || null, category: category.trim() || null, about: about.trim() || null },
+          recipient: { name: name.trim() || null, category: category.trim() || null, about: about.trim() || null },
           ...request,
         }),
       });
@@ -169,31 +152,11 @@ export function Composer({
           <Segmented
             label="Alıcı türü"
             items={[
-              { key: "firma", label: "Firma", pressed: target === "firma", onClick: () => setTarget("firma") },
-              { key: "kisi", label: "Kişi", pressed: target === "kisi", onClick: () => setTarget("kisi") },
+              { key: "elle", label: "Kendim yazayım", pressed: target === "elle", onClick: () => setTarget("elle") },
+              { key: "kisi", label: "Kayıtlı kişi", pressed: target === "kisi", onClick: () => setTarget("kisi") },
             ]}
           />
-          {target === "firma" ? (
-            <>
-              <Select<string>
-                label="Kayıtlı firma"
-                value={firm?.id ?? ""}
-                options={[
-                  { value: "", label: "Firma seçmeden yaz", hint: "Genel bir mesaj hazırlar" },
-                  ...favorites.map((f) => ({ value: f.id, label: f.name, hint: [f.category, f.district].filter(Boolean).join(" · ") || undefined })),
-                ]}
-                onChange={onPickFirm}
-              />
-              {favorites.length === 0 && (
-                <p className="-mt-2 text-sm text-muted">
-                  Kaydettiğiniz firmaları buradan seçebilirsiniz.{" "}
-                  <Link href="/panel/musteri-bul" className="font-medium text-accent underline underline-offset-4 hover:no-underline">
-                    Firma bul
-                  </Link>
-                </p>
-              )}
-            </>
-          ) : (
+          {target === "kisi" && (
             <>
               <Select<string>
                 label="Kayıtlı kişi"
@@ -218,34 +181,28 @@ export function Composer({
                 <p className="-mt-2 text-sm text-muted">
                   Kayıtlı kişiniz yok.{" "}
                   <Link href="/panel/kisi-bul" className="font-medium text-accent underline underline-offset-4 hover:no-underline">
-                    Kişi bul
+                    Müşteri bul
                   </Link>
                 </p>
               )}
             </>
           )}
-          {target === "firma" && firm ? (
-            <FirmInfo firm={firm} />
-          ) : (
-            <>
-              <label className="grid gap-1.5 text-sm">
-                Firma ya da kişi adı
-                <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Örn. Lale Diş Kliniği" className={inputClass} />
-              </label>
-              <label className="grid gap-1.5 text-sm">
-                {target === "kisi" ? "Unvan" : "Sektör"}
-                <input value={category} onChange={(e) => setCategory(e.target.value)} maxLength={80} placeholder="Örn. Diş kliniği" className={inputClass} />
-              </label>
-              <TextArea
-                label="Bildikleriniz"
-                hint="Ne kadar bilgi verirseniz mesaj o kadar kişisel olur."
-                value={about}
-                onChange={(e) => setAbout(e.target.value)}
-                maxLength={500}
-                placeholder="Örn. Yeni şube açıyorlar, Instagram'larını yeni yenilemişler."
-              />
-            </>
-          )}
+          <label className="grid gap-1.5 text-sm">
+            Kişi ya da firma adı
+            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Örn. Ayşe Demir · Lale Diş Kliniği" className={inputClass} />
+          </label>
+          <label className="grid gap-1.5 text-sm">
+            {target === "kisi" ? "Unvan" : "Unvan ya da sektör"}
+            <input value={category} onChange={(e) => setCategory(e.target.value)} maxLength={80} placeholder="Örn. Pazarlama müdürü" className={inputClass} />
+          </label>
+          <TextArea
+            label="Bildikleriniz"
+            hint="Ne kadar bilgi verirseniz mesaj o kadar kişisel olur."
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            maxLength={500}
+            placeholder="Örn. Yeni şube açıyorlar, Instagram'larını yeni yenilemişler."
+          />
         </div>
 
         <TextArea
@@ -370,7 +327,7 @@ export function Composer({
               )}
             </div>
 
-            <SendBox key={`${kind}-${target}-${contactId}`} kind={kind} draft={draft} firm={target === "firma" ? firm : null} defaultTo={target === "kisi" ? contact?.email : null} />
+            <SendBox key={`${kind}-${target}-${contactId}`} kind={kind} draft={draft} defaultTo={target === "kisi" ? contact?.email : null} />
           </>
         )}
       </section>

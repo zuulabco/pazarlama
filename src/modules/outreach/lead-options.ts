@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fold } from "@/lib/text";
 
 /** "Kişi bul" arama seçenekleri ve doğrulaması (sunucu ve istemci ortak). Sağlayıcı değerleri İngilizce, etiketler Türkçedir. */
 
@@ -100,8 +101,58 @@ export const roleOptions = [
 /** "Stajyer ve asistanları hariç tut" seçeneğinin eklediği unvanlar. */
 export const juniorTitles = ["Intern", "Stajyer", "Assistant", "Asistan", "Student"] as const;
 
-/** Hızlı eklenen unvanlar. Veritabanında unvanlar hem Türkçe hem İngilizce geçtiği için ikisi de önerilir. */
-export const titleSuggestions = ["CEO", "Founder", "Owner", "Genel Müdür", "Kurucu", "Pazarlama Müdürü", "Marketing Manager", "Satış Müdürü", "Sales Manager", "Satın Alma", "İnsan Kaynakları", "Finans Müdürü", "CTO"] as const;
+/**
+ * Unvan sözlüğü: kullanıcıya yalnızca Türkçe adı gösterilir; sağlayıcıya (İngilizce ağırlıklı veritabanı) Türkçe ve İngilizce karşılıkları
+ * birlikte gider. Kullanıcı İngilizce yazarsa da eşleşir ("marketing manager" → "Pazarlama Müdürü").
+ */
+export type TitleEntry = { tr: string; en: readonly string[] };
+const T = (tr: string, ...en: string[]): TitleEntry => ({ tr, en });
+export const titleCatalog: readonly TitleEntry[] = [
+  T("Kurucu", "Founder"), T("Kurucu Ortak", "Co-Founder"), T("İşletme Sahibi", "Owner", "Business Owner"), T("Ortak", "Partner"),
+  T("CEO", "CEO", "Chief Executive Officer"), T("Genel Müdür", "General Manager", "Managing Director"), T("Genel Müdür Yardımcısı", "Deputy General Manager", "Assistant General Manager"),
+  T("Yönetim Kurulu Başkanı", "Chairman"), T("Başkan", "President"),
+  T("Pazarlama Müdürü", "Marketing Manager"), T("Pazarlama Direktörü", "Marketing Director", "Head of Marketing"), T("CMO", "CMO", "Chief Marketing Officer"),
+  T("Dijital Pazarlama Müdürü", "Digital Marketing Manager"), T("Marka Müdürü", "Brand Manager"), T("Sosyal Medya Yöneticisi", "Social Media Manager"),
+  T("E-ticaret Müdürü", "E-commerce Manager"), T("İçerik Müdürü", "Content Manager"), T("Büyüme Müdürü", "Growth Manager"),
+  T("Satış Müdürü", "Sales Manager"), T("Satış Direktörü", "Sales Director", "Head of Sales"), T("İş Geliştirme Müdürü", "Business Development Manager"),
+  T("Müşteri Yöneticisi", "Account Manager"), T("İhracat Müdürü", "Export Manager"), T("Bölge Satış Müdürü", "Regional Sales Manager"),
+  T("Operasyon Müdürü", "Operations Manager"), T("COO", "COO", "Chief Operating Officer"), T("Lojistik Müdürü", "Logistics Manager"),
+  T("Tedarik Zinciri Müdürü", "Supply Chain Manager"), T("Üretim Müdürü", "Production Manager"), T("Fabrika Müdürü", "Plant Manager"), T("Kalite Müdürü", "Quality Manager"),
+  T("Finans Müdürü", "Finance Manager"), T("Finans Direktörü", "Finance Director"), T("CFO", "CFO", "Chief Financial Officer"),
+  T("Muhasebe Müdürü", "Accounting Manager"), T("Mali İşler Müdürü", "Financial Controller", "Controller"),
+  T("BT Müdürü", "IT Manager", "Head of IT"), T("CTO", "CTO", "Chief Technology Officer"), T("Yazılım Müdürü", "Software Development Manager", "Engineering Manager"), T("Ürün Müdürü", "Product Manager"),
+  T("İnsan Kaynakları Müdürü", "HR Manager", "Human Resources Manager"), T("İnsan Kaynakları Direktörü", "HR Director", "Head of HR"), T("İşe Alım Uzmanı", "Recruiter", "Talent Acquisition Specialist"),
+  T("Satın Alma Müdürü", "Procurement Manager", "Purchasing Manager"), T("Satın Alma Uzmanı", "Buyer", "Procurement Specialist"),
+  T("Müşteri Hizmetleri Müdürü", "Customer Service Manager"), T("Mağaza Müdürü", "Store Manager"), T("Şube Müdürü", "Branch Manager"),
+  T("Restoran Müdürü", "Restaurant Manager"), T("Otel Müdürü", "Hotel Manager"),
+  T("Mimar", "Architect"), T("Mühendis", "Engineer"), T("Doktor", "Doctor"), T("Avukat", "Lawyer"), T("Mali Müşavir", "Accountant"), T("Danışman", "Consultant"),
+];
+
+const titleIndex = new Map<string, TitleEntry>();
+for (const e of titleCatalog) for (const name of [e.tr, ...e.en]) titleIndex.set(fold(name), e);
+
+/** Bir unvanın sağlayıcıya gidecek karşılıkları: sözlükte varsa Türkçe + İngilizce adlar, yoksa yazıldığı gibi. */
+export const resolveTitle = (t: string): string[] => {
+  const e = titleIndex.get(fold(t.trim()));
+  return e ? [e.tr, ...e.en] : [t.trim()];
+};
+
+/** Anahtar kelime sözlüğü (şirketin faaliyet alanı): Türkçe gösterilir, sağlayıcıya İngilizcesi gider. */
+const K = (tr: string, en: string) => ({ tr, en });
+export const keywordCatalog = [
+  K("e-ticaret", "e-commerce"), K("restoran", "restaurant"), K("otel", "hotel"), K("yazılım", "software"), K("ajans", "agency"), K("klinik", "clinic"),
+  K("diş", "dental"), K("güzellik", "beauty"), K("emlak", "real estate"), K("inşaat", "construction"), K("tekstil", "textile"), K("lojistik", "logistics"),
+  K("eğitim", "education"), K("sağlık", "healthcare"), K("turizm", "tourism"), K("gıda", "food"), K("otomotiv", "automotive"), K("mobilya", "furniture"),
+  K("finans", "finance"), K("sigorta", "insurance"), K("danışmanlık", "consulting"), K("tasarım", "design"), K("reklam", "advertising"), K("medya", "media"),
+  K("üretim", "manufacturing"), K("enerji", "energy"), K("spor", "sports"), K("perakende", "retail"), K("kozmetik", "cosmetics"), K("tarım", "agriculture"),
+] as const;
+const keywordIndex = new Map<string, string>();
+for (const k of keywordCatalog) {
+  keywordIndex.set(fold(k.tr), k.en);
+  keywordIndex.set(fold(k.en), k.en);
+}
+/** Kelimeleri sağlayıcının diline çevirir (bilinmeyenler olduğu gibi); tekrarsız. */
+export const expandKeywords = (words: readonly string[]): string[] => [...new Set(words.map((w) => keywordIndex.get(fold(w.trim())) ?? w.trim().toLowerCase()).filter(Boolean))];
 
 export const countChoices = [10, 25, 50, 100, 200] as const;
 
@@ -135,18 +186,19 @@ export const leadSearchSchema = z
 
 export type LeadSearchInput = z.infer<typeof leadSearchSchema>;
 
-/** Seçilen kişi türleri ve elle yazılan unvanlardan sağlayıcıya gidecek benzersiz unvan listesi. */
+/** Seçilen kişi türleri ve yazılan unvanlardan sağlayıcıya gidecek benzersiz unvan listesi (Türkçe ve İngilizce karşılıklarıyla). */
 export function expandTitles(q: Pick<LeadSearchInput, "roles" | "titles">): string[] {
   const out = new Map<string, string>();
   for (const r of q.roles) for (const t of roleOptions.find((o) => o.value === r)?.titles ?? []) out.set(t.toLowerCase(), t);
-  for (const t of q.titles) out.set(t.toLowerCase(), t);
+  for (const t of q.titles) for (const v of resolveTitle(t)) out.set(v.toLowerCase(), v);
   return [...out.values()];
 }
 
 /** Hariç tutulacak unvanlar (elle yazılanlar + isteğe bağlı stajyer/asistan). */
 export function expandNotTitles(q: Pick<LeadSearchInput, "notTitles" | "excludeJunior">): string[] {
   const out = new Map<string, string>();
-  for (const t of [...q.notTitles, ...(q.excludeJunior ? juniorTitles : [])]) out.set(t.toLowerCase(), t);
+  for (const t of q.notTitles) for (const v of resolveTitle(t)) out.set(v.toLowerCase(), v);
+  for (const t of q.excludeJunior ? juniorTitles : []) out.set(t.toLowerCase(), t);
   return [...out.values()];
 }
 
@@ -175,19 +227,19 @@ export const skippedLabels: Record<keyof LeadJob["skipped"], string> = {
   kisi_siniri: "kişi sınırı doldu",
 };
 
-/** Hazır aramalar: tek tıkla filtreleri doldurur. */
-export type LeadPreset = { id: string; label: string; hint: string; query: Partial<Pick<LeadSearchInput, "roles" | "titles" | "notTitles" | "country" | "city" | "industries" | "sizes" | "keywords">> };
+/** Hazır aramalar: tıklayınca metin kutusuna yazılır (Enter'a kullanıcı basar); Adspine AI bunları filtrelere çevirir. */
+export type LeadPreset = { id: string; label: string; prompt: string };
 
 export const leadPresets: LeadPreset[] = [
-  { id: "pazarlama", label: "Pazarlama yöneticileri", hint: "Türkiye · her sektörden", query: { roles: ["pazarlama"], country: "turkey" } },
-  { id: "kurucu-kobi", label: "Küçük işletme kurucuları", hint: "Türkiye · 1-50 çalışan", query: { roles: ["sahip"], country: "turkey", sizes: ["1-10", "11-20", "21-50"] } },
-  { id: "eticaret", label: "E-ticaret şirketlerinin yöneticileri", hint: "Türkiye · e-ticaret", query: { roles: ["sahip", "ust"], country: "turkey", keywords: ["e-commerce"] } },
-  { id: "otel", label: "Otel ve restoran sahipleri", hint: "Türkiye · otelcilik, restoran", query: { roles: ["sahip", "ust"], country: "turkey", industries: ["Hospitality", "Restaurants"] } },
-  { id: "yazilim", label: "Yazılım şirketi CEO'ları", hint: "Türkiye · yazılım ve bilişim", query: { roles: ["sahip", "ust"], country: "turkey", industries: ["Computer Software", "Information Technology & Services"] } },
-  { id: "istanbul-ceo", label: "İstanbul'daki üst yöneticiler", hint: "İstanbul · CEO ve genel müdürler", query: { roles: ["ust"], country: "turkey", city: "İstanbul" } },
+  { id: "pazarlama", label: "Pazarlama yöneticileri", prompt: "Türkiye'deki pazarlama müdürleri ve direktörleri" },
+  { id: "kurucu-kobi", label: "Küçük işletme kurucuları", prompt: "Türkiye'deki 1-50 çalışanlı küçük işletmelerin kurucuları" },
+  { id: "eticaret", label: "E-ticaret yöneticileri", prompt: "E-ticaret şirketlerinin kurucuları ve genel müdürleri" },
+  { id: "otel", label: "Otel ve restoran sahipleri", prompt: "Türkiye'deki otel ve restoran sahipleri" },
+  { id: "yazilim", label: "Yazılım şirketi CEO'ları", prompt: "Türkiye'deki yazılım şirketlerinin CEO'ları" },
+  { id: "istanbul-ceo", label: "İstanbul'daki üst yöneticiler", prompt: "İstanbul'daki CEO'lar ve genel müdürler" },
 ];
 
-export const emptySearch = (): LeadSearchInput => ({ roles: [], titles: [], notTitles: [], excludeJunior: true, perCompany: 1, country: "turkey", city: undefined, industries: [], sizes: [], keywords: [], notKeywords: [], count: 25 });
+export const emptySearch = (country: string = "turkey"): LeadSearchInput => ({ roles: [], titles: [], notTitles: [], excludeJunior: true, perCompany: 1, country, city: undefined, industries: [], sizes: [], keywords: [], notKeywords: [], count: 25 });
 
 /** "Ayşe Demir" → "Ayşe D." (önizlemede soyadı kısaltılır). */
 export const shortName = (name: string | null) => {
@@ -201,7 +253,11 @@ export const shortName = (name: string | null) => {
 export const browseSizes = [10, 25, 50, 100, 200] as const;
 
 /** Listeleme sonucundaki bir satır: soyadı, e-posta ve LinkedIn gizlidir; kişi eklenince açılır. */
-export type BrowseRow = { rid: number; name: string; jobTitle: string | null; company: string | null; location: string | null; owned: boolean };
+export type BrowseRow = { rid: number; name: string; jobTitle: string | null; company: string | null; location: string | null; owned: boolean; /** JEV uyum skoru (0-100); skorlanamadıysa null. */ score: number | null };
+
+/** Skora göre uyum grubu. */
+export const scoreTier = (score: number | null): "yuksek" | "orta" | "dusuk" | null => (score === null ? null : score >= 70 ? "yuksek" : score >= 45 ? "orta" : "dusuk");
+export const tierLabels = { yuksek: "Yüksek uyum", orta: "Orta uyum", dusuk: "Düşük uyum" } as const;
 
 export type LeadBrowse = {
   id: string;
@@ -216,25 +272,3 @@ export type LeadBrowse = {
 };
 
 export type SavedSearch = { id: string; name: string; query: LeadSearchInput; createdAt: string };
-
-/** Unvan seçicideki öneriler (yazdıkça süzülür; listede olmayan unvan da yazılıp eklenebilir). Türkçe ve İngilizce karışık: veritabanında ikisi de geçer. */
-export const titleDictionary: readonly string[] = [
-  "CEO", "Founder", "Co-Founder", "Owner", "Managing Director", "General Manager", "President", "Chairman", "Partner",
-  "Genel Müdür", "Genel Müdür Yardımcısı", "Kurucu", "Kurucu Ortak", "Yönetim Kurulu Başkanı", "İşletme Sahibi", "Şirket Sahibi", "Ortak", "İcra Kurulu Başkanı",
-  "CMO", "Chief Marketing Officer", "Marketing Manager", "Marketing Director", "Head of Marketing", "VP Marketing", "Digital Marketing Manager", "Brand Manager", "Growth Manager", "Content Manager", "Social Media Manager", "Performance Marketing Manager", "E-commerce Manager",
-  "Pazarlama Müdürü", "Pazarlama Direktörü", "Pazarlama Yöneticisi", "Dijital Pazarlama Müdürü", "Marka Müdürü", "Sosyal Medya Yöneticisi", "E-ticaret Müdürü", "İçerik Müdürü",
-  "Sales Manager", "Sales Director", "Head of Sales", "VP Sales", "Business Development Manager", "Account Manager", "Key Account Manager", "Export Manager", "Regional Sales Manager",
-  "Satış Müdürü", "Satış Direktörü", "Satış Yöneticisi", "İş Geliştirme Müdürü", "Müşteri Yöneticisi", "İhracat Müdürü", "Bölge Satış Müdürü",
-  "COO", "Operations Manager", "Operations Director", "Logistics Manager", "Supply Chain Manager", "Production Manager", "Plant Manager", "Quality Manager",
-  "Operasyon Müdürü", "Lojistik Müdürü", "Tedarik Zinciri Müdürü", "Üretim Müdürü", "Fabrika Müdürü", "Kalite Müdürü",
-  "CFO", "Finance Manager", "Finance Director", "Accounting Manager", "Controller", "Financial Controller",
-  "Finans Müdürü", "Mali İşler Müdürü", "Muhasebe Müdürü", "Finans Direktörü",
-  "CTO", "CIO", "IT Manager", "IT Director", "Head of IT", "Head of Engineering", "Engineering Manager", "Software Development Manager", "Product Manager", "Head of Product",
-  "Bilgi Teknolojileri Müdürü", "BT Müdürü", "Yazılım Müdürü", "Ürün Müdürü", "Teknoloji Direktörü",
-  "HR Manager", "Human Resources Manager", "HR Director", "Head of HR", "Talent Acquisition Manager", "Recruiter",
-  "İnsan Kaynakları Müdürü", "İK Müdürü", "İnsan Kaynakları Direktörü", "İşe Alım Uzmanı",
-  "Procurement Manager", "Purchasing Manager", "Head of Procurement", "Buyer", "Satın Alma Müdürü", "Satın Alma Yöneticisi", "Satın Alma Uzmanı",
-  "Customer Success Manager", "Customer Service Manager", "Müşteri Hizmetleri Müdürü", "Müşteri Deneyimi Müdürü",
-  "Store Manager", "Mağaza Müdürü", "Branch Manager", "Şube Müdürü", "Restaurant Manager", "Restoran Müdürü", "Hotel Manager", "Otel Müdürü", "Front Office Manager",
-  "Architect", "Mimar", "Engineer", "Mühendis", "Doctor", "Doktor", "Lawyer", "Avukat", "Accountant", "Mali Müşavir", "Consultant", "Danışman",
-] as const;

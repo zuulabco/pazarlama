@@ -5,8 +5,8 @@ export const site = {
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000"),
-  title: "Potansiyel Müşteri Bulma ve Puanlama | Adspine",
+  title: "Potansiyel Müşteri Bulma ve E-posta Otomasyonu | Adspine",
   description:
-    "Bölgenizdeki firmaları bulun, yedi kritere göre puanlayın ve hizmetinize en çok ihtiyacı olan potansiyel müşterilere önce ulaşın.",
+    "Karar vericileri bulun, Adspine AI ile yazdığınız e-postaları kendi adresinizden otomatik gönderin, yanıtları tek kutuda toplayın.",
   locale: "tr_TR",
 } as const;

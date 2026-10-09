@@ -22,7 +22,7 @@ export function setupSteps(f: HomeFacts): Step[] {
   return [
     { key: "adres", title: "Gönderici adresi bağlayın", hint: "E-postaları kendi adresinizden göndermek için Google hesabınızla tek tıkla bağlanın.", href: "/panel/posta-kutulari", cta: "Adres bağla", done: f.connectedMailboxes > 0 },
     { key: "isinma", title: "Isındırmayı açın", hint: "Yeni adreslerin itibarı haftalar içinde oluşur; erken başlamak spam'e düşmeyi azaltır.", href: "/panel/posta-kutulari", cta: "Isındırmayı aç", done: f.warmupOn > 0 },
-    { key: "kisi", title: "İlk kişileri ekleyin", hint: "Unvan ve sektöre göre listeleyin, seçtiklerinizi e-postalarıyla birlikte kaydedin.", href: "/panel/kisi-bul", cta: "Kişi bul", done: f.contacts > 0 },
+    { key: "kisi", title: "İlk kişileri ekleyin", hint: "Unvan ve sektöre göre listeleyin, seçtiklerinizi e-postalarıyla birlikte kaydedin.", href: "/panel/kisi-bul", cta: "Müşteri bul", done: f.contacts > 0 },
     { key: "kampanya", title: "İlk otomasyonunuzu başlatın", hint: "Adspine AI ile adımları yazdırın, kişileri ekleyin ve başlatın.", href: "/panel/otomasyon", cta: "Otomasyon oluştur", done: f.sent > 0 || f.campaigns > 0 },
     { key: "yanit", title: "İlk yanıtı alın", hint: "Yanıtlar Gelen kutusunda toplanır ve otomatik etiketlenir.", href: "/panel/gelen-kutusu", cta: "Gelen kutusu", done: f.replies > 0 },
   ];
@@ -36,7 +36,7 @@ export function attention(f: HomeFacts): Attention[] {
   for (const m of f.brokenMailboxes.slice(0, 2)) list.push({ key: `hata-${m.email}`, tone: "danger", text: `${m.email} adresine bağlanılamıyor; bu adresten gönderim durdu.`, href: "/panel/posta-kutulari", cta: "Düzelt" });
   if (f.sent >= 20 && f.bounceRate >= 5.5) list.push({ key: "geri", tone: "danger", text: `Geri dönen oranınız %${f.bounceRate.toFixed(1).replace(".", ",")}: güvenli sınırın üzerinde. Listeyi temizleyin, gönderimi azaltın.`, href: "/panel/raporlar", cta: "Raporlara bak" });
   else if (f.sent >= 20 && f.bounceRate >= 3) list.push({ key: "geri", tone: "warn", text: `Geri dönen oranınız %${f.bounceRate.toFixed(1).replace(".", ",")}; %2 altı hedeflenir.`, href: "/panel/raporlar", cta: "Raporlara bak" });
-  if (f.credits <= 10) list.push({ key: "kredi", tone: "warn", text: f.credits === 0 ? "Spine Krediniz bitti; yeni kişi eklemek için paketinizi yükseltin." : `Yalnızca ${f.credits} Spine Krediniz kaldı.`, href: "/panel/kisi-bul", cta: "Kişi bul" });
+  if (f.credits <= 10) list.push({ key: "kredi", tone: "warn", text: f.credits === 0 ? "Spine Krediniz bitti; yeni kişi eklemek için paketinizi yükseltin." : `Yalnızca ${f.credits} Spine Krediniz kaldı.`, href: "/panel/kisi-bul", cta: "Müşteri bul" });
   return list;
 }
 
@@ -57,5 +57,5 @@ export function focusOf(f: HomeFacts): Focus {
   if (next) return { tone: "info", title: next.title, text: next.hint, href: next.href, cta: next.cta, progress };
   const low = attention(f).find((a) => a.key === "kredi" || a.key === "geri");
   if (low) return { tone: "warn", title: "Dikkat edilecek bir şey var", text: low.text, href: low.href, cta: low.cta, progress };
-  return { tone: "ok", title: "Her şey yolunda", text: "Yeni kişiler bulup otomasyonlarınıza ekleyerek devam edin.", href: "/panel/kisi-bul", cta: "Kişi bul", progress };
+  return { tone: "ok", title: "Her şey yolunda", text: "Yeni kişiler bulup otomasyonlarınıza ekleyerek devam edin.", href: "/panel/kisi-bul", cta: "Müşteri bul", progress };
 }

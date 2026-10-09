@@ -39,7 +39,7 @@ const sections = [
   {
     title: "Aktarım",
     body: [
-      "Hizmetin sunulabilmesi için veriler; kimlik doğrulama (Google Firebase), barındırma (Vercel), veritabanı (Supabase), işletme verisi toplama (Apify) ve yapay zekâ ile değerlendirme (TypeSafe, NVIDIA) hizmet sağlayıcılarına aktarılabilir. Bu sağlayıcıların bir kısmı yurt dışında bulunduğundan aktarım KVKK m. 9'da öngörülen güvencelerle yapılır.",
+      "Hizmetin sunulabilmesi için veriler; kimlik doğrulama (Google Firebase), barındırma (Vercel), veritabanı (Supabase), kişi verisi sağlama (Apify) ve yapay zekâ ile değerlendirme (TypeSafe, NVIDIA) hizmet sağlayıcılarına aktarılabilir. Bu sağlayıcıların bir kısmı yurt dışında bulunduğundan aktarım KVKK m. 9'da öngörülen güvencelerle yapılır.",
     ],
   },
   {

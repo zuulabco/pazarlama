@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { channels, companySizes, labelOf, sectors, services, signals, workTypes } from "@/modules/profile/options";
-import { computeWeights, criteria } from "@/modules/profile/weights";
 import type { Draft } from "@/modules/profile/draft";
-import styles from "./wizard.module.css";
 
 export type EditableStage = "about" | "target" | "reach" | "fit";
 
@@ -35,9 +33,6 @@ function Section({ title, onEdit, children }: { title: string; onEdit: () => voi
 
 /** Son adımın bilgi kartı: her bölüm ilgili adıma dönülerek düzenlenebilir. */
 export function SummaryCard({ draft, onEdit }: { draft: Draft; onEdit: (stage: EditableStage) => void }) {
-  const weights = computeWeights(draft);
-  const top = Math.max(...Object.values(weights));
-  const emphasize = top - Math.min(...Object.values(weights)) >= 3;
   const signalItems = [...draft.signals.map((s) => labelOf(signals, s))];
   const place = draft.cityScope === "turkey" ? ["Türkiye genelinde"] : draft.targetCities;
 
@@ -71,24 +66,6 @@ export function SummaryCard({ draft, onEdit }: { draft: Draft; onEdit: (stage: E
         {draft.signalNotes && <p className="text-pretty text-muted">&ldquo;{draft.signalNotes}&rdquo;</p>}
       </Section>
 
-      <section className="border-t border-line pt-6">
-        <h2 className="text-sm font-medium">Puanlama öncelikleriniz</h2>
-        <p className="mt-1 mb-4 text-sm text-muted">Firmalar, cevaplarınıza göre bu önceliklerle puanlanacak.</p>
-        <dl className="grid gap-3">
-          {criteria.map((c) => (
-            <div key={c.key} className="grid grid-cols-[minmax(0,10.5rem)_1fr_2rem] items-center gap-3 text-sm">
-              <dt className="truncate text-muted">{c.label}</dt>
-              <div className="h-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden="true">
-                <div
-                  className={`${styles.weight} h-full rounded-full ${emphasize && weights[c.key] === top ? "bg-forest" : "bg-score-mid"}`}
-                  style={{ width: `${(weights[c.key] / top) * 100}%` }}
-                />
-              </div>
-              <dd className="text-right font-medium tabular-nums">{weights[c.key]}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
     </div>
   );
 }

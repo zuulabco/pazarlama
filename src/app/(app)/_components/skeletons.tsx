@@ -20,7 +20,7 @@ function Row() {
   );
 }
 
-/** Sol filtre çubuğu + sağda sonuç listesi (Kişi bul, Firma bul). */
+/** Sol filtre çubuğu + sağda sonuç listesi (Müşteri bul). */
 export function LeadsSkeleton() {
   return (
     <SkeletonRegion>
@@ -46,7 +46,7 @@ export function LeadsSkeleton() {
   );
 }
 
-/** Arama kutusu, filtre seçenekleri ve satır listesi (Kayıtlı kişiler/firmalar, Otomasyonlar, Gönderici adresleri). */
+/** Arama kutusu, filtre seçenekleri ve satır listesi (Kayıtlı kişiler, Otomasyonlar, Gönderici adresleri). */
 export function ListSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <SkeletonRegion>

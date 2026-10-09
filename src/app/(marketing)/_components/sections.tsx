@@ -6,7 +6,7 @@ import { BoltIcon, CheckIcon, InboxIcon, SparkleIcon } from "@/components/ui/ico
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { planList } from "@/modules/outreach/plans";
 import styles from "./landing.module.css";
-import { AutomationMock, ChatMock, DashboardMock, FirmsMock, InboxMock, LeadsMock, ReportMock } from "./mocks";
+import { AutomationMock, ChatMock, DashboardMock, InboxMock, LeadsMock, ReportMock } from "./mocks";
 
 type SectionProps = { id?: string; children: ReactNode; className?: string; padding?: string };
 
@@ -74,7 +74,7 @@ export function Hero() {
           </ScrollReveal>
           <ScrollReveal delay={160}>
             <p className="mt-7 max-w-[34rem] text-lg text-muted">
-              Adspine karar vericileri ve yerel firmaları bulur, Adspine AI ile yazdığınız e-postaları sizin adresinizden otomatik gönderir, yanıtları tek kutuda toplar ve sonucu raporlar.
+              Adspine karar vericileri bulur, Adspine AI ile yazdığınız e-postaları sizin adresinizden otomatik gönderir, yanıtları tek kutuda toplar ve sonucu raporlar.
             </p>
           </ScrollReveal>
           <ScrollReveal delay={240} className="mt-9 flex flex-wrap gap-3">
@@ -139,23 +139,17 @@ export function Find() {
     <Section id="bul">
       <ScrollReveal>
         <Heading eyebrow="Bul" title="Hedef kitlenizi dakikalar içinde çıkarın">
-          İster karar vericileri unvana göre, ister bölgenizdeki yerel firmaları puanlarına göre bulun. Seçtiklerinizi kaydedin, e-postalarını otomatik bulalım.
+          Karar vericileri unvana, sektöre ve konuma göre bulun. Seçtiklerinizi kaydedin, iş e-postalarıyla birlikte otomasyonunuza ekleyin.
         </Heading>
       </ScrollReveal>
-      <div className="mt-14 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-2">
-        <ScrollReveal className="grid gap-6">
+      <div className="mt-14 grid grid-cols-[minmax(0,1fr)] items-center gap-12 lg:grid-cols-2 lg:gap-20">
+        <ScrollReveal>
           <LeadsMock />
-          <div>
-            <h3 className="text-lg font-semibold tracking-tight">Kişi bul</h3>
-            <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin. Listelemek serbest; yalnızca gizli bilgilerini açıp eklediğiniz kişiler için Spine Kredi harcanır.</p>
-          </div>
         </ScrollReveal>
-        <ScrollReveal delay={120} className="grid gap-6">
-          <FirmsMock />
-          <div>
-            <h3 className="text-lg font-semibold tracking-tight">Firma bul</h3>
-            <p className="mt-2 text-muted">Bölge ve sektör seçin; firmalar hedef profilinize göre puanlanır, kimden başlamanız gerektiği sıralanır.</p>
-          </div>
+        <ScrollReveal delay={120}>
+          <h3 className="text-lg font-semibold tracking-tight">Müşteri bul</h3>
+          <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin ya da ne aradığınızı Adspine AI&apos;a yazın. Listelemek serbest; yalnızca gizli bilgilerini açıp eklediğiniz kişiler için Spine Kredi harcanır.</p>
+          <Points items={["Aynı şirketten tek kişi, zaten kayıtlı olanları atla", "İş e-postaları doğrulanır", "Aramalarınızı kaydedip tekrar kullanın"]} />
         </ScrollReveal>
       </div>
     </Section>
@@ -341,8 +335,8 @@ export function Pricing() {
 
 export const faqs = [
   {
-    q: "Kişi ve firma verileri nereden geliyor?",
-    a: "Kişiler herkese açık iş bilgilerinden (unvan, şirket, iş e-postası) bulunur; yerel firmalar herkese açık işletme bilgilerinden (ad, kategori, adres, telefon, web sitesi, puan, yorum sayısı) toplanır.",
+    q: "Kişi verileri nereden geliyor?",
+    a: "Kişiler herkese açık iş bilgilerinden (unvan, şirket, iş e-postası) bulunur.",
   },
   {
     q: "E-postalar kimin adresinden gidiyor?",

@@ -89,7 +89,7 @@ const sections: SectionDef[] = [
   {
     id: "fit",
     title: "İyi aday işaretleri",
-    description: "Hangi firmaların listenizde öne çıkacağını belirler.",
+    description: "Adspine AI'nın mesajlarınızı ve önerilerinizi hazırlarken kullandığı ipuçları.",
     view: (d) => (
       <>
         <Chips items={d.signals.map((s) => labelOf(signals, s))} />

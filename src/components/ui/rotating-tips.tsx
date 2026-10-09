@@ -5,13 +5,11 @@ import styles from "./rotating-tips.module.css";
 
 /** Müşteri aramasında dönen ipuçları. */
 export const searchTips = [
-  "Web sitesi olmayan firmalar, web tasarım teklifleri için en sıcak adaylardır.",
-  "Çok yorumu olup dijitalde zayıf kalan firmalar, genellikle hızlı karar verir.",
-  "İlk mesajda hizmetinizi değil, firmanın kaçırdığı fırsatı anlatmak daha çok ilgi çeker.",
-  "Telefonu olan firmalara önce WhatsApp'tan yazmak, aramaktan daha az rahatsız edicidir.",
-  "Yıldızla işaretlediğiniz firmalar, Firmalar sayfasında takip listenizde toplanır.",
-  "Skorlar profilinize göre hesaplanır; profilinizi güncellerseniz sonraki aramalar değişir.",
-  "Az firma istemek sonucu hızlandırır; ilk bakış için 10–25 firma yeterlidir.",
+  "Aynı şirketten tek kişi seçmek, hem çeşitlilik hem de spam riski açısından daha güvenlidir.",
+  "Dar bir unvan ve sektör seçimi, daha ilgili ve daha yanıt veren bir liste çıkarır.",
+  "İlk e-postada hizmetinizi değil, alıcının işine bağlanan tek bir fayda cümlesini yazmak daha çok ilgi çeker.",
+  "Listelemek Spine Kredi harcamaz; yalnızca gizli bilgilerini açıp eklediğiniz kişiler harcar.",
+  "Kaydettiğiniz aramalar, filtrelerinizi tek tıkla geri getirir.",
 ];
 
 const INTERVAL_MS = 3800;

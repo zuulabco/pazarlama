@@ -1,6 +1,6 @@
 /** Planlar ve sınırları (sunucu ve istemci ortak). Fiyatlar ödeme altyapısı bağlanınca eklenecek; şimdilik yalnızca sınırlar uygulanır. */
 
-export type PlanKey = "ucretsiz" | "baslangic" | "buyume" | "ajans";
+export type PlanKey = "ucretsiz" | "baslangic" | "buyume" | "ajans" | "kurucu";
 
 export type Plan = {
   key: PlanKey;
@@ -24,15 +24,37 @@ export type Plan = {
   ai: boolean;
 };
 
-export const plans: Record<PlanKey, Plan> = {
+export const plans: Record<Exclude<PlanKey, "kurucu">, Plan> & Partial<Record<"kurucu", Plan>> = {
   ucretsiz: { key: "ucretsiz", label: "Ücretsiz", senders: 1, monthlyCredits: 25, campaigns: 1, dailyLeadCap: 25, browsePerDay: 25, browsePerMonth: 75, warmupAndInbox: false, ai: false, priceUsd: 0 },
   baslangic: { key: "baslangic", label: "Başlangıç", senders: 3, monthlyCredits: 750, campaigns: 3, dailyLeadCap: 150, browsePerDay: 400, browsePerMonth: 2250, warmupAndInbox: false, ai: false, priceUsd: 29 },
   buyume: { key: "buyume", label: "Büyüme", senders: 10, monthlyCredits: 2500, campaigns: 20, dailyLeadCap: 500, browsePerDay: 1000, browsePerMonth: 7500, warmupAndInbox: true, ai: true, priceUsd: 79 },
   ajans: { key: "ajans", label: "Ajans", senders: 20, monthlyCredits: 8000, campaigns: 100, dailyLeadCap: 1000, browsePerDay: 3000, browsePerMonth: 24000, warmupAndInbox: true, ai: true, priceUsd: 179 },
 };
 
-export const planList = Object.values(plans);
-export const planOf = (key: string | null | undefined): Plan => plans[(key as PlanKey) in plans ? (key as PlanKey) : "ucretsiz"];
+/**
+ * Kurucu hesabı: hiçbir plan sınırı yoktur (gönderici adresi, otomasyon, Spine Kredi, listeleme). Tanıtım sayfasında listelenmez ve
+ * veritabanındaki plan sütununa yazılmaz; yalnızca `founderEmails` içindeki oturum e-postaları için kodda uygulanır.
+ */
+const UNLIMITED = 1_000_000;
+export const founderPlan: Plan = {
+  key: "kurucu",
+  label: "Kurucu",
+  senders: UNLIMITED,
+  monthlyCredits: UNLIMITED,
+  campaigns: UNLIMITED,
+  dailyLeadCap: UNLIMITED,
+  browsePerDay: UNLIMITED,
+  browsePerMonth: UNLIMITED,
+  warmupAndInbox: true,
+  ai: true,
+  priceUsd: 0,
+};
+export const founderEmails: readonly string[] = ["info@adspine.app"];
+export const isUnlimited = (plan: Plan) => plan.key === "kurucu";
+
+/** Tanıtım sayfasında gösterilen herkese açık planlar (kurucu hesabı hariç). */
+export const planList = Object.values(plans).filter((p) => p.key !== "kurucu");
+export const planOf = (key: string | null | undefined): Plan => (key && key in plans ? plans[key as keyof typeof plans]! : plans.ucretsiz);
 
 /** Bir gönderici adresinden günde güvenle gönderilebilecek e-posta (soğuk e-posta için ~20-50; ortası). */
 export const SAFE_DAILY_PER_SENDER = 30;

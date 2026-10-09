@@ -6,7 +6,7 @@ import type { ReportsData } from "./reports";
  */
 
 export const assistantLinks = [
-  { path: "/panel/kisi-bul", label: "Kişi bul" },
+  { path: "/panel/kisi-bul", label: "Müşteri bul" },
   { path: "/panel/kisiler", label: "Kişiler" },
   { path: "/panel/otomasyon", label: "Otomasyon" },
   { path: "/panel/gelen-kutusu", label: "Gelen kutusu" },

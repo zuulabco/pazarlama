@@ -1,7 +1,8 @@
 import "server-only";
 import { db } from "@/lib/supabase/server";
 import { OutreachUnavailableError } from "./contacts";
-import { planOf, plans, type Plan } from "./plans";
+import { adminAuth } from "@/lib/firebase/admin";
+import { founderEmails, founderPlan, planOf, plans, type Plan } from "./plans";
 
 export type Account = { plan: Plan; credits: number; periodStart: string };
 
@@ -17,6 +18,22 @@ const unavailable = (e: { code?: string; message: string } | null) => {
   throw new Error(e.message);
 };
 
+const founderCache = new Map<string, boolean>();
+
+/** Oturum e-postası kurucu listesinde mi? (Firebase'den bir kez sorulur, süreç boyunca saklanır.) Ulaşılamazsa kurucu sayılmaz. */
+async function isFounder(uid: string): Promise<boolean> {
+  const hit = founderCache.get(uid);
+  if (hit !== undefined) return hit;
+  try {
+    const email = (await adminAuth().getUser(uid)).email?.toLowerCase() ?? "";
+    const yes = founderEmails.includes(email);
+    founderCache.set(uid, yes);
+    return yes;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Kullanıcının paketini ve kalan kredisini döndürür; hesap yoksa ücretsiz paketle açar, ay değiştiyse krediyi yeniler.
  * Paketin kredisi veritabanına parametre olarak verilir; mevcut hesabın paketi önce okunur.
@@ -24,11 +41,18 @@ const unavailable = (e: { code?: string; message: string } | null) => {
 export async function getAccount(uid: string): Promise<Account> {
   const existing = await db().from("outreach_accounts").select("plan").eq("user_uid", uid).maybeSingle<{ plan: string }>();
   unavailable(existing.error);
-  const plan = planOf(existing.data?.plan);
+  const founder = await isFounder(uid);
+  const plan = founder ? founderPlan : planOf(existing.data?.plan);
   const { data, error } = await db().rpc("outreach_account_touch", { p_uid: uid, p_monthly: plan.monthlyCredits });
   unavailable(error);
   const row = (Array.isArray(data) ? data[0] : data) as { out_plan: string; out_credits: number; out_period_start: string } | null;
-  return { plan: planOf(row?.out_plan ?? plan.key), credits: row?.out_credits ?? plan.monthlyCredits, periodStart: row?.out_period_start ?? new Date().toISOString() };
+  let credits = row?.out_credits ?? plan.monthlyCredits;
+  // Kurucu hesabı: bakiye yarıya düşerse tam değere tamamlanır (sınırsız hissi; ledger'a "elle" olarak yazılır).
+  if (founder && credits < plan.monthlyCredits / 2) {
+    const topped = await db().rpc("outreach_credit_change", { p_uid: uid, p_delta: plan.monthlyCredits - credits, p_reason: "elle", p_ref: "kurucu" });
+    if (typeof topped.data === "number") credits = topped.data;
+  }
+  return { plan: founder ? plan : planOf(row?.out_plan ?? plan.key), credits, periodStart: row?.out_period_start ?? new Date().toISOString() };
 }
 
 /** Krediyi atomik olarak düşer; yetmiyorsa hata fırlatır. Yeni bakiyeyi döndürür. */

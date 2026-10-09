@@ -34,12 +34,12 @@ const copy: Record<Exclude<Stage, "intro">, { short: string; title: string; text
   reach: {
     short: "Bölge ve iletişim",
     title: "Nerede ve nasıl ulaşıyorsunuz?",
-    text: "İletişim bilgisi bulunan, bölgenizdeki firmaları öne çıkaracağız.",
+    text: "Hangi bölgede ve hangi kanallardan müşteri aradığınızı öğrenelim.",
   },
   fit: {
     short: "İyi aday",
     title: "İyi bir aday nasıl biri?",
-    text: "Bu seçimler, hangi firmaların listenizde öne çıkacağını belirler.",
+    text: "Adspine AI, mesajlarınızı ve arama önerilerinizi buna göre hazırlar.",
   },
   review: {
     short: "Bilgi kartı",
@@ -58,7 +58,7 @@ const stageFields: Record<Exclude<Stage, "intro" | "site" | "review">, (keyof Dr
 
 const setupTips = [
   "Bilgileriniz kaydediliyor…",
-  "Puanlama önceliklerinizi hesaplıyoruz…",
+  "Profilinizi hazırlıyoruz…",
   "Müşteri aramanız için hazırlık yapıyoruz…",
   "Neredeyse bitti…",
 ];
@@ -256,7 +256,7 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
               <ShapeLoader />
               <div className="grid gap-2">
                 <h1 className="text-3xl font-semibold tracking-display sm:text-4xl">Hesabınız hazırlanıyor</h1>
-                <p className="max-w-[28rem] text-lg text-muted">Bilgilerinizi kaydediyor ve puanlama profilinizi oluşturuyoruz.</p>
+                <p className="max-w-[28rem] text-lg text-muted">Bilgilerinizi kaydediyor ve profilinizi oluşturuyoruz.</p>
               </div>
               <RotatingTips tips={setupTips} label={null} />
             </div>
@@ -266,8 +266,8 @@ export function Wizard({ defaultName, initial }: { defaultName: string; initial:
                 {firstName ? `Hoş geldiniz, ${firstName}.` : "Hoş geldiniz."}
               </h1>
               <p style={{ "--i": 1 } as React.CSSProperties} className="max-w-[30rem] text-lg text-muted">
-                Adspine&apos;i size göre kuralım. Dört kısa soruyla ne sattığınızı ve kime sattığınızı öğreneceğiz; listeniz
-                buna göre puanlanacak. Bir dakika sürer.
+                Adspine&apos;i size göre kuralım. Dört kısa soruyla ne sattığınızı ve kime sattığınızı öğreneceğiz; mesajlarınız ve
+                arama önerileriniz buna göre hazırlanacak. Bir dakika sürer.
               </p>
               <div style={{ "--i": 2 } as React.CSSProperties}>
                 <Button type="submit" size="lg">

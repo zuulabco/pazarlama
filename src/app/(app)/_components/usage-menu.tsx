@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { GaugeIcon } from "@/components/ui/icons";
 import popover from "@/components/ui/popover.module.css";
+import { isUnlimited } from "@/modules/outreach/plans";
 import type { AccountSummary } from "@/modules/outreach/usage";
 
 const num = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
@@ -72,6 +73,7 @@ export function UsageMenu() {
   }, [open]);
 
   const sending = data?.sending ?? { today: 0, capacity: 0 };
+  const unlimited = data ? isUnlimited(data.plan) : false;
   const ratio = data ? Math.min(data.credits / Math.max(data.plan.monthlyCredits, 1), 1) : null;
 
   return (
@@ -123,8 +125,8 @@ export function UsageMenu() {
                   <p className="text-xs text-muted">{nextReset()} tarihinde yenilenir</p>
                 </div>
                 <p className="text-2xl leading-none font-semibold tabular-nums">
-                  {num(data.credits)}
-                  <span className="text-sm font-normal text-muted"> / {num(data.plan.monthlyCredits)}</span>
+                  {unlimited ? "Sınırsız" : num(data.credits)}
+                  {!unlimited && <span className="text-sm font-normal text-muted"> / {num(data.plan.monthlyCredits)}</span>}
                 </p>
               </div>
               <div role="progressbar" aria-label="Spine Kredi" aria-valuemin={0} aria-valuemax={data.plan.monthlyCredits} aria-valuenow={data.credits} className="h-1.5 overflow-hidden rounded-full bg-surface">
@@ -134,16 +136,16 @@ export function UsageMenu() {
             </div>
 
             <Group title="Listeleme" note="Listelemek Spine Kredi harcamaz; ayrı bir haktır.">
-              <Meter label="Bugün" value={data.browse.today} max={data.browse.dailyLimit} text={`${num(data.browse.today)} / ${num(data.browse.dailyLimit)}`} />
-              <Meter label="Bu ay" value={data.browse.used} max={data.browse.limit} text={`${num(data.browse.used)} / ${num(data.browse.limit)}`} />
+              <Meter label="Bugün" value={data.browse.today} max={data.browse.dailyLimit} text={unlimited ? `${num(data.browse.today)} · sınırsız` : `${num(data.browse.today)} / ${num(data.browse.dailyLimit)}`} />
+              <Meter label="Bu ay" value={data.browse.used} max={data.browse.limit} text={unlimited ? `${num(data.browse.used)} · sınırsız` : `${num(data.browse.used)} / ${num(data.browse.limit)}`} />
             </Group>
 
             <Group title="Gönderim">
               <Meter label="Son 24 saatte gönderilen" value={sending.today} max={sending.capacity} text={sending.capacity ? `${num(sending.today)} / ${num(sending.capacity)}` : "Adres yok"} />
-              <Meter label="Gönderici adresi" value={data.senders.used} max={data.senders.limit} text={`${data.senders.used} / ${data.senders.limit}`} />
-              <Meter label="Otomasyon" value={data.campaigns.used} max={data.campaigns.limit} text={`${data.campaigns.used} / ${data.campaigns.limit}`} />
+              <Meter label="Gönderici adresi" value={data.senders.used} max={data.senders.limit} text={unlimited ? `${data.senders.used} · sınırsız` : `${data.senders.used} / ${data.senders.limit}`} />
+              <Meter label="Otomasyon" value={data.campaigns.used} max={data.campaigns.limit} text={unlimited ? `${data.campaigns.used} · sınırsız` : `${data.campaigns.used} / ${data.campaigns.limit}`} />
               <p className="text-xs text-muted">
-                Aylık gönderim kapasiteniz yaklaşık {num(data.monthlyCapacity)} e-posta.{" "}
+                {unlimited ? "Kurucu hesabı: plan sınırı yok." : `Aylık gönderim kapasiteniz yaklaşık ${num(data.monthlyCapacity)} e-posta.`}{" "}
                 <Link href="/panel/posta-kutulari" onClick={() => setOpen(false)} className="text-accent underline underline-offset-4 hover:no-underline">
                   Gönderici adresleri
                 </Link>

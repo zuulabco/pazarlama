@@ -8,7 +8,7 @@ import { companyKey, limitPerCompany } from "./company";
 import { classifyEmail, cleanEmail, emailDomain, isPlausibleEmail } from "./discover/emails";
 import { isDisposable, statusFor } from "./discover/verify-rules";
 import { isSuppressedIn, suppressionSets } from "./enrollments";
-import { expandNotTitles, expandTitles, type LeadJob, type LeadSearchInput } from "./lead-options";
+import { expandKeywords, expandNotTitles, expandTitles, type LeadJob, type LeadSearchInput } from "./lead-options";
 import { maxContacts } from "./schema";
 
 /**
@@ -47,9 +47,9 @@ export async function apify<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 /** Sağlayıcıya gidecek girdi. Yalnızca doğrulanmış e-postalar istenir; cep telefonu istenmez (KVKK ve maliyet). */
-export function buildActorInput(q: LeadSearchInput): Record<string, unknown> {
+export function buildActorInput(q: LeadSearchInput, count: number = q.count): Record<string, unknown> {
   const input: Record<string, unknown> = {
-    max_result: q.count,
+    max_result: count,
     include_mobile: false,
     email_status: ["verified"],
     // Sağlayıcı İngilizce yazımla eşleşir: "İstanbul" → "istanbul", "Şanlıurfa" → "sanliurfa".
@@ -61,8 +61,8 @@ export function buildActorInput(q: LeadSearchInput): Record<string, unknown> {
   if (notTitles.length) input.contact_job_not_titles = notTitles;
   if (q.industries.length) input.company_industry = q.industries;
   if (q.sizes.length) input.company_num_employees_range = q.sizes;
-  if (q.keywords.length) input.keywords = q.keywords;
-  if (q.notKeywords.length) input.not_keywords = q.notKeywords;
+  if (q.keywords.length) input.keywords = expandKeywords(q.keywords);
+  if (q.notKeywords.length) input.not_keywords = expandKeywords(q.notKeywords);
   return input;
 }
 

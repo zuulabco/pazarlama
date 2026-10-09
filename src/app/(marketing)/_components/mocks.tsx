@@ -46,7 +46,7 @@ export function DashboardMock() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              ["Kişi bul", "184 kayıtlı", UsersIcon],
+              ["Müşteri bul", "184 kayıtlı", UsersIcon],
               ["Otomasyon", "2 aktif", BoltIcon],
             ].map(([t, s, Icon]) => {
               const I = Icon as typeof UsersIcon;

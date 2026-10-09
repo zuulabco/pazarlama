@@ -13,8 +13,8 @@ export const appModules: readonly AppModule[] = [
   {
     id: "musteri-bul",
     name: "Müşteri bul",
-    description: "Bölgenizdeki firmaları bulun, puanlayın ve önceliklendirin.",
-    href: "/panel/musteri-bul",
+    description: "Karar vericileri unvan, sektör ve konuma göre bulun; iş e-postalarıyla kaydedin.",
+    href: "/panel/kisi-bul",
     status: "ready",
   },
   {

@@ -1,7 +1,8 @@
 import "server-only";
 import { z } from "zod";
 import { chatJson } from "@/lib/llm/nvidia";
-import { countryOptions, emptySearch, industryOptions, roleOptions, sizeOptions, type LeadSearchInput } from "./lead-options";
+import { fold } from "@/lib/text";
+import { countryOptions, emptySearch, industryOptions, keywordCatalog, roleOptions, sizeOptions, type LeadSearchInput } from "./lead-options";
 
 /**
  * "Yapay zekâ ile ara": doğal dildeki isteği (örn. "İstanbul'daki 10-50 çalışanlı ajansların kurucuları") filtrelere çevirir.
@@ -44,7 +45,7 @@ ${sizeOptions.map((o) => `- ${o.value}`).join("\n")}
 
 Kurallar:
 - "kurucu", "sahip" → kisi_turleri: sahip. "CEO", "genel müdür" → ust. "pazarlama yöneticisi/müdürü" → pazarlama. Benzer şekilde satis, satinalma, ik, finans, bt, operasyon.
-- Listede karşılığı olmayan bir unvan istendiyse unvanlar alanına yaz (örn. "Mağaza Müdürü"); en çok 4.
+- Listede karşılığı olmayan bir unvan istendiyse unvanlar alanına kullanıcının yazdığı dilde yaz (Türkçe ya da İngilizce olabilir; sistem ikisini de arar); en çok 4.
 - Şehir adını kullanıcının yazdığı gibi yaz (örn. "İstanbul"). Şehir varsa ulke'yi de doldur.
 - "küçük işletme" → 1-10, 11-20, 21-50; "orta ölçekli" → 51-100, 101-200, 201-500. Sayı verilmişse en yakın aralıkları seç.
 - Sektör listede yoksa sektorler boş kalsın, konuyu anahtar_kelimeler'e İngilizce tek kelime olarak yaz (örn. "e-commerce"); en çok 3.`,
@@ -64,7 +65,8 @@ export function toFilters(raw: z.infer<typeof aiSchema>): Pick<LeadSearchInput, 
     city: raw.sehir?.trim().slice(0, 60) || undefined,
     industries: pick(raw.sektorler, industryOptions, 4),
     sizes: pick(raw.calisan_araliklari, sizeOptions, 5),
-    keywords: [...new Set(raw.anahtar_kelimeler.map((k) => k.trim().toLowerCase()).filter((k) => k.length >= 2 && k.length <= 40))].slice(0, 3),
+    // Kullanıcıya Türkçe gösterilir: sözlükteki İngilizce kelimeler Türkçe karşılığına çevrilir (aramada ikisi de aranır).
+    keywords: [...new Set(raw.anahtar_kelimeler.map((k) => k.trim().toLowerCase()).filter((k) => k.length >= 2 && k.length <= 40).map((k) => keywordCatalog.find((c) => fold(c.en) === fold(k))?.tr ?? k))].slice(0, 3),
   };
 }
 

@@ -208,64 +208,6 @@ export async function importContacts(uid: string, rows: ContactInput[], source: 
   return { added: batch.length, skipped: rows.length - batch.length };
 }
 
-/** Takipteki firmaları kişi olarak ekler (zaten ekli olanlar atlanır). Takipte e-posta yazılıysa o kullanılır. */
-export async function importFavorites(uid: string): Promise<{ added: number; skipped: number }> {
-  const favs = await db()
-    .from("favorites")
-    .select("id, name, city, phone, website, email")
-    .eq("user_uid", uid)
-    .limit(2000)
-    .returns<{ id: string; name: string; city: string | null; phone: string | null; website: string | null; email: string | null }[]>();
-  check("Takip listesi okunamadı", favs.error);
-  const all = favs.data ?? [];
-  if (all.length === 0) return { added: 0, skipped: 0 };
-
-  const existing = await db().from("outreach_contacts").select("favorite_id, email").eq("user_uid", uid).not("favorite_id", "is", null).returns<{ favorite_id: string; email: string | null }[]>();
-  check("Kişiler okunamadı", existing.error);
-  const have = new Set((existing.data ?? []).map((r) => r.favorite_id));
-
-  const room = maxContacts - (await countContacts(uid));
-  const taken = new Set<string>();
-  const batch = all
-    .filter((f) => !have.has(f.id))
-    .map((f): Record<string, unknown> => {
-      const raw = f.email?.trim().toLowerCase() || null;
-      // Aynı e-posta iki firmada yazılmışsa ikincisine e-posta yazılmaz (benzersizlik).
-      const email = raw && !taken.has(raw) ? raw : null;
-      if (email) taken.add(email);
-      return {
-        user_uid: uid,
-        company: f.name,
-        city: f.city,
-        phone: f.phone,
-        website: f.website,
-        source: "takip" as const,
-        favorite_id: f.id,
-        ...emailFields(email, "elle"),
-      };
-    })
-    .slice(0, Math.max(room, 0));
-
-  if (batch.length > 0) {
-    // Takipte e-posta olan firma başka bir kişide zaten varsa çakışır; bu yüzden tek tek değil, çakışanları eleyerek ekleriz.
-    const { error } = await db().from("outreach_contacts").insert(batch);
-    if (error?.code === "23505") {
-      let added = 0;
-      for (const row of batch) {
-        const one = await db().from("outreach_contacts").insert(row);
-        if (!one.error) added++;
-        else if (one.error.code === "23505") {
-          const retry = await db().from("outreach_contacts").insert({ ...row, ...emailFields(null, "yok") });
-          if (!retry.error) added++;
-        } else check("Kişi eklenemedi", one.error);
-      }
-      return { added, skipped: all.length - added };
-    }
-    check("Kişiler eklenemedi", error);
-  }
-  return { added: batch.length, skipped: all.length - batch.length };
-}
-
 export async function updateContact(uid: string, id: string, patch: Partial<ContactInput>): Promise<Contact | null> {
   const update: Record<string, unknown> = {};
   if (patch.name !== undefined) update.name = patch.name;

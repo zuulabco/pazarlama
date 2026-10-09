@@ -2,20 +2,16 @@
 
 import { useState } from "react";
 import { ActionLink } from "@/components/ui/action-link";
-import { ChatIcon, CheckIcon, CopyIcon, MailIcon } from "@/components/ui/icons";
+import { ChatIcon, CopyIcon, MailIcon } from "@/components/ui/icons";
 import { toast } from "@/components/ui/toast";
-import { gmailHref, mailtoHref, parseRecipient, whatsappHref, type Draft, type WorkFirm, type WorkKind } from "@/modules/work/context";
-
-const kindLabel: Record<WorkKind, string> = { message: "WhatsApp / DM mesajı", email: "E-posta" };
+import { gmailHref, mailtoHref, parseRecipient, whatsappHref, type Draft, type WorkKind } from "@/modules/work/context";
 
 /**
  * Gönderim kutusu: alıcı kutusuna e-posta yazılırsa Gmail ya da e-posta uygulaması, telefon yazılırsa WhatsApp
- * açılır; metin hazır dolu gelir. Takipten bir firma seçildiyse adresi/numarası hazır yazılıdır ve "Gönderdim"
- * Takip'e not düşer.
+ * açılır; metin hazır dolu gelir. Kayıtlı bir kişi seçildiyse adresi hazır yazılıdır.
  */
-export function SendBox({ kind, draft, firm, defaultTo }: { kind: WorkKind; draft: Draft; firm: WorkFirm | null; defaultTo?: string | null }) {
-  const [text, setText] = useState(() => (kind === "email" ? (firm?.email ?? firm?.phone) : (firm?.phone ?? firm?.email)) ?? defaultTo ?? "");
-  const [sent, setSent] = useState(false);
+export function SendBox({ kind, draft, defaultTo }: { kind: WorkKind; draft: Draft; defaultTo?: string | null }) {
+  const [text, setText] = useState(defaultTo ?? "");
 
   const recipient = parseRecipient(text);
   const invalid = recipient?.type === "invalid";
@@ -36,30 +32,6 @@ export function SendBox({ kind, draft, firm, defaultTo }: { kind: WorkKind; draf
     }
   }
 
-  async function markSent() {
-    if (!firm?.id) return;
-    try {
-      const note = `${kindLabel[kind]} gönderildi: "${draft.body.replace(/\s+/g, " ").slice(0, 150)}${draft.body.length > 150 ? "…" : ""}"`;
-      const noted = await fetch(`/api/favorites/${firm.id}/notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: note }),
-      });
-      if (!noted.ok) throw new Error("Takip'e işlenemedi. Tekrar deneyin.");
-      if (firm.status === "takipte") {
-        await fetch(`/api/favorites/${firm.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "iletisim" }),
-        });
-      }
-      setSent(true);
-      toast("Notlara işlendi", { action: { label: "Kayıtlı firmalar", href: "/panel/firmalar" } });
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Takip'e işlenemedi. Tekrar deneyin.", { kind: "error" });
-    }
-  }
-
   return (
     <div className="grid gap-4 rounded-row bg-sunken/60 p-4 sm:p-5">
       <div className="grid gap-2">
@@ -70,10 +42,7 @@ export function SendBox({ kind, draft, firm, defaultTo }: { kind: WorkKind; draf
         <input
           id="send-recipient"
           value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            setSent(false);
-          }}
+          onChange={(e) => setText(e.target.value)}
           inputMode="email"
           autoComplete="off"
           autoCapitalize="none"
@@ -107,17 +76,6 @@ export function SendBox({ kind, draft, firm, defaultTo }: { kind: WorkKind; draf
           <CopyIcon />
           Kopyala
         </button>
-        {firm?.id && (
-          <button
-            type="button"
-            onClick={markSent}
-            disabled={sent}
-            className="ml-auto inline-flex h-9 items-center gap-2 rounded-full bg-forest px-4 text-sm font-medium text-white transition-colors hover:bg-forest-hover disabled:opacity-60"
-          >
-            <CheckIcon />
-            {sent ? "Notlara işlendi" : "Gönderdim"}
-          </button>
-        )}
       </div>
 
       {kind === "email" && (

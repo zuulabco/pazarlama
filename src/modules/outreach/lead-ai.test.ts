@@ -28,7 +28,7 @@ describe("yapay zekâ filtreleri", () => {
 
   it("şehri, ülkeyi ve anahtar kelimeleri düzenler; çıktı arama şemasını geçer", () => {
     const f = toFilters(raw({ kisi_turleri: ["ust"], ulke: "germany", sehir: " Berlin ", anahtar_kelimeler: ["E-Commerce", "e-commerce", "a"] }));
-    expect(f).toMatchObject({ country: "germany", city: "Berlin", keywords: ["e-commerce"] });
+    expect(f).toMatchObject({ country: "germany", city: "Berlin", keywords: ["e-ticaret"] });
     expect(leadSearchSchema.safeParse({ ...f, count: 25 }).success).toBe(true);
   });
 

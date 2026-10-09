@@ -100,7 +100,7 @@ export function ContactForm({
           <input value={draft.phone} onChange={(e) => set("phone", e.target.value)} maxLength={40} placeholder="0216 000 00 00" className={inputClass} />
         </Field>
         <Field label="Şehir">
-          <input value={draft.city} onChange={(e) => set("city", e.target.value)} maxLength={80} placeholder="Kadıköy" className={inputClass} />
+          <input value={draft.city} onChange={(e) => set("city", e.target.value)} maxLength={80} placeholder="İstanbul" className={inputClass} />
         </Field>
       </div>
       <Field label="Web sitesi">

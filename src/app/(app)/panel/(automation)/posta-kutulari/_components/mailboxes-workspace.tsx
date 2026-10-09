@@ -190,7 +190,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
           {plan && (
             <span className="rounded-full bg-sunken px-3 py-1.5 text-sm" title={`${plan.label} paketi`}>
               <span className="font-medium tabular-nums">
-                {mailboxes.length} / {plan.senders}
+                {mailboxes.length} / {plan.senders >= 1_000_000 ? "∞" : plan.senders}
               </span>{" "}
               gönderici adresi
             </span>
