@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { isUnlimited } from "@/modules/outreach/plans";
 import { Modal } from "@/components/ui/modal";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Segmented } from "@/components/ui/segmented";
@@ -13,6 +14,7 @@ import type { AccountSummary } from "@/modules/outreach/usage";
 import { api } from "../../kisiler/_components/contact-ui";
 import { LeadAddModal } from "./lead-add-modal";
 import { LeadFilters } from "./lead-filters";
+import styles from "./ai-bar.module.css";
 import { LeadMore } from "./lead-more";
 import { LeadResults } from "./lead-results";
 
@@ -21,6 +23,8 @@ const num = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const inputClass =
   "h-11 w-full min-w-0 rounded-control bg-surface px-3.5 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest";
+
+const filterKey = (x: LeadSearchInput) => JSON.stringify({ ...x, count: 0 });
 
 type Stage = { kind: "idle" } | { kind: "running" } | { kind: "results"; search: LeadBrowse } | { kind: "failed"; message: string };
 
@@ -37,6 +41,8 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
   const [busy, setBusy] = useState(false);
   const [aiText, setAiText] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
+  /** Son çalıştırılan aramanın filtre özeti: filtreler sonradan değişirse "yeniden ara" çubuğu çıkar. */
+  const [searchedKey, setSearchedKey] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [loadOpen, setLoadOpen] = useState(false);
@@ -69,6 +75,7 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
   async function run(query: LeadSearchInput = q) {
     if (busy) return;
     setBusy(true);
+    setSearchedKey(filterKey(query));
     setSelected(new Set());
     const r = await api<{ search: LeadBrowse }>("/api/outreach/leads/browse", { method: "POST", body: JSON.stringify({ ...query, city: query.city?.trim() || undefined, count: query.count }) });
     if (!r.ok) {
@@ -122,6 +129,13 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
     void run(next);
   }
 
+  /** Sonuç çıkmadıysa: sektör, büyüklük ve anahtar kelime filtreleri kaldırılıp aynı unvan ve konumla yeniden aranır. */
+  function relax() {
+    const next = { ...q, industries: [], sizes: [], keywords: [], notKeywords: [] };
+    setQ(next);
+    void run(next);
+  }
+
   /** Hazır aramaya tıklamak yalnızca metni kutuya yazar; göndermek (Enter) kullanıcıya kalır. */
   function preset(p: LeadPreset) {
     setAiText(p.prompt);
@@ -150,11 +164,23 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
   }
 
   const searching = stage.kind === "running";
-  /** Eylem çubuğu (kaç kişi, Ara) yalnızca filtre seçilince ya da arama başlayınca görünür; başlangıç ekranı sade kalır. */
-  const showBar = ready || stage.kind !== "idle";
+  const unlimited = isUnlimited(account.plan);
+  const dirty = (stage.kind === "results" || stage.kind === "failed") && searchedKey !== null && searchedKey !== filterKey(q);
+  /** Kaç kişi + Ara çubuğu: yalnızca henüz arama yapılmamışken filtreler hazırsa ya da filtreler sonradan değiştiyse görünür. */
+  const showBar = (stage.kind === "idle" && ready) || dirty;
+  const idle = stage.kind === "idle";
+  /** Tek sayaç: yalnızca başlangıç ekranında; sonuç ekranında kalan hak "Daha fazla listele" kutusunda gösterilir. */
   const usage = (
     <p className="text-sm text-muted">
-      Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan Spine Kredi: <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} planı).
+      {unlimited ? (
+        <>
+          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> kişi listelediniz · Listeleme ve Spine Kredi sınırsız ({account.plan.label} planı).
+        </>
+      ) : (
+        <>
+          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan Spine Kredi: <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} planı).
+        </>
+      )}
     </p>
   );
 
@@ -168,63 +194,53 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
         onClear={() => setQ({ ...emptySearch(defaultCountry), count: q.count })}
         onSave={() => setSaveOpen(true)}
         onLoad={() => void openLoad()}
+        onSearch={() => void run({ ...q, count: size })}
+        searching={busy}
+        canSearch={ready && sizes.length > 0}
         activeCount={activeCount}
       />
 
       <section aria-label="Arama" className="order-first grid min-h-[28rem] content-start gap-5 rounded-panel bg-surface p-5 ring-1 ring-line sm:p-6 lg:order-none">
-        {/* Eylem çubuğu: kaç kişi listelensin ve ara. */}
-        {showBar && (
-        <div className="grid gap-2 border-b border-line pb-5">
-          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-            <div className="grid gap-1.5 text-sm font-medium">
-              Listelenecek kişi
-              {sizes.length > 0 ? <Segmented label="Listelenecek kişi sayısı" items={sizes.map((s) => ({ key: String(s), label: String(s), pressed: size === s, onClick: () => set({ count: s }) }))} /> : <span className="text-sm font-normal text-danger">Bugünkü listeleme hakkınız doldu.</span>}
-            </div>
-            <Button onClick={() => void run({ ...q, count: size })} disabled={!ready || busy || sizes.length === 0}>
-              <SearchIcon size={16} />
-              {searching ? "Aranıyor…" : "Ara"}
-            </Button>
-          </div>
-          {usage}
-        </div>
-        )}
-
-        <div aria-live="polite">
-          {stage.kind === "idle" && (
-            <div className="mx-auto grid w-full max-w-3xl gap-6 py-8 sm:py-16">
-              <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Kimi bulmak istiyorsunuz?</h2>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void askAi();
-                }}
-                className="flex items-center gap-2 rounded-full bg-surface p-2 pl-5 shadow-sm ring-1 ring-line-strong transition-shadow focus-within:shadow-float focus-within:ring-2 focus-within:ring-forest"
+        {/* Adspine AI kutusu: her aşamada görünür (başlangıçta büyük, sonrasında ince); çalışırken marka renklerinde ışık geçişi. */}
+        <div className={idle ? "mx-auto grid w-full max-w-3xl gap-6 pt-8 sm:pt-16" : "grid"}>
+          {idle && <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">Kimi bulmak istiyorsunuz?</h2>}
+          <div className={styles.frame} data-busy={aiBusy || searching}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void askAi();
+              }}
+              className="flex items-center gap-2 rounded-full bg-surface p-2 pl-5"
+            >
+              <span className="shrink-0 text-accent">
+                <SparkleIcon size={20} />
+              </span>
+              <label className="sr-only" htmlFor="ai-arama">
+                Kimi aradığınızı yazın
+              </label>
+              <input
+                ref={aiInput}
+                id="ai-arama"
+                value={aiText}
+                onChange={(e) => setAiText(e.target.value)}
+                readOnly={aiBusy}
+                maxLength={400}
+                placeholder="Örn. İstanbul'daki 10-50 çalışanlı ajansların kurucuları"
+                className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted"
+              />
+              <button
+                type="submit"
+                disabled={aiBusy || busy || aiText.trim().length < 4}
+                aria-label={aiBusy ? "Filtreler hazırlanıyor" : "Filtreleri hazırla ve ara"}
+                title="Adspine AI ile ara"
+                className="grid size-11 shrink-0 place-items-center rounded-full bg-forest text-white transition-colors hover:bg-forest-hover disabled:opacity-40"
               >
-                <span className="shrink-0 text-accent">
-                  <SparkleIcon size={20} />
-                </span>
-                <label className="sr-only" htmlFor="ai-arama">
-                  Kimi aradığınızı yazın
-                </label>
-                <input
-                  ref={aiInput}
-                  id="ai-arama"
-                  value={aiText}
-                  onChange={(e) => setAiText(e.target.value)}
-                  maxLength={400}
-                  placeholder="Örn. İstanbul'daki 10-50 çalışanlı ajansların kurucuları"
-                  className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted"
-                />
-                <button
-                  type="submit"
-                  disabled={aiBusy || aiText.trim().length < 4}
-                  aria-label={aiBusy ? "Filtreler hazırlanıyor" : "Filtreleri hazırla"}
-                  title="Adspine AI ile filtreleri hazırla"
-                  className="grid size-11 shrink-0 place-items-center rounded-full bg-forest text-white transition-colors hover:bg-forest-hover disabled:opacity-40"
-                >
-                  {aiBusy ? <span aria-hidden="true" className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <ArrowRightIcon size={18} />}
-                </button>
-              </form>
+                {aiBusy ? <span aria-hidden="true" className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <ArrowRightIcon size={18} />}
+              </button>
+            </form>
+          </div>
+          {idle && (
+            <>
               <ul className="flex flex-wrap justify-center gap-2">
                 {leadPresets.map((p) => (
                   <li key={p.id}>
@@ -234,10 +250,21 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
                   </li>
                 ))}
               </ul>
-              <div className="grid justify-items-center">{usage}</div>
-            </div>
+              <div className="grid justify-items-center text-center">{usage}</div>
+            </>
           )}
+        </div>
 
+        {showBar && (
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 rounded-row bg-sunken/60 p-4">
+            <div className="grid gap-1.5 text-sm font-medium">
+              {dirty ? "Filtreleri değiştirdiniz: kaç kişi listelensin? Sonra sol alttaki \"Müşteri bul\"a basın." : "Listelenecek kişi"}
+              {sizes.length > 0 ? <Segmented label="Listelenecek kişi sayısı" items={sizes.map((s) => ({ key: String(s), label: String(s), pressed: size === s, onClick: () => set({ count: s }) }))} /> : <span className="text-sm font-normal text-danger">Bugünkü listeleme hakkınız doldu.</span>}
+            </div>
+          </div>
+        )}
+
+        <div aria-live="polite">
           {searching && (
             <div role="status" className="grid min-h-[20rem] content-center justify-items-center gap-7 text-center">
               <ShapeLoader />
@@ -269,11 +296,12 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
               }
               onToggleAll={(all) => setSelected(all ? new Set(stage.search.rows.filter((r) => !r.owned).map((r) => r.rid)) : new Set())}
               onAdd={() => setAddOpen(true)}
+              onRelax={q.industries.length + q.sizes.length + q.keywords.length + q.notKeywords.length > 0 ? relax : undefined}
             />
           )}
           {stage.kind === "results" && (
             <div className="mt-5">
-              <LeadMore left={account.browse.left} busy={busy} onMore={(c) => void more(c)} />
+              <LeadMore left={account.browse.left} unlimited={unlimited} busy={busy} onMore={(c) => void more(c)} />
             </div>
           )}
         </div>

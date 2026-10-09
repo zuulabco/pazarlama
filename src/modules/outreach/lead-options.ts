@@ -125,7 +125,7 @@ export const titleCatalog: readonly TitleEntry[] = [
   T("Satın Alma Müdürü", "Procurement Manager", "Purchasing Manager"), T("Satın Alma Uzmanı", "Buyer", "Procurement Specialist"),
   T("Müşteri Hizmetleri Müdürü", "Customer Service Manager"), T("Mağaza Müdürü", "Store Manager"), T("Şube Müdürü", "Branch Manager"),
   T("Restoran Müdürü", "Restaurant Manager"), T("Otel Müdürü", "Hotel Manager"),
-  T("Mimar", "Architect"), T("Mühendis", "Engineer"), T("Doktor", "Doctor"), T("Avukat", "Lawyer"), T("Mali Müşavir", "Accountant"), T("Danışman", "Consultant"),
+  T("Diş Hekimi", "Dentist"), T("Veteriner", "Veterinarian"), T("Eczacı", "Pharmacist"), T("Psikolog", "Psychologist"), T("Fizyoterapist", "Physiotherapist"), T("Mimar", "Architect"), T("Mühendis", "Engineer"), T("Doktor", "Doctor"), T("Avukat", "Lawyer"), T("Mali Müşavir", "Accountant"), T("Danışman", "Consultant"),
 ];
 
 const titleIndex = new Map<string, TitleEntry>();

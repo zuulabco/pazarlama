@@ -12,7 +12,7 @@ const MAX = 200;
  * "Daha fazla listele": liste hazır olduktan sonra aynı aramaya (zaten listelenenler hariç) daha fazla kişi ekler.
  * Sayı hazır seçeneklerden seçilir ya da elle yazılır; kalan listeleme hakkını aşan seçenek çıkmaz, aşan sayı yazılınca uyarılır.
  */
-export function LeadMore({ left, busy, onMore }: { left: number; busy: boolean; onMore: (count: number) => void }) {
+export function LeadMore({ left, unlimited = false, busy, onMore }: { left: number; unlimited?: boolean; busy: boolean; onMore: (count: number) => void }) {
   const [custom, setCustom] = useState("");
   const max = Math.min(left, MAX);
   const n = Number(custom);
@@ -28,7 +28,7 @@ export function LeadMore({ left, busy, onMore }: { left: number; busy: boolean; 
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="font-medium">Daha fazla listele</h3>
         <p className="text-sm text-muted">
-          Kalan listeleme hakkınız: <span className="font-medium tabular-nums text-ink">{num(left)}</span> kişi
+          Kalan listeleme hakkınız: <span className="font-medium tabular-nums text-ink">{unlimited ? "Sınırsız" : `${num(left)} kişi`}</span>
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">

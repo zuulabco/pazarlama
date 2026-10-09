@@ -41,12 +41,15 @@ export function LeadResults({
   onToggle,
   onToggleAll,
   onAdd,
+  onRelax,
 }: {
   search: LeadBrowse;
   selected: ReadonlySet<number>;
   onToggle: (rid: number) => void;
   onToggleAll: (all: boolean) => void;
   onAdd: () => void;
+  /** Sonuç çıkmadıysa: dar filtreleri kaldırıp yeniden arar (yalnızca kaldırılacak filtre varsa verilir). */
+  onRelax?: () => void;
 }) {
   const selectable = search.rows.filter((r) => !r.owned);
   const allSelected = selectable.length > 0 && selectable.every((r) => selected.has(r.rid));
@@ -56,7 +59,7 @@ export function LeadResults({
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="grid gap-0.5">
-          <h3 className="text-lg font-semibold tracking-tight">{num(search.rows.length)} kişi listelendi</h3>
+          <h3 className="text-lg font-semibold tracking-tight">{search.rows.length > 0 ? `${num(search.rows.length)} kişi listelendi` : "Sonuç yok"}</h3>
           <p className="text-sm text-muted">
             Profilinize uyum skoruna göre sıralandı. Her şirketten en uygun tek kişi gösterilir, zaten kayıtlı olanlar atlanır.
             {hiddenNote ? ` ${hiddenNote}.` : ""}
@@ -69,7 +72,18 @@ export function LeadResults({
       </div>
 
       {search.rows.length === 0 ? (
-        <p className="rounded-row bg-pollen/50 px-4 py-3 text-sm">Gösterilecek kişi kalmadı (hepsi zaten kayıtlı ya da aynı şirketten). Filtreleri gevşetip yeniden arayın.</p>
+        <div className="grid justify-items-start gap-3 rounded-row bg-pollen/50 px-4 py-3.5 text-sm">
+          {search.found === 0 ? (
+            <p>Bu filtrelerle kişi bulunamadı. Filtre birleşimi çok dar olabilir; sektör ve anahtar kelimeyi kaldırmak çoğu zaman sonuç getirir.</p>
+          ) : (
+            <p>Gösterilecek kişi kalmadı (bulunanların hepsi zaten kayıtlı ya da aynı şirketten). Filtreleri gevşetip yeniden arayın.</p>
+          )}
+          {onRelax && (
+            <Button variant="secondary" onClick={onRelax}>
+              Sektör ve kelime filtreleri olmadan ara
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-row ring-1 ring-line">
           <table className="w-full min-w-[52rem] text-left text-sm">

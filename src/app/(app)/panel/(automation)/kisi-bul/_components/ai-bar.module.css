@@ -1,0 +1,50 @@
+/*
+ * Adspine AI kutusu: kenarlık normalde sakin, odaktayken mavi; AI çalışırken (filtre hazırlama ve arama) marka mavilerinde yumuşakça dönen
+ * bir ışık geçişi ve hafif bir hâle görünür. Hareket azaltma tercihinde animasyon durur.
+ */
+@property --ai-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.frame {
+  position: relative;
+  isolation: isolate;
+  border-radius: 9999px;
+  padding: 1.5px;
+  background: var(--color-line-strong);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.frame:focus-within {
+  background: var(--color-forest);
+  box-shadow: 0 8px 28px -14px color-mix(in srgb, var(--color-forest) 60%, transparent);
+}
+.frame[data-busy="true"] {
+  background: conic-gradient(from var(--ai-angle), #0072e5, #6db3ff, #b9dcff, #3d9bff, #0072e5);
+  animation: spin 3.2s linear infinite;
+}
+.frame[data-busy="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(from var(--ai-angle), #0072e5, #6db3ff, transparent 55%, #0072e5);
+  filter: blur(14px);
+  opacity: 0.4;
+  animation: spin 3.2s linear infinite;
+}
+@keyframes spin {
+  to {
+    --ai-angle: 360deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .frame[data-busy="true"],
+  .frame[data-busy="true"]::before {
+    animation: none;
+  }
+}

@@ -1,7 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { ComboField, type Option } from "@/components/ui/combo-field";
 import { Disclosure } from "@/components/ui/disclosure";
+import { BookmarkIcon, SearchIcon } from "@/components/ui/icons";
 import { Switch } from "@/components/ui/switch";
 import { countryOptions, industryOptions, keywordCatalog, roleOptions, sizeOptions, titleCatalog, type LeadSearchInput } from "@/modules/outreach/lead-options";
 
@@ -25,7 +27,8 @@ function GroupTitle({ title, count }: { title: string; count: number }) {
 }
 
 /**
- * Sol filtre çubuğu (Instantly SuperSearch yapısı): açılır gruplar, her grupta seçili filtre sayısı rozeti, Kaydet/Yükle düğmeleri.
+ * Sol filtre çubuğu (Instantly SuperSearch yapısı): açılır gruplar, her grupta seçili filtre sayısı rozeti. Altta, kaydırdıkça ekranda kalan
+ * "Müşteri bul" düğmesi vardır (Mesaj hazırla sayfasındaki gibi). Kayıtlı aramalar üstte ince bir satırdadır.
  * Tüm çoklu alanlar etiket (chip) girişlidir: listeden seçilir ya da yazılıp eklenir. Unvan ve kelimeler Türkçe ya da İngilizce yazılabilir;
  * arama her ikisini de kapsar. (Zaten kayıtlı kişileri atlama ve şirket başına tek kişi her zaman açıktır, bu yüzden anahtar yoktur.)
  */
@@ -35,6 +38,9 @@ export function LeadFilters({
   onClear,
   onSave,
   onLoad,
+  onSearch,
+  searching,
+  canSearch,
   activeCount,
   defaultCountry,
 }: {
@@ -43,6 +49,9 @@ export function LeadFilters({
   onClear: () => void;
   onSave: () => void;
   onLoad: () => void;
+  onSearch: () => void;
+  searching: boolean;
+  canSearch: boolean;
   activeCount: number;
   defaultCountry: string;
 }) {
@@ -53,7 +62,17 @@ export function LeadFilters({
   const personValue = [...q.roles.map((r) => `rol:${r}`), ...q.titles];
 
   return (
-    <aside aria-label="Filtreler" className="grid content-start gap-3 lg:sticky lg:top-14">
+    <aside aria-label="Filtreler" className="grid content-start gap-3">
+      <div className="flex items-center justify-between gap-2 px-1 text-sm">
+        <button type="button" onClick={onLoad} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-medium text-muted transition-colors hover:bg-sunken hover:text-ink">
+          <BookmarkIcon size={15} />
+          Kayıtlı aramalarım
+        </button>
+        <button type="button" onClick={onSave} disabled={activeCount === 0} className="rounded-full px-2.5 py-1.5 font-medium text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40">
+          Bu aramayı kaydet
+        </button>
+      </div>
+
       <Disclosure defaultOpen className={groupClass} buttonClassName="px-4 py-3.5" panelClassName="px-4 pb-4" summary={<GroupTitle title="Unvan" count={person} />}>
         <div className="grid gap-5">
           <ComboField
@@ -97,14 +116,6 @@ export function LeadFilters({
         </div>
       </Disclosure>
 
-      <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={onLoad} className="h-10 rounded-control text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken">
-          Yükle
-        </button>
-        <button type="button" onClick={onSave} className="h-10 rounded-control text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken">
-          Kaydet
-        </button>
-      </div>
       {activeCount > 0 && (
         <div className="flex items-center justify-between gap-3 px-1 text-sm text-muted">
           <span>{activeCount} filtre seçili</span>
@@ -113,6 +124,15 @@ export function LeadFilters({
           </button>
         </div>
       )}
+
+      {/* Kaydırdıkça ekranda kalır. */}
+      <div className="sticky bottom-0 z-10 -mx-1 rounded-b-row bg-paper/95 px-1 pt-3 pb-3 backdrop-blur">
+        <Button onClick={onSearch} disabled={!canSearch || searching} size="lg" className="w-full">
+          <SearchIcon size={18} />
+          {searching ? "Aranıyor…" : "Müşteri bul"}
+        </Button>
+        {!canSearch && !searching && <p className="mt-2 text-center text-xs text-muted">Önce bir unvan, sektör ya da kelime seçin.</p>}
+      </div>
     </aside>
   );
 }

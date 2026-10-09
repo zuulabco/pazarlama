@@ -19,6 +19,8 @@ const aiSchema = z.object({
   anahtar_kelimeler: z.array(z.string()).default([]),
 });
 
+const STOP_WORDS = new Set(["popular", "best", "top", "good", "famous", "leading", "new", "small", "big", "large", "unlu", "buyuk", "kucuk", "iyi", "populer"]);
+
 const list = (items: readonly { value: string; label: string }[]) => items.map((o) => `- ${o.value} (${o.label})`).join("\n");
 
 export function leadFilterMessages(text: string) {
@@ -48,7 +50,9 @@ Kurallar:
 - Listede karşılığı olmayan bir unvan istendiyse unvanlar alanına kullanıcının yazdığı dilde yaz (Türkçe ya da İngilizce olabilir; sistem ikisini de arar); en çok 4.
 - Şehir adını kullanıcının yazdığı gibi yaz (örn. "İstanbul"). Şehir varsa ulke'yi de doldur.
 - "küçük işletme" → 1-10, 11-20, 21-50; "orta ölçekli" → 51-100, 101-200, 201-500. Sayı verilmişse en yakın aralıkları seç.
-- Sektör listede yoksa sektorler boş kalsın, konuyu anahtar_kelimeler'e İngilizce tek kelime olarak yaz (örn. "e-commerce"); en çok 3.`,
+- Sektör listede varsa anahtar_kelimeler'e AYNI konuyu yazma (anahtar kelime aramayı çok daralttığı için yalnızca sektör listede yoksa kullan): sektör listede yoksa konuyu anahtar_kelimeler'e tek kelime olarak yaz (örn. "e-commerce"); en çok 2.
+- anahtar_kelimeler'e sıfat ya da değerlendirme sözü (popular, best, top, good, ünlü, büyük, küçük) ASLA yazma; yalnızca faaliyet alanı.
+- Meslek sahibi istendiyse (diş hekimi, avukat, mimar...) unvanlar alanına mesleği yaz; ayrıca uygun sektörü seç.`,
     },
     { role: "user" as const, content: text.slice(0, 400) },
   ];
@@ -66,7 +70,8 @@ export function toFilters(raw: z.infer<typeof aiSchema>): Pick<LeadSearchInput, 
     industries: pick(raw.sektorler, industryOptions, 4),
     sizes: pick(raw.calisan_araliklari, sizeOptions, 5),
     // Kullanıcıya Türkçe gösterilir: sözlükteki İngilizce kelimeler Türkçe karşılığına çevrilir (aramada ikisi de aranır).
-    keywords: [...new Set(raw.anahtar_kelimeler.map((k) => k.trim().toLowerCase()).filter((k) => k.length >= 2 && k.length <= 40).map((k) => keywordCatalog.find((c) => fold(c.en) === fold(k))?.tr ?? k))].slice(0, 3),
+    // Aramayı gereksiz daraltan genel sıfatlar atılır; sektör seçiliyken kelime eklenmez.
+    keywords: [...new Set(raw.anahtar_kelimeler.map((k) => k.trim().toLowerCase()).filter((k) => k.length >= 2 && k.length <= 40 && !STOP_WORDS.has(fold(k))).map((k) => keywordCatalog.find((c) => fold(c.en) === fold(k))?.tr ?? k))].slice(0, 3),
   };
 }
 
