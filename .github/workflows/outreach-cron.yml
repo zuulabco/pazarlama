@@ -27,4 +27,11 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then echo "APP_URL ve CRON_SECRET gizli değerleri tanımlı değil"; exit 1; fi
-          curl -fsS -X POST "$APP_URL/api/cron/outreach" -H "Authorization: Bearer $CRON_SECRET" --max-time 290
+          # adspine.app → www.adspine.app yönlendirmesi (308) olabilir: -f yönlendirmeyi "başarı" sayıp isteği hiç çalıştırmaz.
+          # Bu yüzden yönlendirmeler izlenir (Authorization başlığı korunur) ve yanıtın gerçekten {"ok":true} olduğu doğrulanır.
+          out=$(curl -sS -L --location-trusted -X POST "$APP_URL/api/cron/outreach" -H "Authorization: Bearer $CRON_SECRET" --max-time 290 -w '
+%{http_code}')
+          code=$(printf '%s' "$out" | tail -n1)
+          body=$(printf '%s' "$out" | sed '$d')
+          echo "HTTP $code: $body"
+          if [ "$code" != "200" ] || ! printf '%s' "$body" | grep -q '"ok":true'; then echo "Zamanlayıcı çağrısı başarısız"; exit 1; fi
