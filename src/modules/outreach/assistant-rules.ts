@@ -25,7 +25,7 @@ const pct = (n: number) => `%${n.toFixed(1)}`;
 export function contextText(r: ReportsData, a: AssistantAccount, days: number): string {
   const t = r.overview.totals;
   const lines = [
-    `Paket: ${a.planName}. Kalan Spine Kredi: ${a.credits}. Gönderici adresi: ${a.senders.used}/${a.senders.limit}. Kampanya: ${a.campaigns.used}/${a.campaigns.limit}.`,
+    `Paket: ${a.planName}. Kalan Adspine Kredi: ${a.credits}. Gönderici adresi: ${a.senders.used}/${a.senders.limit}. Kampanya: ${a.campaigns.used}/${a.campaigns.limit}.`,
     `Son ${days} gün: ${t.sent} e-posta gönderildi, ${t.replied} yanıt (${pct(r.overview.rates.reply)}), ${t.positive} olumlu yanıt, ${t.meetings} toplantı, ${t.bounced} geri dönen (${pct(r.overview.rates.bounce)}), ${t.unsubscribed} abonelikten çıkan.`,
   ];
   if (r.campaigns.length) {

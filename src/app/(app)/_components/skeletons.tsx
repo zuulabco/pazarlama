@@ -7,46 +7,108 @@ import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 
 const panel = "rounded-panel bg-surface ring-1 ring-line";
 
-function Row() {
-  return (
-    <div className="flex items-center gap-4 border-b border-line px-5 py-5 last:border-b-0">
-      <div className="grid flex-1 gap-2.5">
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-3.5 w-1/2" />
-      </div>
-      <Skeleton className="hidden h-2 w-28 sm:block" />
-      <Skeleton className="h-8 w-10" />
-    </div>
-  );
-}
-
-/** Sol filtre çubuğu + sağda sonuç listesi (Müşteri bul). */
+/** Müşteri bul: solda gruplu filtreler ve sabit düğme, sağda yuvarlak Adspine AI kutusu ile başlangıç ekranı. */
 export function LeadsSkeleton() {
   return (
     <SkeletonRegion>
-      <div className="grid items-start gap-5 lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-x-6">
-        <div className={`${panel} grid gap-5 p-5`}>
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-11 w-full" />
-          <Skeleton className="h-11 w-full" />
-          <Skeleton className="h-11 w-full" />
-          <Skeleton className="h-11 w-full rounded-control" />
-        </div>
-        <div className={`${panel} hidden lg:block`}>
-          <div className="grid gap-3 border-b border-line px-5 py-5">
-            <Skeleton className="h-6 w-56" />
-            <Skeleton className="h-4 w-72" />
-          </div>
-          {Array.from({ length: 5 }, (_, i) => (
-            <Row key={i} />
+      <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+        <div className="grid gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="rounded-row bg-surface p-4 ring-1 ring-line">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-28" />
+                <Skeleton className="size-5 rounded-full" />
+              </div>
+              {i < 2 && (
+                <div className="mt-4 grid gap-3">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-12 w-full rounded-row" />
+                </div>
+              )}
+            </div>
           ))}
+          <Skeleton className="mt-1 h-12 w-full rounded-control" />
+        </div>
+        <div className={`${panel} grid min-h-[28rem] content-start gap-6 p-5 sm:p-6`}>
+          <div className="mx-auto grid w-full max-w-3xl gap-6 pt-6 sm:pt-14">
+            <Skeleton className="mx-auto h-8 w-72 max-w-full" />
+            <Skeleton className="h-[3.75rem] w-full rounded-full" />
+            <div className="flex flex-wrap justify-center gap-2">
+              {[28, 36, 32, 40, 30].map((w, i) => (
+                <Skeleton key={i} className="h-9 rounded-full" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </SkeletonRegion>
   );
 }
 
-/** Arama kutusu, filtre seçenekleri ve satır listesi (Kayıtlı kişiler, Otomasyonlar, Gönderici adresleri). */
+/** Kayıtlı kişiler tablosunun yükleniyor hâli: avatarlı satırlar ve sütunlar (sayfa yüklenirken ve filtre değişirken aynı iskelet). */
+export function ContactRowsSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <div role="status" aria-busy="true" className="overflow-hidden rounded-row ring-1 ring-line">
+      <span className="sr-only">Kişiler yükleniyor</span>
+      <div className="hidden grid-cols-[2.5rem_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1fr)_6rem] items-center gap-3 bg-sunken/60 px-3 py-3 md:grid">
+        {Array.from({ length: 7 }, (_, i) => (
+          <Skeleton key={i} className={i === 0 ? "size-4" : "h-3 w-16"} />
+        ))}
+      </div>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-3 py-3 md:grid-cols-[2.5rem_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1fr)_6rem]">
+          <Skeleton className="size-4" />
+          <div className="flex min-w-0 items-center gap-3">
+            <Skeleton className="size-9 shrink-0 rounded-full" />
+            <div className="grid flex-1 gap-1.5">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+          <Skeleton className="hidden h-4 w-3/4 md:block" />
+          <div className="hidden gap-1.5 md:grid">
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <Skeleton className="hidden h-4 w-2/3 md:block" />
+          <Skeleton className="hidden h-4 w-3/4 md:block" />
+          <Skeleton className="h-8 w-20 justify-self-end rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Kayıtlı kişiler sayfası: sekmeler ve işlem düğmeleri, araç çubuğu, özet satırı ve tablo. */
+export function ContactsSkeleton() {
+  return (
+    <SkeletonRegion>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Skeleton className="h-10 w-72 max-w-full rounded-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-28" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+      <div className={`${panel} grid gap-4 p-4 sm:p-5`}>
+        <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+          <Skeleton className="h-10 w-full rounded-full" />
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-44" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-4 w-56" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <ContactRowsSkeleton />
+      </div>
+    </SkeletonRegion>
+  );
+}
+
+/** Arama kutusu, filtre seçenekleri ve satır listesi (Otomasyonlar, Gönderici adresleri). */
 export function ListSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <SkeletonRegion>

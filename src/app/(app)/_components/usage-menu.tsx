@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { GaugeIcon } from "@/components/ui/icons";
+import { CreditIcon, GaugeIcon } from "@/components/ui/icons";
 import popover from "@/components/ui/popover.module.css";
 import { isUnlimited } from "@/modules/outreach/plans";
 import type { AccountSummary } from "@/modules/outreach/usage";
@@ -37,15 +37,15 @@ function Group({ title, note, children }: { title: string; note?: string; childr
   );
 }
 
-/** Spine Kredilerin yenileneceği gün (İstanbul takvimine göre bir sonraki ayın ilk günü). */
+/** Adspine Kredilerin yenileneceği gün (İstanbul takvimine göre bir sonraki ayın ilk günü). */
 function nextReset(): string {
   const now = new Date();
   return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", timeZone: "Europe/Istanbul" }).format(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 12)));
 }
 
 /**
- * Plan ve kullanım: sol çubuğun altındaki göstergeden açılır. Üstte paket ve Spine Kredi, altında listeleme ve gönderim hakları
- * gruplanmış olarak. Simgedeki kırmızı nokta Spine Kredinin azaldığını belirtir.
+ * Plan ve kullanım: sol çubuğun altındaki göstergeden açılır. Üstte paket ve Adspine Kredi, altında listeleme ve gönderim hakları
+ * gruplanmış olarak. Simgedeki kırmızı nokta Adspine Kredinin azaldığını belirtir.
  */
 export function UsageMenu() {
   const id = useId();
@@ -121,7 +121,10 @@ export function UsageMenu() {
             <div className="grid gap-2.5 rounded-row bg-forest-soft/60 p-4 ring-1 ring-line">
               <div className="flex items-end justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Spine Kredi</p>
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-accent">
+                    <CreditIcon size={18} />
+                    <span className="text-ink">Adspine Kredi</span>
+                  </p>
                   <p className="text-xs text-muted">{nextReset()} tarihinde yenilenir</p>
                 </div>
                 <p className="text-2xl leading-none font-semibold tabular-nums">
@@ -129,13 +132,13 @@ export function UsageMenu() {
                   {!unlimited && <span className="text-sm font-normal text-muted"> / {num(data.plan.monthlyCredits)}</span>}
                 </p>
               </div>
-              <div role="progressbar" aria-label="Spine Kredi" aria-valuemin={0} aria-valuemax={data.plan.monthlyCredits} aria-valuenow={data.credits} className="h-1.5 overflow-hidden rounded-full bg-surface">
+              <div role="progressbar" aria-label="Adspine Kredi" aria-valuemin={0} aria-valuemax={data.plan.monthlyCredits} aria-valuenow={data.credits} className="h-1.5 overflow-hidden rounded-full bg-surface">
                 <div className={`h-full rounded-full transition-[width] duration-500 ${(ratio ?? 1) < 0.15 ? "bg-danger" : "bg-forest"}`} style={{ width: `${(ratio ?? 0) * 100}%` }} />
               </div>
-              <p className="text-xs text-muted">Listede gizli bilgisi açılıp eklenen her kişi/firma 1 Spine Kredi harcar.</p>
+              <p className="text-xs text-muted">Listede gizli bilgisi açılıp eklenen her kişi/firma 1 Adspine Kredi harcar.</p>
             </div>
 
-            <Group title="Listeleme" note="Listelemek Spine Kredi harcamaz; ayrı bir haktır.">
+            <Group title="Listeleme" note="Listelemek Adspine Kredi harcamaz; ayrı bir haktır.">
               <Meter label="Bugün" value={data.browse.today} max={data.browse.dailyLimit} text={unlimited ? `${num(data.browse.today)} · sınırsız` : `${num(data.browse.today)} / ${num(data.browse.dailyLimit)}`} />
               <Meter label="Bu ay" value={data.browse.used} max={data.browse.limit} text={unlimited ? `${num(data.browse.used)} · sınırsız` : `${num(data.browse.used)} / ${num(data.browse.limit)}`} />
             </Group>

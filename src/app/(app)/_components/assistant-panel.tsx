@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import flow from "@/components/ui/ai-flow.module.css";
-import { CalendarIcon, SearchIcon } from "@/components/ui/icons";
+import { AdspineAiIcon, CalendarIcon, SearchIcon } from "@/components/ui/icons";
 import type { AssistantAction, AssistantAnswer } from "@/modules/outreach/assistant-types";
 import { api } from "../panel/(automation)/kisiler/_components/contact-ui";
 
@@ -15,22 +15,6 @@ type Turn = { role: "user" | "assistant"; content: string; links?: { path: strin
 const istanbulDay = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date(iso));
 
 const suggestions = ["Otomasyonlarım nasıl gidiyor?", "Yarın saat 12:00'de dişçi randevum var, takvime ekle", "İstanbul'daki makine mühendislerini ara", "Kayıtlı kişilerimde reklam sektöründe olan var mı?"];
-
-/** Yapay zekâ simgesi: büyük ve küçük parıltı, marka mavisi geçişli. */
-function AiIcon({ size = 20, id }: { size?: number; id: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#5aa9ff" />
-          <stop offset="1" stopColor="#0072e5" />
-        </linearGradient>
-      </defs>
-      <path d="M10 2.5c.5 4.4 2.6 6.5 7 7-4.4.5-6.5 2.6-7 7-.5-4.4-2.6-6.5-7-7 4.4-.5 6.5-2.6 7-7Z" fill={`url(#${id})`} />
-      <path d="M18.5 14c.25 2.2 1.3 3.25 3.5 3.5-2.2.25-3.25 1.3-3.5 3.5-.25-2.2-1.3-3.25-3.5-3.5 2.2-.25 3.25-1.3 3.5-3.5Z" fill={`url(#${id})`} />
-    </svg>
-  );
-}
 
 /** Ajanın yaptığı işi gösteren kart: marka renklerinde akan çerçeve ("Adspine AI yaptı"). */
 function ActionCard({ action, undone, onUndo, onNavigate }: { action: AssistantAction; undone: boolean; onUndo: (id: string) => void; onNavigate: () => void }) {
@@ -164,7 +148,7 @@ export function AssistantPanel() {
         title="Adspine AI"
         className="fixed right-4 bottom-20 z-40 grid size-12 place-items-center rounded-full bg-surface shadow-float ring-1 ring-line transition-transform hover:-translate-y-0.5 md:bottom-6"
       >
-        <AiIcon id="ai-fab" size={26} />
+        <AdspineAiIcon size={30} />
       </button>
 
       <section
@@ -176,7 +160,7 @@ export function AssistantPanel() {
       >
         <header className="flex items-center justify-between border-b border-line px-4 py-3">
           <h2 className="flex items-center gap-2 font-semibold tracking-tight">
-            <AiIcon id="ai-head" size={20} />
+            <AdspineAiIcon size={22} />
             Adspine AI
           </h2>
           <button type="button" onClick={() => setOpen(false)} aria-label="Kapat" className="grid size-9 place-items-center rounded-full text-muted hover:bg-sunken hover:text-ink">

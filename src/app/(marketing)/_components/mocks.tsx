@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BoltIcon, ChartIcon, HomeIcon, InboxIcon, SearchIcon, SendIcon, SparkleIcon, UsersIcon } from "@/components/ui/icons";
+import { BoltIcon, ChartIcon, HomeIcon, InboxIcon, SearchIcon, SendIcon, UsersIcon, AdspineAiIcon } from "@/components/ui/icons";
 
 /**
  * Tanıtım sayfasındaki ürün görselleri: gerçek arayüzün sadeleştirilmiş, statik kopyaları (görsel dosyası yok; her boyutta keskin,
@@ -189,7 +189,7 @@ export function ChatMock() {
         <p className="justify-self-end rounded-row bg-forest px-4 py-2.5 text-sm text-white">Hangi gönderici adresim sorunlu?</p>
         <div className="grid gap-2 rounded-row bg-sunken p-4 text-sm">
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent">
-            <SparkleIcon size={14} /> Adspine AI
+            <AdspineAiIcon size={16} /> Adspine AI
           </span>
           <p>info@firma.com’da 40 e-postanın 4’ü geri döndü (%10); güvenli sınır %5’in üzerinde. Listeyi temizleyip gönderimi azaltmanızı öneririm.</p>
           <span className="w-fit text-xs text-accent underline underline-offset-4">Gönderici adresleri →</span>

@@ -14,32 +14,11 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { nextPath, startSession } from "@/lib/auth/client-session";
 import { clientAuth } from "@/lib/firebase/client";
 import { authErrorMessage } from "./auth-errors";
 
 type Mode = "giris" | "kayit";
-
-/** Yalnızca site içi yollara yönlendir (açık yönlendirme açığını önler). */
-function nextPath() {
-  const next = new URLSearchParams(window.location.search).get("next");
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/panel";
-}
-
-/** Oturum açar; kullanıcının hesap kurulumunu tamamlayıp tamamlamadığını döndürür. */
-async function startSession(user: User): Promise<boolean> {
-  const idToken = await user.getIdToken();
-  const res = await fetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken }),
-  });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(body?.error ?? "Oturum açılamadı, tekrar deneyin.");
-  }
-  const body = (await res.json().catch(() => null)) as { onboarded?: boolean } | null;
-  return body?.onboarded !== false;
-}
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();

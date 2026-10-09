@@ -205,3 +205,46 @@ export const FlameIcon = ({ size, filled = false }: P & { filled?: boolean }) =>
     <path d="M10 2.5c.4 2.6 3.9 4.4 3.9 8.6a3.9 3.9 0 0 1-7.8 0c0-1.3.5-2.2 1.2-3 .1 1 .6 1.6 1.2 1.9C8.2 7.3 8.6 4.7 10 2.5Z" />
   </svg>
 );
+
+/**
+ * Adspine Kredi simgesi: bir madeni para içinde çam kozalağı (Adspine'in "pine" teması). Para currentColor, kozalak ve pullar zemin rengindedir.
+ */
+export const CreditIcon = ({ size = 16 }: P) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="none" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <circle cx="12" cy="12" r="9.4" fill="currentColor" />
+    <path d="M12 5.8c2.5 0 4.1 2.2 4.1 5.1 0 3.1-1.7 5.4-4.1 6.7-2.4-1.3-4.1-3.6-4.1-6.7 0-2.9 1.6-5.1 4.1-5.1z" fill="var(--color-surface)" />
+    <path d="M9.5 10.3 12 12.4l2.5-2.1M9.2 13.2 12 15.6l2.8-2.4" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M12 5.8V4.6" stroke="var(--color-surface)" strokeWidth="1.4" />
+  </svg>
+);
+
+/**
+ * Adspine AI'nın karakteri "Pino": gülümseyen küçük bir çam ağacı ve tepesinde bir parıltı. Varsayılan marka mavisi geçişlidir (gradient);
+ * "mono" tek renkli (currentColor) çizilir, yüz rengi \`eye\` ile verilir (mavi düğme üzerinde \`eye="var(--color-forest)"\`).
+ */
+export const AdspineAiIcon = ({ size = 20, tone = "gradient", eye }: P & { tone?: "gradient" | "mono"; eye?: string }) => {
+  const body = tone === "gradient" ? "url(#adspine-ai-g)" : "currentColor";
+  const face = eye ?? (tone === "gradient" ? "#ffffff" : "var(--color-surface)");
+  return (
+    <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden="true" fill="none" className="shrink-0">
+      {tone === "gradient" && (
+        <defs>
+          <linearGradient id="adspine-ai-g" x1="6" y1="2" x2="26" y2="30" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#5aa9ff" />
+            <stop offset="1" stopColor="#0072e5" />
+          </linearGradient>
+        </defs>
+      )}
+      <g fill={body} stroke={body} strokeWidth="1.4" strokeLinejoin="round">
+        <path d="M16 3.4 10.6 11.6h10.8z" />
+        <path d="M16 8.2 8.2 19h15.6z" />
+        <path d="M16 13.2 5.8 26h20.4z" />
+        <rect x="13.6" y="26.2" width="4.8" height="3" rx="1" stroke="none" />
+      </g>
+      <circle cx="12.4" cy="20.6" r="1.7" fill={face} />
+      <circle cx="19.6" cy="20.6" r="1.7" fill={face} />
+      <path d="M13.4 23.6q2.6 2.3 5.2 0" stroke={face} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M25.4 3.2l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" fill={tone === "gradient" ? "#6db3ff" : "currentColor"} opacity={tone === "gradient" ? 1 : 0.7} />
+    </svg>
+  );
+};

@@ -16,6 +16,7 @@ import { KindChip, StatusChip, api, download, sourceLabels } from "./contact-ui"
 import type { AccountSummary } from "@/modules/outreach/usage";
 import { CsvPanel } from "./csv-panel";
 import { ListsView, SuppressionsView } from "./side-views";
+import { ContactRowsSkeleton } from "../../../../_components/skeletons";
 
 type View = "kisiler" | "listeler" | "kara-liste";
 type Panel = { mode: "new" } | { mode: "edit"; contact: Contact } | { mode: "csv" } | null;
@@ -70,6 +71,16 @@ export function ContactsWorkspace({
   const [filters, setFilters] = useState<Filters>(defaults);
   const [reload, setReload] = useState(0);
   const [loading, setLoading] = useState(false);
+  /** Yükleme 150 ms'den uzun sürerse iskelet gösterilir; daha kısa yüklemelerde liste olduğu gibi kalır (yanıp sönme yok). */
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!loading) return;
+    const t = setTimeout(() => setSlow(true), 150);
+    return () => {
+      clearTimeout(t);
+      setSlow(false);
+    };
+  }, [loading]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [panel, setPanel] = useState<Panel>(null);
   const account = initialAccount;
@@ -496,7 +507,11 @@ export function ContactsWorkspace({
                 )}
               </div>
             ) : (
-              <div className={`transition-opacity duration-200 ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
+              <div aria-busy={loading}>
+                {slow ? (
+                  <ContactRowsSkeleton rows={Math.min(Math.max(contacts.length, 5), 10)} />
+                ) : (
+                  <>
                 {/* Geniş ekran: gerçek tablo */}
                 <div className="hidden overflow-x-auto rounded-row ring-1 ring-line md:block">
                   <table className="w-full min-w-[56rem] text-left text-sm">
@@ -582,6 +597,9 @@ export function ContactsWorkspace({
                     </li>
                   ))}
                 </ul>
+
+                  </>
+                )}
 
                 {pages > 1 && (
                   <div className="mt-4 flex items-center justify-between gap-3 text-sm text-muted">

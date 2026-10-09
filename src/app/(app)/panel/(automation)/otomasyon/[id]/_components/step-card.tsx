@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapse } from "@/components/ui/collapse";
 import { Disclosure } from "@/components/ui/disclosure";
-import { SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { AdspineAiIcon, TrashIcon } from "@/components/ui/icons";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
@@ -330,7 +330,7 @@ export function StepCard({
                         </Field>
                       )}
                       <Button onClick={() => void writeWithAi()} className="w-fit">
-                        <SparkleIcon size={16} />
+                        <AdspineAiIcon size={18} tone="mono" eye="var(--color-forest)" />
                         {v.body ? "Yeniden yaz" : "Adspine AI ile yaz"}
                       </Button>
                     </>
@@ -425,7 +425,7 @@ export function StepCard({
                 {v.opener && previewId && (
                   <div className="flex flex-wrap items-center gap-3 text-sm">
                     <Button variant="quiet" onClick={() => void fetchOpener()} disabled={openerBusy}>
-                      <SparkleIcon size={16} />
+                      <AdspineAiIcon size={18} />
                       {openerBusy ? "Site okunuyor…" : "Bu kişi için açılışı getir"}
                     </Button>
                     {opener?.id === previewId && !opener.text && <span className="text-muted">Güvenle yazılabilecek bir açılış çıkmadı.</span>}

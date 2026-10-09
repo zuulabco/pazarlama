@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { AdspineAiIcon, ArrowRightIcon, CreditIcon, TrashIcon } from "@/components/ui/icons";
 import { isUnlimited } from "@/modules/outreach/plans";
 import { Modal } from "@/components/ui/modal";
 import { RotatingTips } from "@/components/ui/rotating-tips";
@@ -30,7 +30,7 @@ type Stage = { kind: "idle" } | { kind: "running" } | { kind: "results"; search:
 
 /**
  * Kişi bul (Instantly SuperSearch yapısı): solda filtreler, sağda başlangıç ekranı / sonuç tablosu.
- * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 Spine Kredi) → otomasyona ekle.
+ * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 Adspine Kredi) → otomasyona ekle.
  */
 export function LeadSearchWorkspace({ initialAccount, defaultCountry, initialAsk = null }: { initialAccount: AccountSummary; defaultCountry: string; initialAsk?: string | null }) {
   const [account, setAccount] = useState(initialAccount);
@@ -196,11 +196,11 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry, initialAsk
     <p className="text-sm text-muted">
       {unlimited ? (
         <>
-          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> kişi listelediniz · Listeleme ve Spine Kredi sınırsız ({account.plan.label} planı).
+          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> kişi listelediniz · Listeleme ve Adspine Kredi sınırsız ({account.plan.label} planı).
         </>
       ) : (
         <>
-          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan Spine Kredi: <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} planı).
+          Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · <span className="inline-flex items-center gap-1 align-middle"><CreditIcon size={14} />Kalan Adspine Kredi:</span> <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} planı).
         </>
       )}
     </p>
@@ -235,7 +235,7 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry, initialAsk
               className="flex items-center gap-2 rounded-full bg-surface p-2 pl-5"
             >
               <span className="shrink-0 text-accent">
-                <SparkleIcon size={20} />
+                <AdspineAiIcon size={24} />
               </span>
               <label className="sr-only" htmlFor="ai-arama">
                 Kimi aradığınızı yazın

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import frame from "@/components/ui/flow-frame.module.css";
-import { PlusIcon, SparkleIcon } from "@/components/ui/icons";
+import { AdspineAiIcon, PlusIcon } from "@/components/ui/icons";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { toast } from "@/components/ui/toast";
 import { dayKey, formatDayLong, formatDayShort, parseDayKey } from "@/modules/plan/calendar";
@@ -110,7 +110,7 @@ export function DayPanel({
       >
         <label htmlFor="plan-quick" className="flex items-center gap-1.5 text-sm font-medium">
           <span className="text-accent">
-            <SparkleIcon size={16} />
+            <AdspineAiIcon size={18} />
           </span>
           Yazın, planı biz çıkaralım
         </label>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { Disclosure } from "@/components/ui/disclosure";
-import { BoltIcon, CheckIcon, InboxIcon, SparkleIcon } from "@/components/ui/icons";
+import { AdspineAiIcon, BoltIcon, CheckIcon, InboxIcon } from "@/components/ui/icons";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { planList } from "@/modules/outreach/plans";
 import styles from "./landing.module.css";
@@ -102,7 +102,7 @@ export function Hero() {
           </div>
           <div className={`${styles.floatSlow} absolute -bottom-5 -left-2 hidden items-center gap-2 rounded-row bg-surface/90 px-3.5 py-2.5 text-sm font-medium shadow-float ring-1 ring-line backdrop-blur sm:flex lg:-left-8`}>
             <span className="grid size-6 place-items-center rounded-full bg-forest-soft text-accent">
-              <SparkleIcon size={14} />
+              <AdspineAiIcon size={16} />
             </span>
             Adspine AI ilk e-postayı yazdı
           </div>
@@ -148,7 +148,7 @@ export function Find() {
         </ScrollReveal>
         <ScrollReveal delay={120}>
           <h3 className="text-lg font-semibold tracking-tight">Müşteri bul</h3>
-          <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin ya da ne aradığınızı Adspine AI&apos;a yazın. Listelemek serbest; yalnızca gizli bilgilerini açıp eklediğiniz kişiler için Spine Kredi harcanır.</p>
+          <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin ya da ne aradığınızı Adspine AI&apos;a yazın. Listelemek serbest; yalnızca gizli bilgilerini açıp eklediğiniz kişiler için Adspine Kredi harcanır.</p>
           <Points items={["Aynı şirketten tek kişi, zaten kayıtlı olanları atla", "İş e-postaları doğrulanır", "Aramalarınızı kaydedip tekrar kullanın"]} />
         </ScrollReveal>
       </div>
@@ -206,7 +206,7 @@ export function AiSection() {
 const featureList = [
   { icon: <BoltIcon size={20} />, t: "Otomasyon", s: "Çok adımlı e-posta dizileri" },
   { icon: <InboxIcon size={20} />, t: "Gelen kutusu", s: "Yanıtlar, etiketler, cevap" },
-  { icon: <SparkleIcon size={20} />, t: "Adspine AI", s: "Yazım, yorum, yönlendirme" },
+  { icon: <AdspineAiIcon size={24} />, t: "Adspine AI", s: "Yazım, yorum, yönlendirme" },
 ];
 
 export function Features() {
@@ -260,7 +260,7 @@ export function Pricing() {
   const paid = planList.filter((p) => p.key !== "ucretsiz");
   const features = (p: (typeof planList)[number]) => [
     { text: `${p.senders} gönderici adresi`, on: true },
-    { text: `Ayda ${num(p.monthlyCredits)} Spine Kredi`, on: true },
+    { text: `Ayda ${num(p.monthlyCredits)} Adspine Kredi`, on: true },
     { text: `${p.campaigns} otomasyon`, on: true },
     { text: "Isındırma ve gelen kutusu", on: p.warmupAndInbox },
     { text: "Adspine AI", on: p.ai },
@@ -327,7 +327,7 @@ export function Pricing() {
       </ScrollReveal>
 
       <p className="mx-auto mt-8 max-w-3xl text-center text-sm text-muted">
-        1 Spine Kredi = gizli bilgileri açılıp eklenen 1 kişi/firma. Spine Krediler her ay başında yenilenir; listelemek ayrı bir haktır (ücretsiz planda günde 25, ayda 75 kişi). Ücretli planların hepsinde 7 gün ücretsiz deneme vardır (kart bilgisi gerekir). Fiyatlar aylıktır ve ABD doları ile gösterilir.
+        1 Adspine Kredi = gizli bilgileri açılıp eklenen 1 kişi/firma. Adspine Krediler her ay başında yenilenir; listelemek ayrı bir haktır (ücretsiz planda günde 25, ayda 75 kişi). Ücretli planların hepsinde 7 gün ücretsiz deneme vardır (kart bilgisi gerekir). Fiyatlar aylıktır ve ABD doları ile gösterilir.
       </p>
     </Section>
   );

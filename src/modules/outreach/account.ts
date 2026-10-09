@@ -8,7 +8,7 @@ export type Account = { plan: Plan; credits: number; periodStart: string };
 
 export class InsufficientCreditsError extends Error {
   constructor(readonly needed: number, readonly available: number) {
-    super(`Yeterli Spine Krediniz yok: ${needed} Spine Kredi gerekiyor, ${available} Spine Kredi kaldı.`);
+    super(`Yeterli Adspine Krediniz yok: ${needed} Adspine Kredi gerekiyor, ${available} Adspine Kredi kaldı.`);
   }
 }
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, CopyIcon, PenIcon, PlusIcon, SearchIcon, SendIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { AdspineAiIcon, ArrowRightIcon, CopyIcon, PenIcon, PlusIcon, SearchIcon, SendIcon, TrashIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
 import { RowMenu, type RowMenuItem } from "@/components/ui/row-menu";
 import { Select } from "@/components/ui/select";
@@ -151,7 +151,7 @@ function CreatePanel({ onCancel, onCreated }: { onCancel: () => void; onCreated:
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={busy}>
-          {method === "ai" && <SparkleIcon size={16} />}
+          {method === "ai" && <AdspineAiIcon size={18} tone="mono" eye="var(--color-forest)" />}
           {busy ? "Oluşturuluyor…" : method === "ai" ? "Adspine AI ile yaz" : "Otomasyonu oluştur"}
         </Button>
         <Button variant="quiet" onClick={onCancel} disabled={busy}>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, SparkleIcon } from "@/components/ui/icons";
+import { AdspineAiIcon, CheckIcon } from "@/components/ui/icons";
 import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
@@ -217,7 +217,7 @@ export function Composer({
         {/* Düğme, uzun formda aşağı kaydırmadan hep görünür kalır. */}
         <div className="sticky bottom-0 z-10 -mx-5 -mb-5 rounded-b-panel bg-surface/95 px-5 pt-3 pb-5 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 sm:pb-6">
           <Button onClick={() => run({})} disabled={busy !== null} size="lg" className="w-full">
-            <SparkleIcon size={18} />
+            <AdspineAiIcon size={20} tone="mono" eye="var(--color-forest)" />
             {busy === "write" ? "Yazılıyor…" : draft ? "Yeniden oluştur" : "Mesajı oluştur"}
           </Button>
         </div>
@@ -234,7 +234,7 @@ export function Composer({
         ) : !draft ? (
           <div className="grid min-h-[22rem] content-center justify-items-center gap-4 text-center">
             <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-accent">
-              <SparkleIcon size={22} />
+              <AdspineAiIcon size={28} />
             </span>
             <div className="grid gap-1.5">
               <p className="text-lg font-semibold tracking-tight">Mesajınız burada görünecek</p>
