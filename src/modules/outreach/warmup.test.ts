@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { effectiveDailyLimit, summarize, warmupQuota, warmupScore, type WarmupStatus } from "./warmup-rules";
+import { effectiveDailyLimit, summarize, warmupDue, warmupQuota, warmupRamp, warmupScore, type WarmupStatus } from "./warmup-rules";
 import { newWarmupToken, warmupMessage, warmupReply } from "./warmup-bank";
 
 describe("ısındırma kotası", () => {
@@ -64,5 +64,29 @@ describe("ısındırma metinleri", () => {
     expect(warmupReply("Ayşe", "Elif", () => 0.3)).toContain("Ayşe");
     expect(newWarmupToken()).toMatch(/^[a-f0-9]{32}$/);
     expect(newWarmupToken()).not.toBe(newWarmupToken());
+  });
+});
+
+describe("ısındırma takvimi", () => {
+  // İstanbul UTC+3: 05:30Z = 08:30 yerel.
+  const at = (hh: number, mm: number) => new Date(Date.UTC(2026, 9, 9, hh - 3, mm));
+  it("pencere dışında göndermez", () => {
+    expect(warmupDue({ quota: 4, sentToday: 0, now: at(7, 0) })).toBe(false);
+    expect(warmupDue({ quota: 4, sentToday: 0, now: at(21, 0) })).toBe(false);
+  });
+  it("ilk e-posta pencerenin ilk tick'inde gider, kota dolunca durur", () => {
+    expect(warmupDue({ quota: 2, sentToday: 0, now: at(8, 30) })).toBe(true);
+    expect(warmupDue({ quota: 2, sentToday: 1, now: at(8, 35) })).toBe(false);
+    expect(warmupDue({ quota: 2, sentToday: 2, now: at(19, 0) })).toBe(false);
+  });
+  it("kalanlar güne yayılır ve son tick'te kota tamamlanır", () => {
+    expect(warmupDue({ quota: 2, sentToday: 1, now: at(14, 40) })).toBe(true);
+    expect(warmupDue({ quota: 20, sentToday: 0, now: at(20, 25) })).toBe(true);
+    expect(warmupDue({ quota: 20, sentToday: 19, now: at(20, 25) })).toBe(true);
+  });
+  it("kademe tablosu 1. günden başlar ve sonsuza uzanır", () => {
+    const r = warmupRamp();
+    expect(r[0]).toEqual({ from: 1, to: 3, quota: 2 });
+    expect(r[r.length - 1]).toEqual({ from: 23, to: null, quota: 20 });
   });
 });

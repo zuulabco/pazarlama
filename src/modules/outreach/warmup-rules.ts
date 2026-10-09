@@ -1,4 +1,5 @@
 import { warmupDailyCap } from "./limits";
+import { isWithinWindow, zoned, type Schedule } from "./schedule";
 
 /**
  * Isındırma kuralları (saf): günlük ısınma e-postası kotası, ısınma skoru ve ısınırken otomasyon limiti.
@@ -7,6 +8,45 @@ import { warmupDailyCap } from "./limits";
 export type WarmupStatus = "gonderildi" | "gelen_kutusu" | "spam" | "yanitlandi" | "kayip";
 
 const DAY = 86_400_000;
+
+/** Isındırma yalnızca bu saatlerde (İstanbul) gönderilir: gece e-postası doğal görünmez. */
+export const WARMUP_WINDOW: Schedule = { tz: "Europe/Istanbul", days: [1, 2, 3, 4, 5, 6, 7], start: "08:30", end: "20:30" };
+/** Zamanlayıcı en sık bu kadar dakikada bir çalışır. */
+export const TICK_MINUTES = 5;
+
+/** İstanbul takvimine göre bugünün ilk anı (ms). İstanbul UTC+3'tür, yaz saati yoktur. */
+export const dayStartMs = (now = Date.now()) => Math.floor((now + 3 * 3_600_000) / DAY) * DAY - 3 * 3_600_000;
+
+const toMin = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+
+/**
+ * Bu tick'te bir ısındırma e-postası gönderilmeli mi? Günlük kota, gönderim penceresine eşit aralıklarla yayılır:
+ * ilk e-posta pencerenin ilk tick'inde, sonuncusu pencerenin sonuna doğru gider. Rastgelelik yoktur; böylece "bugün hiç gitmedi" olmaz.
+ */
+export function warmupDue(a: { quota: number; sentToday: number; now: Date }): boolean {
+  if (!isWithinWindow(a.now, WARMUP_WINDOW) || a.sentToday >= a.quota) return false;
+  const start = toMin(WARMUP_WINDOW.start);
+  const len = toMin(WARMUP_WINDOW.end) - start;
+  const elapsed = zoned(a.now, WARMUP_WINDOW.tz).minutes - start;
+  const expected = Math.min(Math.ceil((a.quota * (elapsed + TICK_MINUTES)) / len), a.quota);
+  return a.sentToday < expected;
+}
+
+/** Kademe tablosu (arayüzde gösterilir): her satır bir gün aralığı (1'den başlar; `to` null ise sonrasında hep) ve günlük e-posta sayısı. */
+export function warmupRamp(): { from: number; to: number | null; quota: number }[] {
+  const out: { from: number; to: number | null; quota: number }[] = [];
+  for (let d = 0; d <= 22; d++) {
+    const q = warmupQuota(d);
+    const last = out[out.length - 1];
+    if (last && last.quota === q) last.to = d + 1;
+    else out.push({ from: d + 1, to: d + 1, quota: q });
+  }
+  out[out.length - 1].to = null;
+  return out;
+}
 
 /** Isınmanın başlangıcından bu yana geçen tam gün (0'dan). */
 export const daysSince = (startedAt: string | null, now = Date.now()) => (startedAt ? Math.max(Math.floor((now - Date.parse(startedAt)) / DAY), 0) : 0);
@@ -57,7 +97,7 @@ export function summarize(rows: { status: WarmupStatus; sent_at: string }[], sta
   return {
     days,
     quota: warmupQuota(days),
-    sentToday: rows.filter((r) => now - Date.parse(r.sent_at) < DAY).length,
+    sentToday: rows.filter((r) => Date.parse(r.sent_at) >= dayStartMs(now)).length,
     sent14d: rows.length,
     inbox: count("gelen_kutusu") + count("yanitlandi"),
     spam: count("spam"),

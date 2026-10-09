@@ -4,10 +4,10 @@ import { deliver } from "./mailer";
 import { withImap } from "./imap";
 import { getMailboxCredentials } from "./mailboxes";
 import { newMessageId } from "./mime";
-import { isWithinWindow, type Schedule } from "./schedule";
+import { isWithinWindow } from "./schedule";
 import { friendlySmtpError } from "./smtp";
 import { newWarmupToken, warmupMessage, warmupReply } from "./warmup-bank";
-import { daysSince, LOST_AFTER_MS, summarize, warmupQuota, warmupScore, type WarmupStats, type WarmupStatus } from "./warmup-rules";
+import { dayStartMs, daysSince, LOST_AFTER_MS, summarize, WARMUP_WINDOW, warmupDue, warmupQuota, warmupScore, type WarmupStats, type WarmupStatus } from "./warmup-rules";
 import { classifySmtpFailure } from "./sender";
 import { listSpamTokens } from "./gmail";
 
@@ -20,9 +20,6 @@ import { listSpamTokens } from "./gmail";
 
 export const WARMUP_HEADER = "X-Adspine-Warmup";
 const REPLY_CHANCE = 0.6;
-/** Isındırma yalnızca bu saatlerde (İstanbul) gönderilir: gece e-postası doğal görünmez. */
-const WINDOW: Schedule = { tz: "Europe/Istanbul", days: [1, 2, 3, 4, 5, 6, 7], start: "08:30", end: "20:30" };
-const TICK_MINUTES = 5;
 
 const unavailable = (e: { code?: string; message: string } | null) => {
   if (!e) return;
@@ -48,13 +45,22 @@ type SentRow = { sender_mailbox_id: string; receiver_mailbox_id: string | null; 
 
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 
-/** Havuzdaki her adres için: günlük kotası dolmadıysa (ve saat uygunsa) bir eşe ısındırma e-postası gönderir. */
-export async function runWarmupSend(opts: { force?: boolean; rng?: () => number; now?: Date } = {}): Promise<{ sent: number; skipped: number; failed: number }> {
+/** Eş seçimi: kendisi hariç; en az yazışılan eşler öncelikli (aynı eşe üst üste yazılmaz). */
+function choosePeer(sender: PoolRow, members: PoolRow[], mine: SentRow[], rng: () => number): PoolRow {
+  const peers = members.filter((m) => m.id !== sender.id);
+  const counts = new Map(peers.map((p) => [p.id, mine.filter((r) => r.receiver_mailbox_id === p.id).length]));
+  const least = Math.min(...peers.map((p) => counts.get(p.id)!));
+  const candidates = peers.filter((p) => counts.get(p.id) === least);
+  return candidates[Math.floor(rng() * candidates.length)];
+}
+
+/** Havuzdaki her adres için: günlük kotası dolmadıysa ve takvimdeki sırası geldiyse bir eşe ısındırma e-postası gönderir. */
+export async function runWarmupSend(opts: { rng?: () => number; now?: Date } = {}): Promise<{ sent: number; skipped: number; failed: number }> {
   const rng = opts.rng ?? Math.random;
   const now = opts.now ?? new Date();
   const res = { sent: 0, skipped: 0, failed: 0 };
   const members = await pool();
-  if (members.length < 2 || (!opts.force && !isWithinWindow(now, WINDOW))) return { ...res, skipped: members.length };
+  if (members.length < 2 || !isWithinWindow(now, WARMUP_WINDOW)) return { ...res, skipped: members.length };
 
   const { data: recent, error } = await db()
     .from("outreach_warmup_messages")
@@ -65,27 +71,16 @@ export async function runWarmupSend(opts: { force?: boolean; rng?: () => number;
   unavailable(error);
   const rows = recent ?? [];
 
-  // Kalan pencere: bu saatten bitiş saatine kaç tick var (gönderimler güne yayılsın).
-  const [eh, em] = WINDOW.end.split(":").map(Number);
-  const tz = new Intl.DateTimeFormat("en-GB", { timeZone: WINDOW.tz, hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now);
-  const nowMin = Number(tz.find((p) => p.type === "hour")!.value) * 60 + Number(tz.find((p) => p.type === "minute")!.value);
-  const ticksLeft = Math.max(Math.floor((eh * 60 + em - nowMin) / TICK_MINUTES), 1);
-
   for (const sender of members) {
     const mine = rows.filter((r) => r.sender_mailbox_id === sender.id);
-    const today = mine.filter((r) => now.getTime() - Date.parse(r.sent_at) < 86_400_000).length;
-    const left = warmupQuota(daysSince(sender.warmup_started_at, now.getTime())) - today;
-    if (left <= 0) continue;
-    if (!opts.force && rng() >= Math.min(left / ticksLeft, 1)) continue;
-
-    // Eş seçimi: kendisi hariç; en az yazışılan eşler öncelikli (aynı eşe üst üste yazılmaz).
-    const peers = members.filter((m) => m.id !== sender.id);
-    const counts = new Map(peers.map((p) => [p.id, mine.filter((r) => r.receiver_mailbox_id === p.id).length]));
-    const least = Math.min(...peers.map((p) => counts.get(p.id)!));
-    const candidates = peers.filter((p) => counts.get(p.id) === least);
-    const peer = candidates[Math.floor(rng() * candidates.length)];
+    const sentToday = mine.filter((r) => Date.parse(r.sent_at) >= dayStartMs(now.getTime())).length;
+    const quota = warmupQuota(daysSince(sender.warmup_started_at, now.getTime()));
+    if (!warmupDue({ quota, sentToday, now })) {
+      res.skipped++;
+      continue;
+    }
     try {
-      await sendWarmup(sender, peer, rng);
+      await sendWarmup(sender, choosePeer(sender, members, mine, rng), rng);
       res.sent++;
     } catch (e) {
       res.failed++;
@@ -93,6 +88,37 @@ export async function runWarmupSend(opts: { force?: boolean; rng?: () => number;
     }
   }
   return res;
+}
+
+export type FirstSend = { result: "sent" | "alone" | "limit" | "error"; message: string };
+
+/**
+ * Isındırma açılır açılmaz (ya da kullanıcı isteyince) bir adresten hemen bir ısındırma e-postası gönderir; saat penceresine bakmaz,
+ * günlük kotayı aşmaz. Amaç, kurulumun çalıştığını beklemeden göstermek ve bir sorun varsa nedenini söylemektir.
+ */
+export async function sendWarmupNow(uid: string, mailboxId: string, rng: () => number = Math.random): Promise<FirstSend> {
+  const members = await pool();
+  const sender = members.find((m) => m.id === mailboxId && m.user_uid === uid);
+  if (!sender) return { result: "error", message: "Isındırma bu adres için açık değil." };
+  if (members.length < 2) return { result: "alone", message: "Havuzda eşleşecek başka bir adres yok; biri katılınca ısındırma kendiliğinden başlar." };
+
+  const { data, error } = await db()
+    .from("outreach_warmup_messages")
+    .select("sender_mailbox_id, receiver_mailbox_id, status, sent_at")
+    .eq("sender_mailbox_id", sender.id)
+    .gte("sent_at", ago(7 * 86_400_000))
+    .returns<SentRow[]>();
+  unavailable(error);
+  const mine = data ?? [];
+  const sentToday = mine.filter((r) => Date.parse(r.sent_at) >= dayStartMs()).length;
+  if (sentToday >= warmupQuota(daysSince(sender.warmup_started_at))) return { result: "limit", message: "Bugünkü ısındırma kotası doldu; yarın sürer." };
+  try {
+    await sendWarmup(sender, choosePeer(sender, members, mine, rng), rng);
+    return { result: "sent", message: "Isındırma e-postası gönderildi." };
+  } catch (e) {
+    const row = await db().from("outreach_mailboxes").select("provider").eq("id", sender.id).maybeSingle<{ provider: "gmail" | "outlook" | "ozel" | "google" }>();
+    return { result: "error", message: friendlySmtpError(e, row.data?.provider ?? "ozel").slice(0, 300) };
+  }
 }
 
 async function sendWarmup(sender: PoolRow, peer: PoolRow, rng: () => number) {
@@ -222,17 +248,28 @@ export async function refreshScores(): Promise<number> {
   return n;
 }
 
-/** Isındırma paneli için son 14 günün özeti. */
-export async function warmupStats(mailboxId: string, startedAt: string | null): Promise<WarmupStats> {
-  const { data, error } = await db().from("outreach_warmup_messages").select("status, sent_at").eq("sender_mailbox_id", mailboxId).gte("sent_at", ago(14 * 86_400_000)).returns<{ status: WarmupStatus; sent_at: string }[]>();
-  unavailable(error);
-  return summarize(data ?? [], startedAt);
+export type WarmupOverview = WarmupStats & {
+  /** Havuzdaki bu adres dışındaki açık adresler: 0 ise ısındırma başlayamaz. */
+  peers: number;
+  /** Şu an gönderim saati içinde mi (08:30-20:30 İstanbul)? */
+  inWindow: boolean;
+  lastSentAt: string | null;
+};
+
+/** Isındırma paneli için son 14 günün özeti ve çalışma durumu. */
+export async function warmupStats(mailboxId: string, startedAt: string | null): Promise<WarmupOverview> {
+  const [msgs, members] = await Promise.all([
+    db().from("outreach_warmup_messages").select("status, sent_at").eq("sender_mailbox_id", mailboxId).gte("sent_at", ago(14 * 86_400_000)).order("sent_at", { ascending: false }).returns<{ status: WarmupStatus; sent_at: string }[]>(),
+    pool(),
+  ]);
+  unavailable(msgs.error);
+  const rows = msgs.data ?? [];
+  return { ...summarize(rows, startedAt), peers: members.filter((m) => m.id !== mailboxId).length, inWindow: isWithinWindow(new Date(), WARMUP_WINDOW), lastSentAt: rows[0]?.sent_at ?? null };
 }
 
-/** Zamanlayıcı: gönder, kayıpları işaretle, skorları güncelle. */
-export async function runWarmupTick(): Promise<{ sent: number; failed: number; lost: number; scored: number }> {
-  const send = await runWarmupSend();
+/** Zamanlayıcının bakım adımı (gelen kutusu taramasından sonra): kayıpları işaretle, skorları güncelle. */
+export async function runWarmupMaintenance(): Promise<{ lost: number; scored: number }> {
   const lost = await markLost();
   const scored = await refreshScores();
-  return { sent: send.sent, failed: send.failed, lost, scored };
+  return { lost, scored };
 }

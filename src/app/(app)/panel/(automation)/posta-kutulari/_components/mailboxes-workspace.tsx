@@ -2,8 +2,8 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, CopyIcon, MailIcon, PenIcon, PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/icons";
-import { RowMenu } from "@/components/ui/row-menu";
+import { CheckIcon, CopyIcon, FlameIcon, MailIcon, PenIcon, PlusIcon, SearchIcon, SendIcon, TrashIcon } from "@/components/ui/icons";
+import { RowMenu, type RowMenuItem } from "@/components/ui/row-menu";
 import { Modal } from "@/components/ui/modal";
 import { fold } from "@/lib/text";
 import { toast, Toaster } from "@/components/ui/toast";
@@ -13,8 +13,9 @@ import { providerLabels } from "@/modules/outreach/presets";
 import { api } from "../../kisiler/_components/contact-ui";
 import { MailboxEdit } from "./mailbox-edit";
 import { MailboxWizard } from "./mailbox-wizard";
+import { WarmupModal } from "./warmup-modal";
 
-type Panel = { mode: "new" } | { mode: "edit"; id: string } | null;
+type Panel = { mode: "new" } | { mode: "edit"; id: string } | { mode: "warmup"; id: string } | null;
 
 const statusStyle = { bagli: "bg-forest-soft text-accent", hata: "bg-danger-soft text-danger", duraklatildi: "bg-sunken text-muted" } as const;
 const statusLabel = { bagli: "Bağlı", hata: "Hata", duraklatildi: "Duraklatıldı" } as const;
@@ -86,6 +87,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
   const [busy, setBusy] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Mailbox | null>(null);
 
   // "Google ile bağlan" dönüşünün sonucu adres çubuğunda gelir; bir kez bildirilip temizlenir.
   useEffect(() => {
@@ -141,8 +143,17 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
     if (!r.ok) return toast(r.error, { kind: "error" });
     setMailboxes((prev) => prev.filter((x) => x.id !== m.id));
     setPanel(null);
+    setDeleting(null);
     toast("Gönderici adresi bağlantıdan çıkarıldı");
   }
+
+  /** Satırın üç nokta menüsü: test e-postası, düzenle, duraklat/başlat, sil. (Isındırma kendi alev düğmesinden açılır.) */
+  const menuFor = (m: Mailbox): RowMenuItem[] => [
+    { label: busy === `test-${m.id}` ? "Gönderiliyor…" : "Test gönder", icon: <MailIcon size={16} />, onClick: () => void test(m) },
+    { label: "Düzenle", icon: <PenIcon size={16} />, onClick: () => setPanel({ mode: "edit", id: m.id }) },
+    { label: m.status === "duraklatildi" ? "Başlat" : "Duraklat", icon: <SendIcon size={16} />, onClick: () => void togglePause(m) },
+    { label: "Sil", icon: <TrashIcon size={16} />, danger: true, separatorBefore: true, onClick: () => setDeleting(m) },
+  ];
 
   if (unavailable) {
     return (
@@ -156,6 +167,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
 
   const shown = mailboxes.filter((m) => !query.trim() || fold(m.email).includes(fold(query.trim())));
   const editing = panel?.mode === "edit" ? mailboxes.find((m) => m.id === panel.id) : undefined;
+  const warming = panel?.mode === "warmup" ? mailboxes.find((m) => m.id === panel.id) : undefined;
 
   return (
     <div className="grid gap-5">
@@ -213,7 +225,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
           <table className="w-full min-w-[56rem] text-left text-sm">
             <thead className="border-b border-line text-xs text-muted">
               <tr>
-                {["E-posta", "Tür", "Durum", "Sağlık skoru", "Isınma", "Günlük limit", ""].map((h, i) => (
+                {["E-posta", "Tür", "Durum", "Sağlık skoru", "Isındırma", "Günlük limit", ""].map((h, i) => (
                   <th key={i} scope="col" className="px-4 py-3 font-medium">
                     {h || <span className="sr-only">Eylemler</span>}
                   </th>
@@ -245,24 +257,24 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
                           <span className={`text-xs ${dnsStyle[dns.tone]}`}>{score === null ? "Denetlenmedi" : `%${score} · ${dns.label}`}</span>
                         </button>
                       </td>
-                      <td className="px-4 py-3 tabular-nums">{m.warmupEnabled ? <span title="Isındırma açık">{m.warmupScore !== null ? `%${m.warmupScore}` : "Başladı"}<span className="block text-xs text-muted">Gün {warmupDay(m.warmupStartedAt)}</span></span> : <span className="text-muted">Kapalı</span>}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => setPanel({ mode: "warmup", id: m.id })}
+                          aria-label={`${m.email} için ısındırma${m.warmupEnabled ? " (açık)" : ""}`}
+                          title={m.warmupEnabled ? "Isındırma açık. Ayrıntılar için tıklayın" : "Isındırmayı başlat"}
+                          className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm transition-colors ${m.warmupEnabled ? "bg-forest-soft font-medium text-accent hover:bg-forest-soft/70" : "text-muted ring-1 ring-line ring-inset hover:bg-sunken hover:text-ink"}`}
+                        >
+                          <FlameIcon size={16} filled={m.warmupEnabled} />
+                          <span className="tabular-nums">{m.warmupEnabled ? (m.warmupScore !== null ? `%${m.warmupScore}` : `${warmupDay(m.warmupStartedAt)}. gün`) : "Kapalı"}</span>
+                        </button>
+                      </td>
                       <td className="px-4 py-3 tabular-nums">
                         {m.dailyLimit} <span className="text-muted">/ gün · {m.hourlyLimit} / saat</span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-0.5">
-                          <button type="button" onClick={() => void test(m)} disabled={busy === `test-${m.id}` || m.status === "duraklatildi"} className="h-8 rounded-full px-3 text-xs font-medium text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-50">
-                            {busy === `test-${m.id}` ? "Gönderiliyor…" : "Test"}
-                          </button>
-                          <button type="button" onClick={() => setPanel({ mode: "edit", id: m.id })} className="h-8 rounded-full px-3 text-xs font-medium text-muted transition-colors hover:bg-sunken hover:text-ink">
-                            Ayarlar
-                          </button>
-                          <button type="button" onClick={() => void togglePause(m)} className="h-8 rounded-full px-3 text-xs font-medium text-muted transition-colors hover:bg-sunken hover:text-ink">
-                            {m.status === "duraklatildi" ? "Sürdür" : "Duraklat"}
-                          </button>
-                          <button type="button" onClick={() => void remove(m)} aria-label={`${m.email} bağlantısını kaldır`} className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-sunken hover:text-danger">
-                            <TrashIcon size={15} />
-                          </button>
+                        <div className="flex justify-end">
+                          <RowMenu label={`${m.email} için işlemler`} items={menuFor(m)} />
                         </div>
                       </td>
                     </tr>
@@ -327,15 +339,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[m.status]}`}>{statusLabel[m.status]}</span>
-                    <RowMenu
-                      label={`${m.email} için işlemler`}
-                      items={[
-                        { label: "Ayarlar", icon: <PenIcon size={16} />, onClick: () => setPanel({ mode: "edit", id: m.id }) },
-                        { label: busy === `test-${m.id}` ? "Gönderiliyor…" : "Test e-postası", icon: <MailIcon size={16} />, onClick: () => void test(m) },
-                        { label: m.status === "duraklatildi" ? "Sürdür" : "Duraklat", onClick: () => void togglePause(m) },
-                        { label: "Bağlantıyı kaldır", icon: <TrashIcon size={16} />, danger: true, separatorBefore: true, onClick: () => void remove(m) },
-                      ]}
-                    />
+                    <RowMenu label={`${m.email} için işlemler`} items={[{ label: "Isındırma", icon: <FlameIcon size={16} />, onClick: () => setPanel({ mode: "warmup", id: m.id }) }, ...menuFor(m)]} />
                   </div>
                 </div>
                 {m.status === "hata" && m.lastError && <p className="text-xs text-danger">{m.lastError}</p>}
@@ -345,7 +349,7 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
                     <dd className="tabular-nums">{score === null ? <span className="text-muted">—</span> : `%${score}`}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-muted">Isınma</dt>
+                    <dt className="text-xs text-muted">Isındırma</dt>
                     <dd className="tabular-nums">{m.warmupEnabled ? (m.warmupScore !== null ? `%${m.warmupScore}` : "Başladı") : <span className="text-muted">Kapalı</span>}</dd>
                   </div>
                   <div>
@@ -369,6 +373,26 @@ export function MailboxesWorkspace({ initial, unavailable, encryptionReady, goog
           }}
           onCancel={() => setPanel(null)}
         />
+      </Modal>
+      <Modal open={panel?.mode === "warmup" && Boolean(warming)} onClose={() => setPanel(null)} title="Isındırma" width="38rem">
+        {warming && <WarmupModal key={warming.id} mailbox={warming} onChange={put} onClose={() => setPanel(null)} />}
+      </Modal>
+      <Modal open={deleting !== null} onClose={() => setDeleting(null)} title="Gönderici adresi kaldırılsın mı?" width="26rem">
+        {deleting && (
+          <div className="grid gap-4">
+            <p className="text-sm text-muted">
+              <span className="font-medium text-ink">{deleting.email}</span> Adspine&apos;dan çıkarılır; kayıtlı bağlantı bilgisi silinir. E-posta hesabınıza ve gönderilmiş iletilere dokunulmaz. Bu adresi kullanan otomasyonlar başka bir adres bağlanana kadar gönderemez.
+            </p>
+            <div className="flex gap-2">
+              <Button className="bg-danger hover:bg-danger" onClick={() => void remove(deleting)}>
+                Kaldır
+              </Button>
+              <Button variant="quiet" onClick={() => setDeleting(null)}>
+                Vazgeç
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
       <Modal open={panel?.mode === "edit" && Boolean(editing)} onClose={() => setPanel(null)} title="Gönderici adresi ayarları" width="34rem">
         {editing && (

@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { runBounceGuard } from "@/modules/outreach/guard";
-import { runWarmupTick } from "@/modules/outreach/warmup";
+import { runWarmupMaintenance, runWarmupSend } from "@/modules/outreach/warmup";
 import { purgeOldBrowses } from "@/modules/outreach/lead-browse";
 import { finalizeOpenLeadJobs } from "@/modules/outreach/lead-search";
 import { runSendTick } from "@/modules/outreach/sender";
@@ -30,13 +30,19 @@ async function run(req: NextRequest) {
   const started = Date.now();
   try {
     const send = await runSendTick({ batch: 20, deadlineMs: 150_000 });
-    const scan = await scanDueMailboxes(3, Math.max(20_000, 250_000 - (Date.now() - started)));
-    const paused = await runBounceGuard();
-    // Isındırma: havuzdaki adresler birbirine doğal e-posta gönderir; kayıplar işaretlenir, skorlar güncellenir.
-    const warmup = await runWarmupTick().catch((e) => {
-      console.error("Isındırma hatası:", e instanceof Error ? e.message : e);
+    // Isındırma gönderimi taramadan önce: hızlıdır, uzun süren bir tarama yüzünden atlanmasın; ulaşma da aynı turda görülsün.
+    const warmupSend = await runWarmupSend().catch((e) => {
+      console.error("Isındırma gönderimi hatası:", e instanceof Error ? e.message : e);
       return null;
     });
+    const scan = await scanDueMailboxes(3, Math.max(20_000, 250_000 - (Date.now() - started)));
+    const paused = await runBounceGuard();
+    // Isındırma bakımı: kayıplar işaretlenir, skorlar güncellenir.
+    const warmupCare = await runWarmupMaintenance().catch((e) => {
+      console.error("Isındırma bakımı hatası:", e instanceof Error ? e.message : e);
+      return null;
+    });
+    const warmup = { send: warmupSend, ...warmupCare };
     // Kişi bul: tarayıcı kapalıyken biten aramaların sonuçlarını aktarır (sağlayıcı yapılandırılmamışsa sessizce atlanır).
     const leadJobs = await finalizeOpenLeadJobs().catch((e) => {
       console.error("Kişi bul işleri kapatılamadı:", e instanceof Error ? e.message : e);

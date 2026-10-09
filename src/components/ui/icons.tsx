@@ -198,3 +198,10 @@ export const SendIcon = ({ size }: P) => (
     <path d="m9.2 11.2 3-3" />
   </Svg>
 );
+
+/** Alev: ısındırma. `filled` açıkken (ısınıyor) dolu çizilir. */
+export const FlameIcon = ({ size, filled = false }: P & { filled?: boolean }) => (
+  <svg viewBox="0 0 20 20" width={size ?? 18} height={size ?? 18} aria-hidden="true" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <path d="M10 2.5c.4 2.6 3.9 4.4 3.9 8.6a3.9 3.9 0 0 1-7.8 0c0-1.3.5-2.2 1.2-3 .1 1 .6 1.6 1.2 1.9C8.2 7.3 8.6 4.7 10 2.5Z" />
+  </svg>
+);
