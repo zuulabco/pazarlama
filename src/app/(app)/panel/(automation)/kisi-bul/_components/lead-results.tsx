@@ -41,6 +41,7 @@ export function LeadResults({
   onToggle,
   onToggleAll,
   onAdd,
+  relaxOptions,
   onRelax,
 }: {
   search: LeadBrowse;
@@ -48,8 +49,9 @@ export function LeadResults({
   onToggle: (rid: number) => void;
   onToggleAll: (all: boolean) => void;
   onAdd: () => void;
-  /** Sonuç çıkmadıysa: dar filtreleri kaldırıp yeniden arar (yalnızca kaldırılacak filtre varsa verilir). */
-  onRelax?: () => void;
+  /** Sonuç çıkmadıysa sunulan gevşetme seçenekleri: her biri belirli bir filtreyi kaldırıp aynı aramayı yeniden çalıştırır. */
+  relaxOptions?: { key: "unvan" | "sektor" | "sehir"; label: string }[];
+  onRelax?: (key: "unvan" | "sektor" | "sehir") => void;
 }) {
   const selectable = search.rows.filter((r) => !r.owned);
   const allSelected = selectable.length > 0 && selectable.every((r) => selected.has(r.rid));
@@ -60,28 +62,36 @@ export function LeadResults({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="grid gap-0.5">
           <h3 className="text-lg font-semibold tracking-tight">{search.rows.length > 0 ? `${num(search.rows.length)} kişi listelendi` : "Sonuç yok"}</h3>
-          <p className="text-sm text-muted">
-            Profilinize uyum skoruna göre sıralandı. Her şirketten en uygun tek kişi gösterilir, zaten kayıtlı olanlar atlanır.
-            {hiddenNote ? ` ${hiddenNote}.` : ""}
-          </p>
+          {search.rows.length > 0 && (
+            <p className="text-sm text-muted">
+              Profilinize uyum skoruna göre sıralandı. Her şirketten en uygun tek kişi gösterilir, zaten kayıtlı olanlar atlanır.
+              {hiddenNote ? ` ${hiddenNote}.` : ""}
+            </p>
+          )}
         </div>
-        <Button onClick={onAdd} disabled={selected.size === 0}>
-          <PlusIcon size={16} />
-          {selected.size > 0 ? `${num(selected.size)} kişiyi ekle` : "Kişileri ekle"}
-        </Button>
+        {search.rows.length > 0 && (
+          <Button onClick={onAdd} disabled={selected.size === 0}>
+            <PlusIcon size={16} />
+            {selected.size > 0 ? `${num(selected.size)} kişiyi ekle` : "Kişileri ekle"}
+          </Button>
+        )}
       </div>
 
       {search.rows.length === 0 ? (
         <div className="grid justify-items-start gap-3 rounded-row bg-pollen/50 px-4 py-3.5 text-sm">
           {search.found === 0 ? (
-            <p>Bu filtrelerle kişi bulunamadı. Filtre birleşimi çok dar olabilir; sektör ve anahtar kelimeyi kaldırmak çoğu zaman sonuç getirir.</p>
+            <p>Bu filtrelerle kişi bulunamadı. Küçük şehirlerde ya da dar kıdem ve sektör birleşimlerinde kayıt az olabilir; aşağıdaki seçeneklerden birini kaldırıp yeniden deneyin.</p>
           ) : (
             <p>Gösterilecek kişi kalmadı (bulunanların hepsi zaten kayıtlı ya da aynı şirketten). Filtreleri gevşetip yeniden arayın.</p>
           )}
-          {onRelax && (
-            <Button variant="secondary" onClick={onRelax}>
-              Sektör ve kelime filtreleri olmadan ara
-            </Button>
+          {relaxOptions && relaxOptions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {relaxOptions.map((o) => (
+                <Button key={o.key} variant="secondary" onClick={() => onRelax?.(o.key)}>
+                  {o.label}
+                </Button>
+              ))}
+            </div>
           )}
         </div>
       ) : (

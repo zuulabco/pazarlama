@@ -77,9 +77,13 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
     setBusy(true);
     setSearchedKey(filterKey(query));
     setSelected(new Set());
+    // Arama isteği beklenirken de yükleme ekranı gösterilir (aksi hâlde kısa bir süre "kaç kişi" çubuğu görünürdü).
+    const before = stage;
+    setStage({ kind: "running" });
     const r = await api<{ search: LeadBrowse }>("/api/outreach/leads/browse", { method: "POST", body: JSON.stringify({ ...query, city: query.city?.trim() || undefined, count: query.count }) });
     if (!r.ok) {
       setBusy(false);
+      setStage(before.kind === "running" ? { kind: "idle" } : before);
       return toast(r.error, { kind: "error" });
     }
     await poll(r.data.search.id);
@@ -129,9 +133,16 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
     void run(next);
   }
 
-  /** Sonuç çıkmadıysa: sektör, büyüklük ve anahtar kelime filtreleri kaldırılıp aynı unvan ve konumla yeniden aranır. */
-  function relax() {
-    const next = { ...q, industries: [], sizes: [], keywords: [], notKeywords: [] };
+  /** Sonuç çıkmadıysa sunulan seçenekler (yalnızca veri): her biri belirli bir filtreyi kaldırır. */
+  const relaxList: { key: "unvan" | "sektor" | "sehir"; label: string }[] = [];
+  if (q.roles.length + q.titles.length > 0) relaxList.push({ key: "unvan", label: "Unvan filtresi olmadan ara" });
+  if (q.industries.length + q.sizes.length + q.keywords.length + q.notKeywords.length > 0) relaxList.push({ key: "sektor", label: "Sektör ve kelime filtreleri olmadan ara" });
+  if (q.city?.trim()) relaxList.push({ key: "sehir", label: "Şehir yerine tüm ülkede ara" });
+
+  /** Seçilen filtreyi kaldırıp aynı aramayı yeniden çalıştırır. */
+  function relax(key: "unvan" | "sektor" | "sehir") {
+    const next: LeadSearchInput =
+      key === "unvan" ? { ...q, roles: [], titles: [] } : key === "sektor" ? { ...q, industries: [], sizes: [], keywords: [], notKeywords: [] } : { ...q, city: undefined };
     setQ(next);
     void run(next);
   }
@@ -296,7 +307,8 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
               }
               onToggleAll={(all) => setSelected(all ? new Set(stage.search.rows.filter((r) => !r.owned).map((r) => r.rid)) : new Set())}
               onAdd={() => setAddOpen(true)}
-              onRelax={q.industries.length + q.sizes.length + q.keywords.length + q.notKeywords.length > 0 ? relax : undefined}
+              relaxOptions={relaxList}
+              onRelax={relax}
             />
           )}
           {stage.kind === "results" && (

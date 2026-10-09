@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { DownloadIcon, PlusIcon, SearchIcon, SparkleIcon, TrashIcon } from "@/components/ui/icons";
+import { DownloadIcon, MailIcon, PenIcon, PlusIcon, SearchIcon, SparkleIcon, TrashIcon, UsersIcon } from "@/components/ui/icons";
+import { RowMenu, type RowMenuItem } from "@/components/ui/row-menu";
 import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
 import { toast, Toaster } from "@/components/ui/toast";
@@ -31,6 +32,16 @@ const kindOptions = [
   { value: "rol", label: "Ortak adres (info@…)" },
   { value: "kisisel", label: "Kişisel adres (gmail…)" },
 ];
+
+const initialsOf = (c: Contact) =>
+  (c.name ?? c.company ?? c.email ?? "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toLocaleUpperCase("tr");
+const hostOf = (url: string | null) => (url ? url.replace(/^https?:\/\/(www\.)?/, "").replace(/[/?#].*$/, "") : null);
 
 /** İkinci-sınıf: bir kişiye e-posta bulma gerekli mi? (adres yok/geçersiz/doğrulanamamış ve web sitesi var) */
 const canFind = (c: Contact) => Boolean(c.website) && (!c.email || c.emailStatus === "gecersiz" || c.emailStatus === "riskli");
@@ -206,6 +217,14 @@ export function ContactsWorkspace({
     void loadLists();
   }
 
+  async function removeOne(c: Contact) {
+    const r = await api<{ ok: true }>("/api/outreach/contacts", { method: "DELETE", body: JSON.stringify({ ids: [c.id] }) });
+    if (!r.ok) return toast(r.error, { kind: "error" });
+    toast("Kişi silindi");
+    refetch();
+    void loadLists();
+  }
+
   async function addSelectedToList(listId: string) {
     const r = await api<{ added: number }>(`/api/outreach/lists/${listId}/members`, { method: "POST", body: JSON.stringify({ contactIds: [...selected] }) });
     if (!r.ok) return toast(r.error, { kind: "error" });
@@ -251,6 +270,42 @@ export function ContactsWorkspace({
     );
   }
 
+  const menuFor = (c: Contact): RowMenuItem[] => [
+    { label: "Düzenle", icon: <PenIcon size={16} />, onClick: () => openEdit(c) },
+    ...(canFind(c) ? [{ label: "E-posta bul", icon: <SearchIcon size={16} />, onClick: () => void findOne(c.id) }] : []),
+    ...(c.email ? [{ label: "E-postayı kopyala", icon: <MailIcon size={16} />, onClick: () => void navigator.clipboard.writeText(c.email!).then(() => toast("Kopyalandı")) }] : []),
+    { label: "Sil", icon: <TrashIcon size={16} />, danger: true, separatorBefore: true, onClick: () => void removeOne(c) },
+  ];
+
+  const emailCell = (c: Contact) =>
+    c.email ? (
+      <div className="grid gap-1">
+        <span className="truncate">{c.email}</span>
+        <span className="flex flex-wrap gap-1.5">
+          <StatusChip status={c.emailStatus} />
+          <KindChip kind={c.emailKind} />
+        </span>
+      </div>
+    ) : (
+      <div className="grid justify-items-start gap-1">
+        <StatusChip status="yok" />
+        {c.discoveryNote && <span className="max-w-[14rem] truncate text-xs text-muted">{c.discoveryNote}</span>}
+      </div>
+    );
+
+  const findButton = (c: Contact) =>
+    canFind(c) ? (
+      <button
+        type="button"
+        onClick={() => void findOne(c.id)}
+        disabled={finding.has(c.id)}
+        className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent disabled:opacity-60"
+      >
+        <SearchIcon size={13} />
+        {finding.has(c.id) ? "Taranıyor…" : "E-posta bul"}
+      </button>
+    ) : null;
+
   return (
     <div className="grid gap-5">
       <Toaster />
@@ -265,24 +320,19 @@ export function ContactsWorkspace({
         />
         {view === "kisiler" && (
           <div className="flex flex-wrap items-center gap-2">
-            {account && (
-              <span className="rounded-full bg-sunken px-3 py-1.5 text-sm" title={`${account.plan.label} paketi`}>
-                Kalan Spine Kredi: <span className="font-medium tabular-nums">{new Intl.NumberFormat("tr-TR").format(account.credits)}</span>
-              </span>
-            )}
+            <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
+              CSV içe aktar
+            </Button>
+            <Button variant="secondary" onClick={openNew}>
+              <PlusIcon size={16} />
+              Kişi ekle
+            </Button>
             {account && (
               <ButtonLink href="/panel/kisi-bul">
                 <SparkleIcon size={16} />
                 Müşteri bul
               </ButtonLink>
             )}
-            <Button variant="secondary" onClick={() => setPanel({ mode: "csv" })}>
-              CSV içe aktar
-            </Button>
-            <Button variant={account ? "secondary" : "primary"} onClick={openNew}>
-              <PlusIcon size={16} />
-              Kişi ekle
-            </Button>
           </div>
         )}
       </div>
@@ -308,8 +358,9 @@ export function ContactsWorkspace({
 
       {view === "kisiler" && (
         <div className={`grid items-start gap-6 ${panel ? "lg:grid-cols-[minmax(0,1fr)_24rem]" : ""}`}>
-          <section aria-label="Kişiler" className="grid gap-4 rounded-panel bg-surface p-4 ring-1 ring-line sm:p-5">
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+          <section aria-label="Kişiler" className="grid min-w-0 gap-4 rounded-panel bg-surface p-4 ring-1 ring-line sm:p-5">
+            {/* Araç çubuğu: arama ve üç süzgeç tek satırda. */}
+            <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
               <label className="relative">
                 <span className="sr-only">Kişi ara</span>
                 <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted">
@@ -319,8 +370,8 @@ export function ContactsWorkspace({
                   value={filters.q}
                   onChange={(e) => patch({ q: e.target.value })}
                   maxLength={80}
-                  placeholder="Firma, ad, e-posta ya da şehir ara"
-                  className="h-10 w-full rounded-control bg-surface pr-3.5 pl-10 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest"
+                  placeholder="Ad, firma, e-posta ya da şehir ara"
+                  className="h-10 w-full rounded-full bg-surface pr-4 pl-10 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest"
                 />
               </label>
               <Select<string> label="E-posta durumu" value={filters.status} options={statusOptions} onChange={(v) => patch({ status: v })} />
@@ -350,8 +401,8 @@ export function ContactsWorkspace({
             )}
 
             {selected.size > 0 ? (
-              <div className="flex flex-wrap items-center gap-2 rounded-row bg-sunken/70 px-3 py-2">
-                <span className="mr-1 text-sm font-medium">{selected.size} seçili</span>
+              <div className="flex flex-wrap items-center gap-2 rounded-row bg-forest-soft/70 px-3 py-2 ring-1 ring-forest/20">
+                <span className="mr-1 text-sm font-medium">{selected.size} kişi seçili</span>
                 <Button variant="secondary" onClick={() => void findSelected()} disabled={Boolean(run)}>
                   <SearchIcon size={16} />
                   E-posta bul
@@ -398,29 +449,38 @@ export function ContactsWorkspace({
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted">
-                <p>
-                  {total} kişi{filtered ? " (filtreyle)" : ""} · bu sayfada {withEmail} tanesinin geçerli e-postası var
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted">
+                  <span>
+                    <span className="font-medium tabular-nums text-ink">{total}</span> kişi{filtered ? " (filtreyle)" : ""}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    bu sayfada <span className="font-medium tabular-nums text-ink">{withEmail}</span> geçerli e-posta
+                  </span>
                 </p>
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => void findAllMissing()} disabled={Boolean(run)} className="font-medium text-accent underline underline-offset-4 hover:no-underline disabled:opacity-50">
+                <div className="flex flex-wrap items-center gap-1">
+                  <button type="button" onClick={() => void findAllMissing()} disabled={Boolean(run)} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 font-medium text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-50">
+                    <SearchIcon size={15} />
                     E-postası olmayanları tara
                   </button>
-                  <button type="button" onClick={exportSelected} className="font-medium text-accent underline underline-offset-4 hover:no-underline">
-                    Bu sayfayı CSV indir
+                  <button type="button" onClick={exportSelected} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 font-medium text-muted transition-colors hover:bg-sunken hover:text-ink">
+                    <DownloadIcon size={15} />
+                    Sayfayı CSV indir
                   </button>
                 </div>
               </div>
             )}
 
             {contacts.length === 0 ? (
-              <div className="grid justify-items-center gap-3 px-4 py-14 text-center">
-                <p className="text-lg font-semibold tracking-tight">{filtered ? "Süzgece uyan kişi yok" : "Henüz kişiniz yok"}</p>
-                <p className="max-w-[30rem] text-muted">
-                  {filtered
-                    ? "Filtreleri gevşetmeyi deneyin."
-                    : "Müşteri bul ile unvana göre iş e-postalarını bulun, CSV yükleyin ya da elle kişi ekleyin."}
-                </p>
+              <div className="grid justify-items-center gap-4 rounded-row px-4 py-16 text-center ring-1 ring-line ring-inset">
+                <span className="grid size-12 place-items-center rounded-full bg-forest-soft text-accent">
+                  <UsersIcon size={22} />
+                </span>
+                <div className="grid gap-1.5">
+                  <p className="text-lg font-semibold tracking-tight">{filtered ? "Filtreye uyan kişi yok" : "Henüz kişiniz yok"}</p>
+                  <p className="mx-auto max-w-[30rem] text-muted">{filtered ? "Filtreleri gevşetmeyi ya da aramayı temizlemeyi deneyin." : "Müşteri bul ile unvana göre iş e-postalarını bulun, CSV yükleyin ya da elle kişi ekleyin."}</p>
+                </div>
                 {!filtered && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {account && (
@@ -437,75 +497,94 @@ export function ContactsWorkspace({
               </div>
             ) : (
               <div className={`transition-opacity duration-200 ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
-                <div role="row" className="hidden grid-cols-[2rem_minmax(0,1.1fr)_minmax(0,1.3fr)_minmax(0,0.8fr)_auto] items-center gap-3 border-b border-line px-2 pb-2 text-xs font-medium text-muted md:grid">
-                  <input type="checkbox" aria-label="Sayfadakilerin tümünü seç" checked={allSelected} onChange={toggleAll} className="size-4 accent-[var(--color-forest)]" />
-                  <span>Firma / Kişi</span>
-                  <span>E-posta</span>
-                  <span>Telefon · Şehir</span>
-                  <span className="w-24 text-right">İşlem</span>
+                {/* Geniş ekran: gerçek tablo */}
+                <div className="hidden overflow-x-auto rounded-row ring-1 ring-line md:block">
+                  <table className="w-full min-w-[56rem] text-left text-sm">
+                    <thead className="bg-sunken/60 text-xs text-muted">
+                      <tr>
+                        <th scope="col" className="w-10 px-3 py-2.5">
+                          <input type="checkbox" aria-label="Sayfadakilerin tümünü seç" checked={allSelected} onChange={toggleAll} className="size-4 accent-[var(--color-forest)]" />
+                        </th>
+                        {["Kişi", "Şirket", "E-posta", "Konum", "Liste · Kaynak"].map((h) => (
+                          <th key={h} scope="col" className="px-3 py-2.5 font-medium">
+                            {h}
+                          </th>
+                        ))}
+                        <th scope="col" className="px-3 py-2.5 text-right font-medium">
+                          <span className="sr-only">İşlemler</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {contacts.map((c) => (
+                        <tr key={c.id} className={`border-t border-line align-middle transition-colors ${selected.has(c.id) ? "bg-forest-soft/40" : "hover:bg-sunken/40"}`}>
+                          <td className="px-3 py-3">
+                            <input type="checkbox" aria-label={`${c.name ?? c.company ?? c.email} seç`} checked={selected.has(c.id)} onChange={() => toggle(c.id)} className="size-4 accent-[var(--color-forest)]" />
+                          </td>
+                          <td className="max-w-[16rem] px-3 py-3">
+                            <button type="button" onClick={() => openEdit(c)} className="flex min-w-0 items-center gap-3 text-left">
+                              <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-forest-soft text-xs font-semibold text-accent">
+                                {initialsOf(c)}
+                              </span>
+                              <span className="grid min-w-0">
+                                <span className="truncate font-medium">{c.name ?? c.company ?? "(adsız)"}</span>
+                                <span className="truncate text-xs text-muted">{c.jobTitle ?? "—"}</span>
+                              </span>
+                            </button>
+                          </td>
+                          <td className="max-w-[14rem] px-3 py-3">
+                            <span className="block truncate">{c.name ? (c.company ?? "—") : "—"}</span>
+                            <span className="block truncate text-xs text-muted">{hostOf(c.website) ?? ""}</span>
+                          </td>
+                          <td className="max-w-[17rem] px-3 py-3">{emailCell(c)}</td>
+                          <td className="max-w-[10rem] px-3 py-3 text-muted">
+                            <span className="block truncate">{c.city ?? "—"}</span>
+                            {c.phone && <span className="block truncate text-xs">{c.phone}</span>}
+                          </td>
+                          <td className="max-w-[12rem] px-3 py-3">
+                            <span className="block truncate">{c.lists.length > 0 ? c.lists.map((l) => l.name).join(", ") : <span className="text-muted">Listede değil</span>}</span>
+                            <span className="block text-xs text-muted">{sourceLabels[c.source]}</span>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {findButton(c)}
+                              <RowMenu label={`${c.name ?? c.company ?? c.email ?? "Kişi"} için işlemler`} items={menuFor(c)} />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <ul>
+
+                {/* Dar ekran: kart listesi */}
+                <ul className="grid gap-3 md:hidden">
                   {contacts.map((c) => (
-                    <li
-                      key={c.id}
-                      className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-b border-line px-2 py-3 last:border-b-0 hover:bg-sunken/50 md:grid-cols-[2rem_minmax(0,1.1fr)_minmax(0,1.3fr)_minmax(0,0.8fr)_auto]"
-                    >
-                      <input
-                        type="checkbox"
-                        aria-label={`${c.company ?? c.name ?? c.email} seç`}
-                        checked={selected.has(c.id)}
-                        onChange={() => toggle(c.id)}
-                        className="size-4 accent-[var(--color-forest)]"
-                      />
-                      <button type="button" onClick={() => openEdit(c)} className="grid min-w-0 gap-0.5 text-left">
-                        <span className="truncate font-medium">{c.company ?? c.name ?? "(adsız)"}</span>
-                        <span className="truncate text-sm text-muted">
-                          {[c.company ? c.name : null, c.jobTitle, c.lists.map((l) => l.name).join(", ") || null, sourceLabels[c.source]].filter(Boolean).join(" · ")}
-                        </span>
-                      </button>
-                      <div className="col-start-2 col-end-4 row-start-2 min-w-0 md:col-end-auto md:row-start-auto">
-                        {c.email ? (
-                          <div className="grid gap-1">
-                            <span className="truncate text-sm">{c.email}</span>
-                            <span className="flex flex-wrap gap-1.5">
-                              <StatusChip status={c.emailStatus} />
-                              <KindChip kind={c.emailKind} />
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="grid gap-1">
-                            <StatusChip status="yok" />
-                            {c.discoveryNote && <span className="truncate text-xs text-muted">{c.discoveryNote}</span>}
-                          </div>
-                        )}
+                    <li key={c.id} className="grid gap-3 rounded-row p-3.5 ring-1 ring-line">
+                      <div className="flex items-start gap-3">
+                        <input type="checkbox" aria-label={`${c.name ?? c.company ?? c.email} seç`} checked={selected.has(c.id)} onChange={() => toggle(c.id)} className="mt-2.5 size-4 shrink-0 accent-[var(--color-forest)]" />
+                        <button type="button" onClick={() => openEdit(c)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                          <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-forest-soft text-xs font-semibold text-accent">
+                            {initialsOf(c)}
+                          </span>
+                          <span className="grid min-w-0">
+                            <span className="truncate font-medium">{c.name ?? c.company ?? "(adsız)"}</span>
+                            <span className="truncate text-xs text-muted">{[c.jobTitle, c.name ? c.company : null].filter(Boolean).join(" · ") || "—"}</span>
+                          </span>
+                        </button>
+                        <RowMenu label={`${c.name ?? c.company ?? c.email ?? "Kişi"} için işlemler`} items={menuFor(c)} />
                       </div>
-                      <div className="hidden min-w-0 text-sm text-muted md:block">
-                        <p className="truncate">{c.phone ?? "—"}</p>
-                        <p className="truncate">{c.city ?? ""}</p>
-                      </div>
-                      <div className="row-start-1 col-start-3 flex justify-end md:row-start-auto md:w-24">
-                        {canFind(c) ? (
-                          <button
-                            type="button"
-                            onClick={() => void findOne(c.id)}
-                            disabled={finding.has(c.id)}
-                            className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-forest-soft hover:text-accent disabled:opacity-60"
-                          >
-                            <SearchIcon size={14} />
-                            {finding.has(c.id) ? "Taranıyor" : "Bul"}
-                          </button>
-                        ) : (
-                          <button type="button" onClick={() => openEdit(c)} className="h-9 rounded-full px-3 text-sm text-muted transition-colors hover:bg-sunken hover:text-ink">
-                            Düzenle
-                          </button>
-                        )}
+                      <div className="pl-7 text-sm">{emailCell(c)}</div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 pl-7 text-xs text-muted">
+                        <span>{[c.city, sourceLabels[c.source]].filter(Boolean).join(" · ")}</span>
+                        {findButton(c)}
                       </div>
                     </li>
                   ))}
                 </ul>
 
                 {pages > 1 && (
-                  <div className="mt-3 flex items-center justify-between gap-3 text-sm text-muted">
+                  <div className="mt-4 flex items-center justify-between gap-3 text-sm text-muted">
                     <span>
                       {(filters.page - 1) * PER_PAGE + 1}–{Math.min(filters.page * PER_PAGE, total)} / {total}
                     </span>
