@@ -4,7 +4,7 @@ import { getAccount, InsufficientCreditsError, refundCredits, spendCredits } fro
 import { blockedMessage, browseAllowance, monthStartIso } from "./browse-pool";
 import { limitPerCompany } from "./company";
 import { shortName, type BrowseRow, type LeadBrowse, type LeadSearchInput, type SavedSearch } from "./lead-options";
-import { saveToPool, searchPool } from "./lead-pool";
+import { countPool, saveToPool, searchPool, touchPool } from "./lead-pool";
 import { scoreChunk, scoringEnabled, type ScoredItem } from "./lead-score";
 import {
   ACTOR,
@@ -79,8 +79,8 @@ function view(row: Row, rows: BrowseRow[], hidden = { owned: 0, sameCompany: 0 }
 }
 
 /** Havuzdan gelecek adaylar: kullanıcının zaten kayıtlı olanları atılır, her şirketten tek kişi alınır, istenen sayıyı geçmez. */
-async function poolCandidates(uid: string, q: LeadSearchInput): Promise<ScoredItem[]> {
-  const found = (await searchPool(q, q.count * 3)).map(trim);
+async function poolCandidates(uid: string, q: LeadSearchInput, exclude: ReadonlySet<string> = new Set()): Promise<ScoredItem[]> {
+  const found = (await searchPool(q, q.count * 3 + exclude.size)).map(trim).filter((it) => !exclude.has(emailOf(it)));
   if (found.length === 0) return [];
   const owned = await existingEmails(uid, found.map(emailOf));
   const fresh = found.filter((it) => !owned.has(emailOf(it)));
@@ -88,7 +88,9 @@ async function poolCandidates(uid: string, q: LeadSearchInput): Promise<ScoredIt
     fresh.map((it) => ({ it, email: emailOf(it), company: typeof it.organization_name === "string" ? it.organization_name : null })),
     1,
   );
-  return kept.slice(0, q.count).map((k) => k.it);
+  const chosen = kept.slice(0, q.count).map((k) => k.it);
+  void touchPool(chosen.map(emailOf));
+  return chosen;
 }
 
 export async function startLeadBrowse(uid: string, q: LeadSearchInput): Promise<LeadBrowse> {
@@ -103,7 +105,8 @@ export async function startLeadBrowse(uid: string, q: LeadSearchInput): Promise<
   // Havuzdaki kişiler sağlayıcıya sorulmadan gelir; yalnızca eksik kısım (ve süzmeler için küçük bir pay) sağlayıcıdan istenir.
   const fromPool = await poolCandidates(uid, q);
   const lacking = q.count - fromPool.length;
-  const ask = lacking > 0 ? Math.min(Math.ceil(lacking * 1.2) + 2, 500) : 0;
+  // Sağlayıcı sıralamayı sabit verir ve atlama (offset) desteklemez: havuzda zaten bilinen kişiler de dönecektir, yeni olanlara ulaşmak için o kadar fazla istenir.
+  const ask = lacking > 0 ? Math.min((await countPool(q)) + Math.ceil(lacking * 1.2) + 2, 500) : 0;
   if (ask > 0) await assertProviderBudget(estimateUsd(ask));
 
   const created = await db().from("outreach_lead_searches").insert({ user_uid: uid, query: q, size: q.count, items: fromPool.length ? fromPool : null }).select("*").single<Row>();
@@ -121,6 +124,48 @@ export async function startLeadBrowse(uid: string, q: LeadSearchInput): Promise<
     if (fromPool.length > 0) return view(row, []);
     await db().from("outreach_lead_searches").update({ status: "hata", error: "Arama başlatılamadı.", finished_at: new Date().toISOString() }).eq("id", row.id);
     throw new LeadSearchError("Arama şu an başlatılamadı. Biraz sonra tekrar deneyin.", 503);
+  }
+}
+
+/**
+ * Hazır bir listeye "daha fazla" kişi ekler: aynı filtrelerle, zaten listelenenler hariç `extra` kişi daha getirilir ve aynı aramaya eklenir
+ * (satır numaraları değişmez; liste yeniden skorlanıp sıralanır). Listeleme hakkından yalnızca eklenen sayı düşer.
+ */
+export async function extendLeadBrowse(uid: string, id: string, extra: number): Promise<LeadBrowse> {
+  const found = await db().from("outreach_lead_searches").select("*").eq("user_uid", uid).eq("id", id).maybeSingle<Row>();
+  unavailable(found.error);
+  const row = found.data;
+  if (!row || row.status !== "hazir" || !row.items) throw new LeadSearchError("Önce arama bitsin, sonra daha fazlasını listeleyin.", 409);
+
+  const { plan } = await getAccount(uid);
+  const [usedToday, usedMonth] = await Promise.all([browseUsedToday(uid), browseUsedThisMonth(uid)]);
+  const allowance = browseAllowance({ usedToday, usedMonth, perDay: plan.browsePerDay, perMonth: plan.browsePerMonth });
+  if (extra > allowance.left) throw new LeadSearchError(blockedMessage(allowance, plan.label, plan.browsePerMonth, plan.browsePerDay, extra), 429);
+
+  const q = { ...row.query, count: extra };
+  const have = new Set(row.items.map(emailOf));
+  const fromPool = await poolCandidates(uid, q, have);
+  const lacking = extra - fromPool.length;
+  // Sağlayıcı aynı sıralamayı verdiği için, bilinen kişiler de dahil istenir; böylece yeni kişiler gelir.
+  const ask = lacking > 0 ? Math.min(Math.max(row.items.length, await countPool(q)) + Math.ceil(lacking * 1.2) + 2, 500) : 0;
+  if (ask > 0) await assertProviderBudget(estimateUsd(ask));
+
+  const items = [...row.items, ...fromPool];
+  const updated = await db().from("outreach_lead_searches").update({ status: "calisiyor", size: row.size + extra, items, finished_at: null }).eq("id", id).eq("status", "hazir").select("*").maybeSingle<Row>();
+  unavailable(updated.error);
+  if (!updated.data) throw new LeadSearchError("Arama şu an genişletilemiyor. Tekrar deneyin.", 409);
+  if (ask === 0) return view(updated.data, []);
+  try {
+    const params = new URLSearchParams({ maxTotalChargeUsd: String(Math.min(estimateUsd(ask) * 1.5 + 0.01, 3)), timeout: "300" });
+    const { data } = await apify<{ data: { id: string } }>(`/acts/${ACTOR}/runs?${params}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildActorInput(q, ask)) });
+    await db().from("outreach_lead_searches").update({ apify_run_id: data.id }).eq("id", id);
+    return view({ ...updated.data, apify_run_id: data.id }, []);
+  } catch (e) {
+    console.error("Daha fazla kişi listelenemedi:", e instanceof Error ? e.message : e);
+    if (fromPool.length > 0) return view(updated.data, []);
+    // Eski haline döner: liste olduğu gibi kalır, hak düşmez.
+    await db().from("outreach_lead_searches").update({ status: "hazir", size: row.size, items: row.items }).eq("id", id);
+    throw new LeadSearchError("Şu an daha fazla kişi listelenemedi. Biraz sonra tekrar deneyin.", 503);
   }
 }
 
@@ -172,6 +217,8 @@ async function refresh(row: Row, uid: string): Promise<Row> {
         seen.add(email);
         merged.push(trim(it));
       }
+      // Sağlayıcıdan gelen her kişi havuza yazılır: aynı kişi için bir daha ödeme yapılmaz, veritabanı zamanla büyür.
+      void saveToPool(raw, cur.query);
       cur = await progress(cur, { items: merged, apify_run_id: null });
       if (cur.status !== "calisiyor") return cur;
     }

@@ -239,7 +239,10 @@ export const leadPresets: LeadPreset[] = [
   { id: "istanbul-ceo", label: "İstanbul'daki üst yöneticiler", prompt: "İstanbul'daki CEO'lar ve genel müdürler" },
 ];
 
-export const emptySearch = (country: string = "turkey"): LeadSearchInput => ({ roles: [], titles: [], notTitles: [], excludeJunior: true, perCompany: 1, country, city: undefined, industries: [], sizes: [], keywords: [], notKeywords: [], count: 25 });
+/** Bir arama varsayılan olarak bu kadar kişi listeler; sonuçtan sonra "daha fazla" ile artırılır. */
+export const DEFAULT_COUNT = 10;
+
+export const emptySearch = (country: string = "turkey"): LeadSearchInput => ({ roles: [], titles: [], notTitles: [], excludeJunior: true, perCompany: 1, country, city: undefined, industries: [], sizes: [], keywords: [], notKeywords: [], count: DEFAULT_COUNT });
 
 /** "Ayşe Demir" → "Ayşe D." (önizlemede soyadı kısaltılır). */
 export const shortName = (name: string | null) => {

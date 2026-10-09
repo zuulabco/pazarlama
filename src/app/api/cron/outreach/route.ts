@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { runBounceGuard } from "@/modules/outreach/guard";
 import { runWarmupMaintenance, runWarmupSend } from "@/modules/outreach/warmup";
 import { purgeOldBrowses } from "@/modules/outreach/lead-browse";
+import { purgePool } from "@/modules/outreach/lead-pool";
 import { finalizeOpenLeadJobs } from "@/modules/outreach/lead-search";
 import { runSendTick } from "@/modules/outreach/sender";
 import { scanDueMailboxes } from "@/modules/outreach/scan";
@@ -49,6 +50,8 @@ async function run(req: NextRequest) {
       return 0;
     });
     await purgeOldBrowses().catch(() => undefined);
+    // Ortak kişi havuzu: 24 aydır kullanılmayan kayıtları sil (saklama süresi).
+    await purgePool().catch(() => undefined);
     return NextResponse.json({ ok: true, ms: Date.now() - started, send, scan, paused, warmup, leadJobs });
   } catch (e) {
     console.error("Cron hatası:", e);

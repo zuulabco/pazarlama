@@ -1,5 +1,4 @@
--- Ortak kişi havuzu (docs/veri-havuzu-tasarimi.md, aşama A+B): bir kullanıcı bir kişiyi kaydettiğinde (Spine Kredi ile açtığında) kayıt buraya da
--- yazılır; başka bir aramada aynı kişi sağlayıcıya yeniden ödeme yapılmadan listeye gelir. E-posta şifreli saklanır, yalnızca sunucu okur.
+-- Ortak kişi havuzu (docs/veri-havuzu-tasarimi.md, aşama A+B): sağlayıcıdan gelen her kişi (listelenen ya da kaydedilen) buraya yazılır; başka bir aramada aynı kişi sağlayıcıya yeniden ödeme yapılmadan listeye gelir. E-posta şifreli saklanır, yalnızca sunucu okur.
 -- Kapatmak için ortam değişkeni: LEAD_POOL=0.
 -- Çalıştırma: Supabase → SQL Editor → New query → bu dosyanın içeriğini yapıştırıp Run.
 

@@ -51,3 +51,14 @@ kullanıcının `outreach_contacts` tablosuna yazılıyor. Aynı kişiyi başka 
 
 **Tahmini etki:** Ayni kitleye (örn. "İstanbul'da pazarlama müdürleri") ikinci ve sonraki aramalar neredeyse bedava; veri kalitesi
 kullandıkça artar. Havuz büyüdükçe listeleme havuzunu (aylık) cömert tutmak maliyeti artırmaz.
+
+## Uygulama notu (9 Ekim 2026)
+
+A ve B aşamaları kodlandı (`lead-pool.ts`, migration 0016). Sağlayıcıdan gelen **her** kişi havuza yazılır (yalnızca kaydedilenler değil); aramalar önce havuza bakar, eksik kısım için sağlayıcıya gider. Sağlayıcı (microworlds/leads-finder) atlama/offset ve e-posta hariç tutma desteklemediği için aynı filtreyle tekrar istenince bilinen kişiler de döner (kişi başına ~0,003 $); bu yüzden istek sayısı havuzdaki bilinen kişi sayısı kadar artırılır. Hukuki kapı koşulları (VERBİS, aydınlatma metni, silme talebi sayfası) hâlâ açık; havuz `LEAD_POOL=0` ile kapatılır.
+
+### Karar (9 Ekim 2026): güvenli yol
+
+- Havuza listelenen **herkes** yazılır (kullanıcı kaydetsin ya da kaydetmesin), **ama yalnızca şirket alan adlı e-postalar**. Kişisel adresler (gmail, hotmail vb.; `classifyEmail` = kisisel) kullanıcıya listelenir, saklanmaz; bunun maliyeti Apify ücretidir.
+- Saklama: 24 ay kullanılmayan kayıt silinir (`RETENTION_DAYS`, zamanlayıcı `purgePool`); havuzdan bir aramaya verilen ya da yeniden görülen kayıt "kullanılmış" sayılır.
+- `/veri-silme` sayfası (doğrulama e-postasız; yalnızca havuz kaydını siler) ve gizlilik metnindeki "kişi havuzu" bölümü eklendi.
+- Kalan işler: hukukçu onayı (meşru menfaat dengelemesi), VERBİS gereği, sağlayıcı (Apify aktörü) kullanım koşulları, şirket unvanı/adres alanlarının doldurulması.

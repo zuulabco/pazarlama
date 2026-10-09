@@ -15,6 +15,9 @@ export function SiteFooter() {
         <Link href="/gizlilik" className="hover:text-ink">
           Gizlilik ve KVKK
         </Link>
+        <Link href="/veri-silme" className="hover:text-ink">
+          Veri silme
+        </Link>
       </div>
       <p>© 2026 Adspine</p>
     </footer>

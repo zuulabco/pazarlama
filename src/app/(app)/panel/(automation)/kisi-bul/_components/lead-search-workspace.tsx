@@ -8,11 +8,12 @@ import { RotatingTips } from "@/components/ui/rotating-tips";
 import { Segmented } from "@/components/ui/segmented";
 import { ShapeLoader } from "@/components/ui/shape-loader";
 import { Toaster, toast } from "@/components/ui/toast";
-import { browseSizes, emptySearch, leadPresets, type LeadBrowse, type LeadPreset, type LeadSearchInput, type SavedSearch } from "@/modules/outreach/lead-options";
+import { browseSizes, DEFAULT_COUNT, emptySearch, leadPresets, type LeadBrowse, type LeadPreset, type LeadSearchInput, type SavedSearch } from "@/modules/outreach/lead-options";
 import type { AccountSummary } from "@/modules/outreach/usage";
 import { api } from "../../kisiler/_components/contact-ui";
 import { LeadAddModal } from "./lead-add-modal";
 import { LeadFilters } from "./lead-filters";
+import { LeadMore } from "./lead-more";
 import { LeadResults } from "./lead-results";
 
 const tips = ["Filtrelerinize uyan kişiler aranıyor…", "Daha önce kaydedilen kişiler öne alınıyor…", "Kişiler profilinize göre puanlanıyor…", "Liste skora göre sıralanıyor…"];
@@ -74,12 +75,17 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
       setBusy(false);
       return toast(r.error, { kind: "error" });
     }
-    searchId.current = r.data.search.id;
+    await poll(r.data.search.id);
+  }
+
+  /** Aramanın bitmesini bekler (sunucu her yoklamada bir adım ilerletir) ve sonucu gösterir. */
+  async function poll(id: string) {
+    searchId.current = id;
     setStage({ kind: "running" });
     for (let i = 0; i < 150 && alive.current; i++) {
       await sleep(i < 4 ? 2000 : 3000);
-      if (!alive.current || searchId.current !== r.data.search.id) return;
-      const s = await api<{ search: LeadBrowse }>(`/api/outreach/leads/browse/${r.data.search.id}`);
+      if (!alive.current || searchId.current !== id) return;
+      const s = await api<{ search: LeadBrowse }>(`/api/outreach/leads/browse/${id}`);
       if (!s.ok || s.data.search.status === "calisiyor") continue;
       setBusy(false);
       void refreshAccount();
@@ -89,17 +95,31 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
     setStage({ kind: "failed", message: "Arama beklenenden uzun sürdü. Biraz sonra tekrar deneyin." });
   }
 
+  /** Hazır listeye daha fazla kişi ekler (zaten listelenenler hariç); seçimler korunur. */
+  async function more(count: number) {
+    if (busy || stage.kind !== "results") return;
+    setBusy(true);
+    const r = await api<{ search: LeadBrowse }>(`/api/outreach/leads/browse/${stage.search.id}/more`, { method: "POST", body: JSON.stringify({ count }) });
+    if (!r.ok) {
+      setBusy(false);
+      return toast(r.error, { kind: "error" });
+    }
+    await poll(r.data.search.id);
+  }
+
   async function askAi() {
     if (aiBusy || aiText.trim().length < 4) return;
     setAiBusy(true);
     const r = await api<{ filters: Partial<LeadSearchInput> }>("/api/outreach/leads/ai", { method: "POST", body: JSON.stringify({ text: aiText }) });
     setAiBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });
-    const next = { ...emptySearch(defaultCountry), ...r.data.filters, count: size };
+    // Filtreler hazırsa arama kendiliğinden başlar: varsayılan ${DEFAULT_COUNT} kişi (hakkınız azsa o kadar); sonuçtan sonra "Daha fazla listele" vardır.
+    const count = Math.min(DEFAULT_COUNT, left);
+    const next = { ...emptySearch(defaultCountry), ...r.data.filters, count };
     setQ(next);
-    // Arama kendiliğinden başlamaz: kullanıcı filtreleri gözden geçirir, kaç kişi listeleneceğini seçer ve "Ara"ya basar.
-    if (next.roles.length + next.titles.length + next.industries.length + next.keywords.length > 0) toast("Filtreler hazırlandı. Kaç kişi listeleneceğini seçip Ara'ya basın.");
-    else toast("İsteğinizden bir filtre çıkarılamadı. Filtreleri soldan seçin.", { kind: "error" });
+    if (next.roles.length + next.titles.length + next.industries.length + next.keywords.length === 0) return toast("İsteğinizden bir filtre çıkarılamadı. Biraz daha ayrıntı yazın ya da filtreleri soldan seçin.", { kind: "error" });
+    if (count < 5) return toast("Listeleme hakkınız doldu.", { kind: "error" });
+    void run(next);
   }
 
   /** Hazır aramaya tıklamak yalnızca metni kutuya yazar; göndermek (Enter) kullanıcıya kalır. */
@@ -250,6 +270,11 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
               onToggleAll={(all) => setSelected(all ? new Set(stage.search.rows.filter((r) => !r.owned).map((r) => r.rid)) : new Set())}
               onAdd={() => setAddOpen(true)}
             />
+          )}
+          {stage.kind === "results" && (
+            <div className="mt-5">
+              <LeadMore left={account.browse.left} busy={busy} onMore={(c) => void more(c)} />
+            </div>
           )}
         </div>
       </section>

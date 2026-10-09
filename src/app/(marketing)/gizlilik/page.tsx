@@ -43,6 +43,15 @@ const sections = [
     ],
   },
   {
+    title: "Potansiyel müşteri araması ve kişi havuzu (aday kişilerin verileri)",
+    body: [
+      "Adspine kullanıcıları, herkese açık iş bilgilerinden potansiyel müşteri arayabilir. Arama sonucunda şu veriler işlenir: ad, soyad, unvan, çalıştığı şirket ve şirket alan adı, şehir/ülke, iş e-posta adresi ve herkese açık LinkedIn adresi. Veriler Apify aracılığıyla herkese açık kaynaklardan alınır; kişiyle doğrudan bir ilişkimiz yoktur.",
+      "Amaç: kullanıcılarımızın ilgili iş bağlantılarına bire bir ticari iletişim kurabilmesi. Hukuki sebep: veri sorumlusunun meşru menfaati (KVKK m. 5/2-f) ve verinin ilgili kişi tarafından alenileştirilmiş olması (KVKK m. 5/2-d). Bu veriler ilgili kişinin haklarına ve temel özgürlüklerine zarar vermeyecek şekilde, yalnızca iş amaçlı kullanılır.",
+      "Ortak kişi havuzu: aynı kişi için sağlayıcıdan tekrar veri çekmemek üzere, şirket alan adlı iş e-posta adresleri ve yukarıdaki bilgiler şifrelenmiş olarak (e-posta adresi şifreli) saklanır. gmail, hotmail gibi kişisel e-posta adresleri havuzda saklanmaz. Kullanılmayan kayıtlar 24 ay sonra otomatik silinir.",
+      "Bu kapsamda verisi işlenen kişiler, e-posta adreslerinin silinmesini ve bir daha eklenmemesini https://adspine.app/veri-silme sayfasından doğrudan talep edebilir; ayrıca bu metindeki iletişim adresine başvurabilir. Her ticari e-postada abonelikten çıkma bağlantısı bulunur.",
+    ],
+  },
+  {
     title: "Google (Gmail) hesabı bağlantısı",
     body: [
       "Gönderici adresi olarak Gmail ya da Google Workspace hesabınızı bağlarsanız Adspine, yalnızca sizin onayınızla ve iki izin için Google'dan erişim ister: e-posta göndermek (gmail.send) ve gelen kutunuza gelen yanıtları okumak (gmail.readonly).",
