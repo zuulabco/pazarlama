@@ -58,14 +58,14 @@ describe("kişi bul: kayıt eşleme", () => {
 
 describe("paketler", () => {
   it("gönderim kapasitesi gönderici adresi sayısıyla orantılıdır", () => {
-    expect(monthlyCapacity(plans.ajans)).toBe(15 * 30 * 22);
+    expect(monthlyCapacity(plans.ajans)).toBe(20 * 30 * 22);
     expect(monthlyCapacity(plans.ajans)).toBeGreaterThan(monthlyCapacity(plans.buyume));
     expect(monthlyCapacity(plans.buyume)).toBeGreaterThan(monthlyCapacity(plans.ucretsiz));
   });
   it("bilinmeyen paket ücretsiz sayılır", () => {
     expect(planOf("x").key).toBe("ucretsiz");
     expect(planOf(null).key).toBe("ucretsiz");
-    expect(planOf("buyume").senders).toBe(5);
+    expect(planOf("buyume").senders).toBe(10);
   });
 });
 

@@ -12,7 +12,7 @@ const account = { planName: "Başlangıç", credits: 120, senders: { used: 1, li
 describe("yardımcı bağlamı", () => {
   it("yalnızca kullanıcının rakamlarını içerir", () => {
     const c = contextText(reports, account, 30);
-    expect(c).toContain("Kalan kredi: 120");
+    expect(c).toContain("Kalan Spine Kredi: 120");
     expect(c).toContain("Ajanslara teklif");
     expect(c).toContain("info@x.com");
     expect(c).toContain("ısınma skoru yok");
@@ -38,8 +38,8 @@ describe("yanıt metni", () => {
     expect(toAnswer("Merhaba!", "selam").links).toEqual([]);
   });
   it("model yanıt vermezse rakam özeti döner", () => {
-    const f = fallbackReply("Paket: Ücretsiz. Kalan kredi: 25.\nSon 30 gün: 0 e-posta.\nKampanyalar: x");
-    expect(f).toContain("Kalan kredi: 25");
+    const f = fallbackReply("Paket: Ücretsiz. Kalan Spine Kredi: 25.\nSon 30 gün: 0 e-posta.\nKampanyalar: x");
+    expect(f).toContain("Kalan Spine Kredi: 25");
     expect(f).toContain("0 e-posta");
     expect(f).not.toContain("Kampanyalar: x");
   });

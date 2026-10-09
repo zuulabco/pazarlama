@@ -121,7 +121,7 @@ export function AssistantPanel() {
         <div className="grid flex-1 content-start gap-3 overflow-y-auto px-4 py-4" aria-live="polite">
           {turns.length === 0 && (
             <div className="grid gap-3">
-              <p className="text-sm text-muted">Son 30 günlük otomasyon, gönderici adresi ve kredi rakamlarınıza bakarak sorularınızı yanıtlarım. Rakamınız olmayan bir şeyi uydurmam.</p>
+              <p className="text-sm text-muted">Son 30 günlük otomasyon, gönderici adresi ve Spine Kredi rakamlarınıza bakarak sorularınızı yanıtlarım. Rakamınız olmayan bir şeyi uydurmam.</p>
               <div className="grid gap-2">
                 {suggestions.map((s) => (
                   <button key={s} type="button" onClick={() => void ask(s)} className="rounded-control px-3 py-2 text-left text-sm ring-1 ring-line transition-colors hover:bg-sunken">

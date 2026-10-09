@@ -9,7 +9,7 @@ const nav = [
   { href: "/#bul", label: "Bul" },
   { href: "/#ulas", label: "Ulaş" },
   { href: "/#adspine-ai", label: "Adspine AI" },
-  { href: "/#paketler", label: "Paketler" },
+  { href: "/#planlar", label: "Planlar" },
   { href: "/#sss", label: "Sorular" },
 ];
 

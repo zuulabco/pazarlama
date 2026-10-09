@@ -86,7 +86,7 @@ export function Hero() {
             </ButtonLink>
           </ScrollReveal>
           <ScrollReveal delay={320}>
-            <p className="mt-6 text-sm text-muted">Kredi kartı gerekmez · Google ile tek tıkla gönderici adresi bağlama</p>
+            <p className="mt-6 text-sm text-muted">Google ile tek tıkla gönderici adresi bağlama</p>
           </ScrollReveal>
         </div>
 
@@ -147,7 +147,7 @@ export function Find() {
           <LeadsMock />
           <div>
             <h3 className="text-lg font-semibold tracking-tight">Kişi bul</h3>
-            <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin. Listelemek serbest; yalnızca eklediğiniz kişiler için kredi harcanır.</p>
+            <p className="mt-2 text-muted">Unvan, sektör, şehir ve şirket büyüklüğüne göre filtreleyin. Listelemek serbest; yalnızca gizli bilgilerini açıp eklediğiniz kişiler için Spine Kredi harcanır.</p>
           </div>
         </ScrollReveal>
         <ScrollReveal delay={120} className="grid gap-6">
@@ -233,42 +233,108 @@ export function Features() {
   );
 }
 
+function PlanFeature({ text, on = true, strong = false }: { text: string; on?: boolean; strong?: boolean }) {
+  return (
+    <li className={`flex items-start gap-2.5 ${on ? "" : "text-muted/80"}`}>
+      <span className={`mt-0.5 grid size-4 shrink-0 place-items-center rounded-full ${on ? (strong ? "bg-forest text-white" : "bg-forest-soft text-accent") : "bg-sunken text-muted"}`}>
+        {on ? (
+          <CheckIcon size={11} />
+        ) : (
+          <svg viewBox="0 0 12 12" width="8" height="8" aria-hidden="true">
+            <path d="m2.5 2.5 7 7m0-7-7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        )}
+      </span>
+      <span className={on ? "" : "line-through decoration-muted/60"}>
+        {text}
+        {!on && <span className="sr-only"> (bu planda yok)</span>}
+      </span>
+    </li>
+  );
+}
+
+const planBlurb: Record<string, string> = {
+  ucretsiz: "Denemek ve ilk kampanyanızı kurmak için.",
+  baslangic: "Tek başına çalışan ya da yeni başlayan ekipler için.",
+  buyume: "Düzenli ve yüksek hacimli gönderim yapan ekipler için.",
+  ajans: "Birden çok müşteri ve markayı yöneten ajanslar için.",
+};
+
 export function Pricing() {
   const num = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
+  const free = planList.find((p) => p.key === "ucretsiz")!;
+  const paid = planList.filter((p) => p.key !== "ucretsiz");
+  const features = (p: (typeof planList)[number]) => [
+    { text: `${p.senders} gönderici adresi`, on: true },
+    { text: `Ayda ${num(p.monthlyCredits)} Spine Kredi`, on: true },
+    { text: `${p.campaigns} otomasyon`, on: true },
+    { text: "Isındırma ve gelen kutusu", on: p.warmupAndInbox },
+    { text: "Adspine AI", on: p.ai },
+  ];
   return (
-    <Section id="paketler">
+    <Section id="planlar">
       <ScrollReveal>
-        <Heading eyebrow="Paketler" title="Gönderici adresi sayınıza göre büyür">
-          Paket ölçüsü, bağlayabildiğiniz gönderici adresi sayısıdır; gönderim hacminiz buna göre belirlenir. Ücretsiz başlayın, ihtiyacınız arttıkça yükseltin.
-        </Heading>
+        <div className="mx-auto max-w-[40rem] text-center">
+          <Eyebrow>Planlar</Eyebrow>
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Gönderici adresi sayınıza göre büyür</h2>
+          <p className="mt-5 text-lg text-muted">Plan ölçüsü, bağlayabildiğiniz gönderici adresi sayısıdır; gönderim hacminiz buna göre belirlenir. Ücretsiz başlayın, ihtiyacınız arttıkça yükseltin.</p>
+        </div>
       </ScrollReveal>
-      <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {planList.map((p, i) => (
-          <ScrollReveal as="li" key={p.key} delay={i * 90} className={`grid content-start gap-5 rounded-panel p-6 ring-1 ${p.key === "buyume" ? "bg-surface shadow-float ring-2 ring-forest" : "bg-surface ring-line"}`}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold tracking-tight">{p.label}</h3>
-              {p.key === "buyume" && <span className="rounded-full bg-forest px-2.5 py-0.5 text-xs font-medium text-white">Popüler</span>}
+
+      <ul className={`${styles.plans} mt-16`}>
+        {paid.map((p, i) => {
+          const featured = p.key === "buyume";
+          return (
+            <ScrollReveal as="li" key={p.key} delay={i * 90} className={featured ? styles.planSlotFeatured : styles.planSlot}>
+              <div data-featured={featured} className={`${styles.plan} relative grid content-start gap-6 rounded-panel p-7 ring-1 ${featured ? "bg-gradient-to-b from-forest-soft/70 to-surface ring-forest/30" : "bg-surface ring-line"}`}>
+                {featured && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-forest px-3.5 py-1 text-xs font-semibold whitespace-nowrap text-white shadow-float">En çok tercih edilen</span>}
+                <div className="grid gap-1.5">
+                  <h3 className="text-xl font-semibold tracking-tight">{p.label}</h3>
+                  <p className="min-h-10 text-sm text-muted">{planBlurb[p.key]}</p>
+                </div>
+                <p className="flex items-baseline gap-2">
+                  <span className={`font-semibold tracking-tight tabular-nums ${featured ? "text-5xl" : "text-4xl"}`}>${p.priceUsd}</span>
+                  <span className="text-sm text-muted">/ ay</span>
+                </p>
+                <ul className="grid gap-3 border-t border-line pt-6 text-sm">
+                  {features(p).map((f) => (
+                    <PlanFeature key={f.text} text={f.text} on={f.on} strong={featured} />
+                  ))}
+                </ul>
+                <div className="grid gap-2 text-center">
+                  <ButtonLink href="/kayit" variant={featured ? "primary" : "secondary"} size={featured ? "lg" : "md"} className="w-full">
+                    7 gün ücretsiz dene
+                  </ButtonLink>
+                  <p className="text-xs text-muted">Kart bilgisi gerekir · deneme bitmeden istediğiniz an iptal edin</p>
+                </div>
+              </div>
+            </ScrollReveal>
+          );
+        })}
+      </ul>
+
+      <ScrollReveal delay={200}>
+        <div className="mx-auto mt-10 grid max-w-4xl gap-5 rounded-panel bg-surface p-6 ring-1 ring-line md:grid-cols-[1fr_auto] md:items-center">
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h3 className="text-lg font-semibold tracking-tight">{free.label} plan</h3>
             </div>
-            <p className="text-3xl font-semibold tracking-tight">
-              {p.key === "ucretsiz" ? "Ücretsiz" : <span className="text-muted">Yakında</span>}
-            </p>
-            <ul className="grid gap-2.5 text-sm">
-              {[`${p.senders} gönderici adresi`, `Ayda ${num(p.monthlyCredits)} kişi kredisi`, `${p.campaigns} otomasyon`, "Isındırma ve gelen kutusu", "Adspine AI"].map((t) => (
-                <li key={t} className="flex gap-2.5">
-                  <span className="mt-0.5 shrink-0 text-accent">
-                    <CheckIcon size={14} />
-                  </span>
-                  {t}
-                </li>
+            <p className="text-sm text-muted">{planBlurb.ucretsiz}</p>
+            <ul className="mt-1 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              {features(free).map((f) => (
+                <PlanFeature key={f.text} text={f.text} on={f.on} />
               ))}
             </ul>
-            <ButtonLink href="/kayit" variant={p.key === "buyume" ? "primary" : "secondary"} className="w-full">
-              {p.key === "ucretsiz" ? "Ücretsiz başla" : "Hesap oluştur"}
-            </ButtonLink>
-          </ScrollReveal>
-        ))}
-      </ul>
-      <p className="mt-6 text-sm text-muted">1 kredi = e-posta adresi bulunan 1 kişi. Krediler her ay başında yenilenir. Ücretli paket fiyatları yakında duyurulacak.</p>
+          </div>
+          <ButtonLink href="/kayit" variant="secondary" size="lg" className="w-full md:w-auto">
+            Ücretsiz başla
+          </ButtonLink>
+        </div>
+      </ScrollReveal>
+
+      <p className="mx-auto mt-8 max-w-3xl text-center text-sm text-muted">
+        1 Spine Kredi = gizli bilgileri açılıp eklenen 1 kişi/firma. Spine Krediler her ay başında yenilenir; listelemek ayrı bir haktır (ücretsiz planda günde 25, ayda 75 kişi). Ücretli planların hepsinde 7 gün ücretsiz deneme vardır (kart bilgisi gerekir). Fiyatlar aylıktır ve ABD doları ile gösterilir.
+      </p>
     </Section>
   );
 }

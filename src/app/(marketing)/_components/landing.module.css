@@ -70,3 +70,125 @@
     animation: none;
   }
 }
+
+/*
+ * Plan kartları: büyüme planı varsayılan olarak öndedir (büyük, ortada). Üzerine gelinen (ya da klavye odağındaki)
+ * kart yalnızca çok az büyür; hiçbir kart küçülmez. Dokunmatikte yalnızca varsayılan düzen vardır.
+ */
+.plans {
+  display: grid;
+  gap: 1.25rem;
+  list-style: none;
+  padding: 0;
+  margin-inline: auto;
+  max-width: 68rem;
+}
+.planSlot,
+.planSlotFeatured {
+  display: grid;
+}
+.planSlotFeatured {
+  order: -1;
+}
+.plan {
+  transition:
+    transform 0.4s var(--ease-out),
+    box-shadow 0.4s var(--ease-out);
+}
+.plan[data-featured="true"] {
+  box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--color-forest) 45%, transparent);
+}
+@media (min-width: 1024px) {
+  .plans {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+  }
+  .planSlotFeatured {
+    order: 0;
+  }
+  .plan[data-featured="true"] {
+    transform: scale(1.05);
+    z-index: 1;
+  }
+  .plan:not([data-featured="true"]) {
+    opacity: 0.94;
+  }
+}
+@media (min-width: 1024px) and (hover: hover) {
+  .plan:hover,
+  .plan:focus-within {
+    transform: scale(1.015);
+    opacity: 1;
+  }
+  .plan[data-featured="true"]:hover,
+  .plan[data-featured="true"]:focus-within {
+    transform: scale(1.065);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan {
+    transition: none;
+  }
+}
+
+/*
+ * Büyüme planının parıltısı: kartın kenarında yavaşça dönen ince bir ışık şeridi ve arkada nefes alan yumuşak bir hâle.
+ * Dikkat çeker ama okumayı bölmez; hareket azaltma tercihinde durur.
+ */
+@property --plan-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.plan[data-featured="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--plan-angle),
+    var(--color-forest),
+    color-mix(in srgb, var(--color-forest) 15%, transparent) 30%,
+    color-mix(in srgb, var(--color-forest) 15%, transparent) 55%,
+    #6db3ff 78%,
+    var(--color-forest)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: planSpin 9s linear infinite;
+  pointer-events: none;
+}
+.plan[data-featured="true"]::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(from var(--plan-angle), color-mix(in srgb, var(--color-forest) 55%, transparent), transparent 45%, color-mix(in srgb, #6db3ff 50%, transparent) 75%, color-mix(in srgb, var(--color-forest) 55%, transparent));
+  filter: blur(22px);
+  opacity: 0.35;
+  animation:
+    planSpin 9s linear infinite,
+    planBreathe 5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes planSpin {
+  to {
+    --plan-angle: 360deg;
+  }
+}
+@keyframes planBreathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan[data-featured="true"]::before,
+  .plan[data-featured="true"]::after {
+    animation: none;
+  }
+}

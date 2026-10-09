@@ -26,7 +26,7 @@ type Stage = { kind: "idle" } | { kind: "running" } | { kind: "results"; search:
 
 /**
  * Kişi bul (Instantly SuperSearch yapısı): solda filtreler, sağda başlangıç ekranı / sonuç tablosu.
- * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 kredi) → otomasyona ekle.
+ * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 Spine Kredi) → otomasyona ekle.
  */
 export function LeadSearchWorkspace({ initialAccount }: { initialAccount: AccountSummary }) {
   const [account, setAccount] = useState(initialAccount);
@@ -181,7 +181,7 @@ export function LeadSearchWorkspace({ initialAccount }: { initialAccount: Accoun
             </Button>
           </div>
           <p className="text-sm text-muted">
-            Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan kredi:{" "}
+            Bu ay <span className="font-medium tabular-nums text-ink">{num(account.browse.used)}</span> / {num(account.browse.limit)} kişi listelediniz · Kalan Spine Kredi:{" "}
             <span className="font-medium tabular-nums text-ink">{num(account.credits)}</span> ({account.plan.label} paketi).
           </p>
           {!ready && stage.kind === "idle" && <p className="text-sm text-muted">Aramak için soldan bir unvan, kişi türü, sektör ya da anahtar kelime seçin.</p>}

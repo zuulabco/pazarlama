@@ -1,32 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { GaugeIcon } from "@/components/ui/icons";
 import popover from "@/components/ui/popover.module.css";
 import type { AccountSummary } from "@/modules/outreach/usage";
 
 const num = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
 
-function Meter({ label, value, max, text, hint, warn }: { label: string; value: number; max: number; text: string; hint?: string; warn?: boolean }) {
+/** Kompakt gösterge: solda ad, sağda değer, altında ince çubuk. */
+function Meter({ label, value, max, text, warn }: { label: string; value: number; max: number; text: string; warn?: boolean }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
     <div className="grid gap-1.5">
       <div className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="font-medium">{label}</span>
-        <span className="text-muted tabular-nums">{text}</span>
+        <span>{label}</span>
+        <span className="font-medium tabular-nums">{text}</span>
       </div>
-      <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value} className="h-1.5 overflow-hidden rounded-full bg-sunken">
+      <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value} className="h-1 overflow-hidden rounded-full bg-sunken">
         <div className={`h-full rounded-full transition-[width] duration-500 ${warn ? "bg-danger" : "bg-forest"}`} style={{ width: `${pct}%` }} />
       </div>
-      {hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
 }
 
+function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <section className="grid gap-3 border-t border-line pt-4" aria-label={title}>
+      <div>
+        <h3 className="text-xs font-medium tracking-wide text-muted uppercase">{title}</h3>
+        {note && <p className="mt-0.5 text-xs text-muted">{note}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Spine Kredilerin yenileneceği gün (İstanbul takvimine göre bir sonraki ayın ilk günü). */
+function nextReset(): string {
+  const now = new Date();
+  return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", timeZone: "Europe/Istanbul" }).format(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 12)));
+}
+
 /**
- * Plan ve kullanım: sol çubuğun altındaki göstergeden açılır. Paket adı, kalan kredi, gönderici adresi ve otomasyon hakları,
- * günlük gönderim ve listeleme hakkı. Simgenin çevresindeki halka kalan krediyi gösterir.
+ * Plan ve kullanım: sol çubuğun altındaki göstergeden açılır. Üstte paket ve Spine Kredi, altında listeleme ve gönderim hakları
+ * gruplanmış olarak. Simgedeki kırmızı nokta Spine Kredinin azaldığını belirtir.
  */
 export function UsageMenu() {
   const id = useId();
@@ -79,30 +97,58 @@ export function UsageMenu() {
         inert={!open}
         role="dialog"
         aria-label="Plan ve kullanım"
-        className={`${popover.popover} fixed inset-x-3 bottom-16 z-50 origin-bottom rounded-panel bg-surface p-4 shadow-float ring-1 ring-line md:absolute md:inset-x-auto md:bottom-0 md:left-full md:ml-3 md:w-80 md:origin-bottom-left`}
+        className={`${popover.popover} fixed inset-x-3 bottom-16 z-50 max-h-[calc(100svh-6rem)] origin-bottom overflow-y-auto rounded-panel bg-surface p-4 shadow-float ring-1 ring-line md:absolute md:inset-x-auto md:bottom-0 md:left-full md:ml-3 md:w-[22rem] md:origin-bottom-left`}
       >
         {!data ? (
-          <p className="py-6 text-center text-sm text-muted">{failed ? "Kullanım bilgisi şu an alınamadı." : "Yükleniyor…"}</p>
+          <div className="grid gap-3 py-1" aria-busy="true">
+            <div className="h-5 w-28 animate-pulse rounded bg-sunken" />
+            <div className="h-24 animate-pulse rounded-row bg-sunken" />
+            <div className="h-20 animate-pulse rounded-row bg-sunken" />
+            {failed && <p className="text-center text-sm text-muted">Kullanım bilgisi şu an alınamadı.</p>}
+          </div>
         ) : (
           <div className="grid gap-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs text-muted">Paketiniz</p>
-                <p className="text-lg font-semibold tracking-tight">{data.plan.label}</p>
+                <p className="text-base font-semibold tracking-tight">{data.plan.label}</p>
               </div>
               <span className="rounded-full bg-sunken px-2.5 py-1 text-xs text-muted">Yükseltme yakında</span>
             </div>
-            <Meter label="Kalan kredi" value={data.credits} max={data.plan.monthlyCredits} text={`${num(data.credits)} / ${num(data.plan.monthlyCredits)}`} hint="1 kredi = e-postası bulunan 1 kişi. Her ay başında yenilenir." warn={data.credits / Math.max(data.plan.monthlyCredits, 1) < 0.15} />
-            <Meter label="Bugünkü gönderim" value={sending.today} max={sending.capacity} text={sending.capacity ? `${num(sending.today)} / ${num(sending.capacity)}` : "Adres yok"} hint="Son 24 saat; bağlı gönderici adreslerinizin toplam günlük limiti." />
-            <Meter label="Gönderici adresi" value={data.senders.used} max={data.senders.limit} text={`${data.senders.used} / ${data.senders.limit}`} />
-            <Meter label="Otomasyon" value={data.campaigns.used} max={data.campaigns.limit} text={`${data.campaigns.used} / ${data.campaigns.limit}`} />
-            <Meter label="Aylık listeleme" value={data.browse.used} max={data.browse.limit} text={`${num(data.browse.used)} / ${num(data.browse.limit)}`} hint={`Her ay başında yenilenir. Günlük tavan: ${num(data.browse.dailyLimit)} kişi.`} />
-            <p className="text-xs text-muted">
-              Yaklaşık aylık gönderim kapasiteniz {num(data.monthlyCapacity)} e-posta.{" "}
-              <Link href="/panel/posta-kutulari" onClick={() => setOpen(false)} className="text-accent underline underline-offset-4 hover:no-underline">
-                Gönderici adresleri
-              </Link>
-            </p>
+
+            <div className="grid gap-2.5 rounded-row bg-forest-soft/60 p-4 ring-1 ring-line">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Spine Kredi</p>
+                  <p className="text-xs text-muted">{nextReset()} tarihinde yenilenir</p>
+                </div>
+                <p className="text-2xl leading-none font-semibold tabular-nums">
+                  {num(data.credits)}
+                  <span className="text-sm font-normal text-muted"> / {num(data.plan.monthlyCredits)}</span>
+                </p>
+              </div>
+              <div role="progressbar" aria-label="Spine Kredi" aria-valuemin={0} aria-valuemax={data.plan.monthlyCredits} aria-valuenow={data.credits} className="h-1.5 overflow-hidden rounded-full bg-surface">
+                <div className={`h-full rounded-full transition-[width] duration-500 ${(ratio ?? 1) < 0.15 ? "bg-danger" : "bg-forest"}`} style={{ width: `${(ratio ?? 0) * 100}%` }} />
+              </div>
+              <p className="text-xs text-muted">Listede gizli bilgisi açılıp eklenen her kişi/firma 1 Spine Kredi harcar.</p>
+            </div>
+
+            <Group title="Listeleme" note="Listelemek Spine Kredi harcamaz; ayrı bir haktır.">
+              <Meter label="Bugün" value={data.browse.today} max={data.browse.dailyLimit} text={`${num(data.browse.today)} / ${num(data.browse.dailyLimit)}`} />
+              <Meter label="Bu ay" value={data.browse.used} max={data.browse.limit} text={`${num(data.browse.used)} / ${num(data.browse.limit)}`} />
+            </Group>
+
+            <Group title="Gönderim">
+              <Meter label="Son 24 saatte gönderilen" value={sending.today} max={sending.capacity} text={sending.capacity ? `${num(sending.today)} / ${num(sending.capacity)}` : "Adres yok"} />
+              <Meter label="Gönderici adresi" value={data.senders.used} max={data.senders.limit} text={`${data.senders.used} / ${data.senders.limit}`} />
+              <Meter label="Otomasyon" value={data.campaigns.used} max={data.campaigns.limit} text={`${data.campaigns.used} / ${data.campaigns.limit}`} />
+              <p className="text-xs text-muted">
+                Aylık gönderim kapasiteniz yaklaşık {num(data.monthlyCapacity)} e-posta.{" "}
+                <Link href="/panel/posta-kutulari" onClick={() => setOpen(false)} className="text-accent underline underline-offset-4 hover:no-underline">
+                  Gönderici adresleri
+                </Link>
+              </p>
+            </Group>
           </div>
         )}
       </div>

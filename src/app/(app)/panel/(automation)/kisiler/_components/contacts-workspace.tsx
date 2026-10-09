@@ -274,7 +274,7 @@ export function ContactsWorkspace({
           <div className="flex flex-wrap items-center gap-2">
             {account && (
               <span className="rounded-full bg-sunken px-3 py-1.5 text-sm" title={`${account.plan.label} paketi`}>
-                Kalan kredi: <span className="font-medium tabular-nums">{new Intl.NumberFormat("tr-TR").format(account.credits)}</span>
+                Kalan Spine Kredi: <span className="font-medium tabular-nums">{new Intl.NumberFormat("tr-TR").format(account.credits)}</span>
               </span>
             )}
             {account && (
