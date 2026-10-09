@@ -28,7 +28,7 @@ function GroupTitle({ title, count }: { title: string; count: number }) {
 
 /**
  * Sol filtre çubuğu (Instantly SuperSearch yapısı): açılır gruplar, her grupta seçili filtre sayısı rozeti. Altta, kaydırdıkça ekranda kalan
- * "Müşteri bul" düğmesi vardır (Mesaj hazırla sayfasındaki gibi). Kayıtlı aramalar üstte ince bir satırdadır.
+ * "Müşteri bul" düğmesi vardır (Mesaj hazırla sayfasındaki gibi). Kayıtlı aramalar düğmenin altında ince bir satırdadır.
  * Tüm çoklu alanlar etiket (chip) girişlidir: listeden seçilir ya da yazılıp eklenir. Unvan ve kelimeler Türkçe ya da İngilizce yazılabilir;
  * arama her ikisini de kapsar. (Zaten kayıtlı kişileri atlama ve şirket başına tek kişi her zaman açıktır, bu yüzden anahtar yoktur.)
  */
@@ -63,16 +63,6 @@ export function LeadFilters({
 
   return (
     <aside aria-label="Filtreler" className="grid content-start gap-3">
-      <div className="flex items-center justify-between gap-2 px-1 text-sm">
-        <button type="button" onClick={onLoad} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-medium text-muted transition-colors hover:bg-sunken hover:text-ink">
-          <BookmarkIcon size={15} />
-          Kayıtlı aramalarım
-        </button>
-        <button type="button" onClick={onSave} disabled={activeCount === 0} className="rounded-full px-2.5 py-1.5 font-medium text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40">
-          Bu aramayı kaydet
-        </button>
-      </div>
-
       <Disclosure defaultOpen className={groupClass} buttonClassName="px-4 py-3.5" panelClassName="px-4 pb-4" summary={<GroupTitle title="Unvan" count={person} />}>
         <div className="grid gap-5">
           <ComboField
@@ -132,6 +122,18 @@ export function LeadFilters({
           {searching ? "Aranıyor…" : "Müşteri bul"}
         </Button>
         {!canSearch && !searching && <p className="mt-2 text-center text-xs text-muted">Önce bir unvan, sektör ya da kelime seçin.</p>}
+        <div className="mt-2 flex items-center justify-center gap-1 text-sm text-muted">
+          <button type="button" onClick={onLoad} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-sunken hover:text-ink">
+            <BookmarkIcon size={14} />
+            Kayıtlı aramalarım
+          </button>
+          <span aria-hidden="true" className="text-line-strong">
+            ·
+          </span>
+          <button type="button" onClick={onSave} disabled={activeCount === 0} className="rounded-full px-3 py-1.5 transition-colors hover:bg-sunken hover:text-ink disabled:opacity-40">
+            Bu aramayı kaydet
+          </button>
+        </div>
       </div>
     </aside>
   );
