@@ -44,3 +44,49 @@ describe("yanıt metni", () => {
     expect(f).not.toContain("Kampanyalar: x");
   });
 });
+
+describe("hesap verilerine erişim: yönlendirme ve arama", () => {
+  it("soruya göre veri türlerini seçer; devam sorusunda önceki soruyu kullanır", async () => {
+    const { routeTopics } = await import("./assistant-rules");
+    expect([...routeTopics("kayıtlı kişilerimde reklam sektöründe olan var mı?")]).toContain("kisiler");
+    expect([...routeTopics("takvimimde herhangi bir plan var mı?")]).toContain("plan");
+    expect([...routeTopics("kimler yanıt verdi")]).toContain("gelen");
+    expect([...routeTopics("peki yarın?", "takvimimde ne var")]).toContain("plan");
+  });
+  it("dolgu kelimeleri atar, eş anlamlıları ekler", async () => {
+    const { searchTerms } = await import("./assistant-rules");
+    const { terms, expanded } = searchTerms("kayıtlı kişilerimde reklam sektöründe olan var mı?");
+    expect(terms).toEqual(["reklam"]);
+    expect(expanded).toEqual(expect.arrayContaining(["reklam", "ajans", "digital", "marketing"]));
+  });
+  it("kayıtlı kişilerde şirket adı, alan adı ve unvandan eşleştirir", async () => {
+    const { matchContacts, searchTerms, contactsSection } = await import("./assistant-rules");
+    const rows = [
+      { name: "Ilker G.", company: "D Generation", job_title: "Founder", city: "Izmir", website: "http://dgeneration.com.tr", email: "ilker@dgeneration.com.tr", email_status: "bulundu" },
+      { name: "Luna K.", company: "Luna Kreatif", job_title: "Co-Founder", city: "Izmir", website: null, email: "f@lunakreatif.com", email_status: "bulundu" },
+      { name: "Ali V.", company: "Vega Çelik Sanayi", job_title: "Satın Alma Müdürü", city: "Kocaeli", website: null, email: "a@vegacelik.com", email_status: "bulundu" },
+    ];
+    const { terms, expanded } = searchTerms("reklam sektöründe kimler var");
+    const hit = matchContacts(rows, expanded);
+    expect(hit.map((r) => r.company)).toEqual(["Luna Kreatif"]);
+    const text = contactsSection({ total: 3, withEmail: 3, lists: [{ name: "Test", count: 3 }], rows, terms, expanded });
+    expect(text).toContain("Kayıtlı kişiler: toplam 3");
+    expect(text).toContain("Luna Kreatif");
+    expect(text).toContain("Tüm kayıtlı kişiler");
+  });
+  it("takvim bölümü bugünü, yaklaşanları ve geçmiş tamamlanmamışları ayırır", async () => {
+    const { planSection } = await import("./assistant-rules");
+    const now = new Date("2026-10-09T10:00:00Z");
+    const text = planSection(
+      [
+        { startsAt: "2026-10-08T07:00:00Z", kind: "Görev", title: "Teklif hazırla", withName: null, location: null, allDay: false, done: false },
+        { startsAt: "2026-10-10T11:00:00Z", kind: "Toplantı", title: "Lale ile görüşme", withName: "Ayşe", location: "Kadıköy", allDay: false, done: false },
+      ],
+      now,
+    );
+    expect(text).toContain("Bugün:");
+    expect(text).toContain("yaklaşan 1 plan");
+    expect(text).toContain("Lale ile görüşme (Ayşe)");
+    expect(text).toContain("Geçmiş ve tamamlanmamış 1 plan");
+  });
+});

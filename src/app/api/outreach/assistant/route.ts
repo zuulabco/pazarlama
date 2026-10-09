@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { chatText } from "@/lib/llm/nvidia";
 import { assistantMessages, contextText, fallbackReply, toAnswer } from "@/modules/outreach/assistant-rules";
+import { knowledgeFor } from "@/modules/outreach/assistant-data";
 import { fail, guard, outreachFailure, rateLimiter } from "@/modules/outreach/http";
 import { loadReports } from "@/modules/outreach/reports";
 import { accountSummary } from "@/modules/outreach/usage";
@@ -23,16 +24,17 @@ export async function POST(req: NextRequest) {
   if (!body.success || body.data.messages.at(-1)?.role !== "user") return fail("Geçersiz istek.", 400);
 
   try {
-    const [reports, account] = await Promise.all([loadReports(g.user.uid, 30), accountSummary(g.user.uid)]);
-    const context = contextText(reports, { planName: account.plan.label, credits: account.credits, senders: account.senders, campaigns: account.campaigns }, 30);
+    const [reports, account, knowledge] = await Promise.all([loadReports(g.user.uid, 30), accountSummary(g.user.uid), knowledgeFor(g.user.uid, body.data.messages).catch(() => "")]);
+    const summary = contextText(reports, { planName: account.plan.label, credits: account.credits, senders: account.senders, campaigns: account.campaigns }, 30);
+    const context = knowledge ? `${summary}\n\n${knowledge}` : summary;
     const question = body.data.messages.at(-1)!.content;
     try {
-      const text = await chatText(assistantMessages(body.data.messages, context), { maxTokens: 700, timeoutMs: 40_000, temperature: 0.3 });
+      const text = await chatText(assistantMessages(body.data.messages, context), { maxTokens: 900, timeoutMs: 45_000, temperature: 0.2 });
       return NextResponse.json(toAnswer(text, question));
     } catch (e) {
       // Model geçici olarak yanıt vermiyorsa kullanıcıya hata değil, elimizdeki rakamların özeti gösterilir.
       console.error("Adspine AI yanıt veremedi:", e instanceof Error ? e.message : e);
-      return NextResponse.json({ reply: fallbackReply(context), links: [{ path: "/panel/raporlar", label: "Raporlar" }] });
+      return NextResponse.json({ reply: fallbackReply(summary), links: [{ path: "/panel/raporlar", label: "Raporlar" }] });
     }
   } catch (e) {
     return outreachFailure(e);

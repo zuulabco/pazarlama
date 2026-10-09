@@ -1,3 +1,4 @@
+import { fold } from "@/lib/text";
 import type { ReportsData } from "./reports";
 
 /**
@@ -12,6 +13,7 @@ export const assistantLinks = [
   { path: "/panel/gelen-kutusu", label: "Gelen kutusu" },
   { path: "/panel/raporlar", label: "Raporlar" },
   { path: "/panel/posta-kutulari", label: "Gönderici adresleri" },
+  { path: "/panel/plan", label: "Takvim" },
 ] as const;
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
@@ -45,11 +47,14 @@ export function assistantMessages(history: ChatTurn[], context: string) {
 Yalnızca düz Türkçe metinle yanıt ver (JSON ya da kod bloğu yok).
 
 Kurallar:
-- Rakamlar yalnızca aşağıdaki "Kullanıcının verileri"nden gelir. Orada olmayan bir rakamı, otomasyonu ya da sonucu uydurma; veri yoksa "henüz veri yok" de.
+- Rakamlar ve kayıtlar yalnızca aşağıdaki "Kullanıcının verileri"nden gelir. Orada olmayan bir rakamı, kişiyi, planı ya da sonucu uydurma. Önce verilere BAK: kişi ya da plan sorulursa ilgili bölümdeki satırları incele; "yok" ya da "bulunmuyor" deme, listede varsa açıkça yaz.
+- Kayıtlı kişilerde "sektör" alanı yoktur: sektörü şirket adından, alan adından ve unvandan çıkar (örn. "Digital", "Ajans", "Reklam", "Medya" içeren şirketler reklam/pazarlama sektöründedir). Çıkarım yapıyorsan "büyük olasılıkla" de; hiç eşleşen yoksa "kayıtlı kişilerinizde bulamadım" de ve Müşteri bul'a yönlendir.
+- Takvim sorularında verilen tarihleri kullan; "bugün/yarın/bu hafta" için verilen bugünün tarihine göre hesapla.
+- Kişi ya da plan sayarken verilen satırlardan say; sayıyı satır sayısından bil, tahmin etme.
 - Elinde gelir, kazanç, satış tutarı, açılma ya da tıklama verisi YOK. Bunlar sorulursa "bu veriyi tutmuyoruz" de ve sıfır deme; yalnızca verilen rakamlardan (gönderilen, yanıt, olumlu yanıt, toplantı, geri dönen) konuş.
-- Kısa ve somut ol (en çok 6 cümle). Madde işareti gerekiyorsa her satıra "- " koy. Markdown başlığı kullanma.
+- Kısa ve somut ol (en çok 8 cümle; liste istenirse en çok 10 madde). Madde işareti gerekiyorsa her satıra "- " koy. Markdown başlığı kullanma.
 - Öneri verirken gerekçeyi verideki rakama bağla (örn. geri dönen %5,5 üzerindeyse gönderimi azaltmayı ve listeyi temizlemeyi öner).
-- Genel kurallar: yeni adres günde 5 e-postayla başlar ve haftalar içinde artar; geri dönen oranı %2 altı hedeftir, %5 üstü tehlikelidir; soğuk e-postayı ana alan adından gönderme; her e-postada abonelikten çıkma bağlantısı olmalı.
+- Genel kurallar: yeni adres günde 5 e-postayla başlar ve haftalar içinde artar; geri dönen oranı %2 altı hedeftir, %5 üstü tehlikelidir; soğuk e-postayı ana alan adından gönderme; her e-postada çıkış yolu olmalı (altta "İPTAL yazın" satırı; e-postalarda bağlantı bulunmaz).
 - Otomasyon metni yazman istenirse kısa bir örnek yaz, ama gerçek yazım için Otomasyonlar > adım editöründeki "Adspine AI ile yaz"ı öner.
 - Yapamayacağın bir işi (örn. e-posta göndermek, veri silmek) yapıyormuş gibi davranma; ilgili sayfaya yönlendir.
 
@@ -63,9 +68,11 @@ ${context}`,
 /** Konudan ilgili sayfaları seçer (kural tabanlı; model bağlantı üretmez). En çok 2. */
 const topics: { path: string; words: RegExp }[] = [
   { path: "/panel/posta-kutulari", words: /gönderici|adres|ısın|spam|geri dön|bounce|dmarc|spf/i },
-  { path: "/panel/gelen-kutusu", words: /yanıt|gelen kutusu|cevap|toplantı/i },
+  { path: "/panel/gelen-kutusu", words: /yanıt|gelen kutusu|cevap/i },
+  { path: "/panel/plan", words: /takvim|plan|randevu|toplantı|görev|hatırlat|yaklaşan/i },
   { path: "/panel/otomasyon", words: /otomasyon|adım|e-posta dizi|metin|yaz/i },
-  { path: "/panel/kisi-bul", words: /kişi|liste|kredi|unvan|bul/i },
+  { path: "/panel/kisiler", words: /kayıtlı|kişilerim|listem|kara liste/i },
+  { path: "/panel/kisi-bul", words: /kredi|unvan|müşteri bul|yeni kişi/i },
   { path: "/panel/raporlar", words: /rapor|oran|performans|nasıl gidiyor|gönderilen/i },
 ];
 
@@ -96,4 +103,117 @@ export function fallbackReply(context: string): string {
 export function toAnswer(text: string, question: string): { reply: string; links: { path: string; label: string }[] } {
   const reply = cleanReply(text);
   return { reply, links: linksFor(question) };
+}
+
+// ─── Hesap verilerine erişim: soruya göre hangi veriler getirilir ───────────────────────────────────
+
+export type Topic = "kisiler" | "plan" | "gelen" | "adresler" | "kara";
+
+// Eşleştirme Türkçe duyarsız (fold) metinde yapılır; bu yüzden desenler aksansızdır.
+const TOPIC_WORDS: Record<Topic, RegExp> = {
+  kisiler: /kisi|kayitli|liste|firma|sirket|musteri|sektor|calisan|unvan|sehir|kurucu|ceo|mudur|e-?posta|ajans|var mi|kimler|hangi/,
+  plan: /takvim|plan|gorev|toplanti|randevu|hatirlat|yaklasan|bugun|yarin|hafta|etkinlik|ne zaman|programim|gunum/,
+  gelen: /yanit|cevap|gelen kutusu|ilgili|okunmam|kim yazdi|geri dondu|yanitlayan/,
+  adresler: /gonderici|adres|isin|spam|bounce|geri don|dmarc|spf|dkim|posta kutu|gmail|limit/,
+  kara: /kara liste|abonelik|cikan|sikayet|iptal/,
+};
+
+/** Soruya (ve bir önceki kullanıcı sorusuna: "peki yarın?" gibi devam soruları için) göre getirilecek veri türleri. */
+export function routeTopics(question: string, previous = ""): Set<Topic> {
+  const out = new Set<Topic>();
+  for (const text of [fold(question), fold(previous)]) {
+    for (const [topic, re] of Object.entries(TOPIC_WORDS) as [Topic, RegExp][]) if (re.test(text)) out.add(topic);
+    if (out.size > 0 && text === fold(question)) break;
+  }
+  return out;
+}
+
+const STOP = new Set(
+  "kayitli kisilerimde kisilerim kisiler kisileri kisilerimi kisi hangileri hangisi takvimimde takvim takvimim plan planim plani planlar herhangi neler nelerdir nedir var mi mu olan olanlar olanlari sektorunde sektorde sektoru sektor hangi kac tane listele goster bul benim icinde icin ile ve veya bir bu su ne nasil neden kimler kim musteri musterim firma firmalar sirket sirketler adres eposta mail mailim liste listem listemde hesabimda hesabim bana soyle ver var mi yok mu tum hepsi herhangi biri bunlar peki ayrica lutfen ama gibi kadar daha cok az en son ilk".split(" "),
+);
+
+/** Arama terimlerinin eş anlamlıları (kayıtlı kişilerde sektör alanı olmadığı için şirket adı/alan adından çıkarım yapılır). */
+const SYNONYMS: Record<string, string[]> = {
+  reklam: ["ajans", "advertising", "marketing", "pazarlama", "dijital", "digital", "medya", "media", "kreatif", "creative", "marka", "brand", "tanitim"],
+  pazarlama: ["marketing", "reklam", "ajans", "dijital", "digital", "medya"],
+  yazilim: ["software", "tech", "bilisim", "teknoloji", "dev", "app", "soft"],
+  teknoloji: ["tech", "yazilim", "bilisim", "software"],
+  restoran: ["restaurant", "cafe", "kafe", "yemek", "food", "otel", "hotel"],
+  saglik: ["klinik", "clinic", "hastane", "dental", "dis", "doktor", "medikal", "health"],
+  egitim: ["okul", "kurs", "akademi", "academy", "education", "universite"],
+  insaat: ["construction", "yapi", "mimarlik", "emlak", "gayrimenkul"],
+  emlak: ["gayrimenkul", "real estate", "insaat", "yapi"],
+  eticaret: ["e-ticaret", "ecommerce", "e-commerce", "shop", "store", "magaza"],
+  turizm: ["tourism", "travel", "seyahat", "otel", "hotel", "tur"],
+  lojistik: ["logistics", "nakliyat", "tasimacilik", "kargo", "cargo"],
+  moda: ["fashion", "tekstil", "textile", "giyim", "apparel"],
+};
+
+/** Sorudaki arama terimleri (dolgu kelimeler atılır) ve eş anlamlıları; hepsi fold edilmiştir. */
+export function searchTerms(question: string): { terms: string[]; expanded: string[] } {
+  const terms = [...new Set(fold(question).split(/[^a-z0-9-]+/).filter((w) => w.length >= 3 && !STOP.has(w)))];
+  const expanded = new Set(terms);
+  for (const t of terms) {
+    for (const [key, syn] of Object.entries(SYNONYMS)) if (t.startsWith(key.slice(0, 5)) || key.startsWith(t.slice(0, 5))) for (const x of syn) expanded.add(x);
+  }
+  return { terms, expanded: [...expanded] };
+}
+
+export type ContactRow = { name: string | null; company: string | null; job_title: string | null; city: string | null; website: string | null; email: string | null; email_status: string };
+
+const domainOf = (r: ContactRow) => (r.website ?? r.email?.slice(r.email.lastIndexOf("@") + 1) ?? "").replace(/^https?:\/\/(www\.)?/, "").replace(/[/?#].*$/, "");
+const haystack = (r: ContactRow) => fold([r.company, r.name, r.job_title, r.city, domainOf(r)].filter(Boolean).join(" | "));
+
+/** Terimlerden herhangi biri (ya da eş anlamlısı) kişinin şirket/ad/unvan/şehir/alan adında geçiyorsa eşleşir. */
+export function matchContacts(rows: ContactRow[], expanded: string[]): ContactRow[] {
+  if (expanded.length === 0) return [];
+  return rows.filter((r) => {
+    const h = haystack(r);
+    return expanded.some((t) => h.includes(t));
+  });
+}
+
+export const contactLine = (r: ContactRow) => `- ${[r.company ?? "(şirket yok)", r.name, r.job_title, r.city, domainOf(r) || null].filter(Boolean).join(" | ")}`;
+
+/** Kayıtlı kişiler bölümü: toplam, listeler, (soru terim içeriyorsa) eşleşenler, (küçük hesapta) tüm kişiler. */
+export function contactsSection(args: { total: number; withEmail: number; lists: { name: string; count: number }[]; rows: ContactRow[]; terms: string[]; expanded: string[] }): string {
+  const { total, withEmail, lists, rows, terms, expanded } = args;
+  const out = [`Kayıtlı kişiler: toplam ${total}, geçerli e-postalı ${withEmail}. Listeler: ${lists.length ? lists.map((l) => `${l.name} (${l.count})`).join(", ") : "yok"}.`];
+  if (total === 0) return out.join("\n");
+  if (terms.length > 0) {
+    const hit = matchContacts(rows, expanded);
+    out.push(`Sorudaki terimlerle (${terms.join(", ")}) eşleşen kişiler: ${hit.length}.`);
+    for (const r of hit.slice(0, 25)) out.push(contactLine(r));
+    if (hit.length > 25) out.push(`… ve ${hit.length - 25} kişi daha.`);
+  }
+  if (rows.length <= 60) {
+    out.push(`Tüm kayıtlı kişiler (şirket | ad | unvan | şehir | alan adı) — sektörü şirket adından, alan adından ve unvandan çıkarabilirsin:`);
+    for (const r of rows) out.push(contactLine(r));
+  } else if (terms.length === 0) {
+    out.push("En son eklenen 10 kişi:");
+    for (const r of rows.slice(0, 10)) out.push(contactLine(r));
+  }
+  return out.join("\n");
+}
+
+export type PlanLine = { startsAt: string; kind: string; title: string; withName: string | null; location: string | null; allDay: boolean; done: boolean };
+
+const trDate = (iso: string, allDay: boolean) =>
+  new Intl.DateTimeFormat("tr-TR", { weekday: "short", day: "numeric", month: "long", ...(allDay ? {} : { hour: "2-digit", minute: "2-digit" }), timeZone: "Europe/Istanbul" }).format(new Date(iso));
+
+/** Takvim bölümü: bugünün tarihi, yaklaşan planlar ve (varsa) geçmiş ama tamamlanmamışlar. */
+export function planSection(items: PlanLine[], now = new Date()): string {
+  const today = new Intl.DateTimeFormat("tr-TR", { dateStyle: "full", timeZone: "Europe/Istanbul" }).format(now);
+  const line = (i: PlanLine) => `- ${trDate(i.startsAt, i.allDay)} · ${i.kind}: ${i.title}${i.withName ? ` (${i.withName})` : ""}${i.location ? ` · ${i.location}` : ""}${i.done ? " [tamamlandı]" : ""}`;
+  const startOfToday = Date.parse(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(now) + "T00:00:00+03:00");
+  const upcoming = items.filter((i) => Date.parse(i.startsAt) >= startOfToday);
+  const overdue = items.filter((i) => Date.parse(i.startsAt) < startOfToday && !i.done);
+  const out = [`Bugün: ${today}.`];
+  out.push(upcoming.length ? `Takvimde yaklaşan ${upcoming.length} plan (en çok 20 gösterilir):` : "Takvimde yaklaşan plan yok.");
+  for (const i of upcoming.slice(0, 20)) out.push(line(i));
+  if (overdue.length) {
+    out.push(`Geçmiş ve tamamlanmamış ${overdue.length} plan:`);
+    for (const i of overdue.slice(0, 8)) out.push(line(i));
+  }
+  return out.join("\n");
 }
