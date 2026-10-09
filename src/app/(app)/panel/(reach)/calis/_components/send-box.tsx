@@ -33,11 +33,11 @@ export function SendBox({ kind, draft, defaultTo }: { kind: WorkKind; draft: Dra
   }
 
   return (
-    <div className="grid gap-4 rounded-row bg-sunken/60 p-4 sm:p-5">
+    <div className="grid gap-4 rounded-row p-4 ring-1 ring-line sm:p-5">
       <div className="grid gap-2">
         <label htmlFor="send-recipient" className="text-sm font-medium">
           Nereye gönderelim?
-          <span className="mt-0.5 block text-sm font-normal text-muted">E-posta adresi yazarsanız e-postada, telefon numarası yazarsanız WhatsApp&apos;ta açılır.</span>
+          <span className="mt-0.5 block text-sm font-normal text-muted">E-posta adresi yazarsanız e-postada, telefon yazarsanız WhatsApp&apos;ta açılır.</span>
         </label>
         <input
           id="send-recipient"
@@ -51,7 +51,7 @@ export function SendBox({ kind, draft, defaultTo }: { kind: WorkKind; draft: Dra
           placeholder="ornek@firma.com ya da 0532 000 00 00"
           aria-invalid={invalid ? true : undefined}
           aria-describedby={invalid ? "send-recipient-error" : undefined}
-          className="h-11 rounded-control bg-surface px-3.5 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger"
+          className="h-11 w-full rounded-control bg-surface px-3.5 ring-1 ring-line-strong ring-inset outline-none placeholder:text-muted focus:ring-2 focus:ring-forest aria-invalid:ring-danger"
         />
         {invalid && (
           <p id="send-recipient-error" role="alert" className="text-sm text-danger">

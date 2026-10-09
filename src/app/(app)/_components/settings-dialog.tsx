@@ -232,7 +232,7 @@ export function SettingsDialog({ open, onClose, name, email }: { open: boolean; 
   return (
     <Modal open={open} onClose={onClose} title="Ayarlar" width="52rem">
       <div className="grid min-h-[26rem] gap-6 sm:grid-cols-[11rem_minmax(0,1fr)]">
-        <nav aria-label="Ayar bölümleri" className="flex gap-1 overflow-x-auto sm:grid sm:content-start sm:overflow-visible">
+        <nav aria-label="Ayar bölümleri" className="flex flex-wrap gap-1 sm:grid sm:content-start">
           {tabs.map((t) => (
             <button
               key={t.key}

@@ -275,8 +275,20 @@ export function Composer({
               <p className="-mt-1 text-right text-xs text-muted tabular-nums">{wordCount(draft.body)} kelime · dilediğiniz gibi düzenleyebilirsiniz</p>
             </div>
 
-            <div className="grid gap-3">
-              <p className="text-sm font-medium">Beğenmediniz mi? Yeniden yazdırın</p>
+            <div className="grid gap-3 rounded-row p-4 ring-1 ring-line sm:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium">Beğenmediniz mi? Yeniden yazdırın</p>
+                {versions.length > 1 && (
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => setHistory((h) => ({ ...h, [kind]: h[kind].slice(0, -1) }))}
+                    className="shrink-0 rounded-full px-3 py-1 text-sm text-muted transition-colors hover:bg-sunken hover:text-ink disabled:opacity-50"
+                  >
+                    ↶ Geri al
+                  </button>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {refinements.map((r) => (
                   <button
@@ -289,19 +301,9 @@ export function Composer({
                     {r.label}
                   </button>
                 ))}
-                {versions.length > 1 && (
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => setHistory((h) => ({ ...h, [kind]: h[kind].slice(0, -1) }))}
-                    className="h-9 rounded-full px-3.5 text-sm text-muted ring-1 ring-line-strong ring-inset transition-colors hover:text-ink disabled:opacity-50"
-                  >
-                    Geri al
-                  </button>
-                )}
               </div>
               <form
-                className="flex gap-2"
+                className="relative"
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (custom.trim()) refine({ custom: custom.trim() });
@@ -313,11 +315,15 @@ export function Composer({
                   maxLength={200}
                   aria-label="Kendi isteğiniz"
                   placeholder="Kendi isteğinizi yazın (örn. Cuma görüşmeyi öner)"
-                  className={`${inputClass} min-w-0 flex-1`}
+                  className={`${inputClass} w-full pr-24`}
                 />
-                <Button type="submit" variant="secondary" disabled={busy !== null || !custom.trim()}>
+                <button
+                  type="submit"
+                  disabled={busy !== null || !custom.trim()}
+                  className="absolute top-1/2 right-1.5 h-8 -translate-y-1/2 rounded-full bg-forest px-4 text-sm font-medium text-white transition-colors hover:bg-forest-hover disabled:bg-sunken disabled:text-muted"
+                >
                   Uygula
-                </Button>
+                </button>
               </form>
               {busy === "refine" && (
                 <div role="status" className="flex items-center gap-4 rounded-row bg-forest-soft px-5 py-3">

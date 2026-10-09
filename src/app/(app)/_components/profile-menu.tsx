@@ -77,7 +77,7 @@ export function ProfileMenu({ name, email }: { name: string | null; email: strin
         id={id}
         data-open={open}
         inert={!open}
-        className={`${popover.popover} absolute right-0 bottom-full z-50 mb-2 w-72 origin-bottom-right rounded-panel md:right-auto md:bottom-0 md:left-full md:mb-0 md:ml-3 md:origin-bottom-left bg-surface p-2 shadow-float ring-1 ring-line`}
+        className={`${popover.popover} fixed inset-x-3 bottom-16 z-50 origin-bottom rounded-panel md:absolute md:inset-x-auto md:bottom-0 md:left-full md:ml-3 md:w-72 md:origin-bottom-left bg-surface p-2 shadow-float ring-1 ring-line`}
       >
         <div className="px-3 py-2.5">
           <p className="truncate font-medium">{name ?? "Hesabım"}</p>
