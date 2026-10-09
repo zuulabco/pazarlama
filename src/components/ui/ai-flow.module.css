@@ -1,0 +1,108 @@
+/*
+ * "Bunu Adspine AI yaptı" hissi: bir kutunun (sohbetteki işlem kartı, takvimde eklenen plan) kenarında marka mavilerinde yumuşakça akan ışık.
+ * .once: birkaç saniye akar ve söner (takvimde yeni eklenen satır). .settle: akar, sonra ince bir çerçeve olarak kalır (sohbet kartı).
+ * Kutunun position:relative ve border-radius'a sahip olması yeterlidir. Hareket azaltma tercihinde akış durur.
+ */
+@property --af-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.once,
+.settle {
+  position: relative;
+  isolation: isolate;
+}
+.once::before,
+.settle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--af-angle), #0072e5, #6db3ff, #b9dcff, #3d9bff, #0072e5);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.once::after,
+.settle::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(from var(--af-angle), #0072e5, #6db3ff, transparent 55%, #0072e5);
+  filter: blur(14px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .once::before {
+    animation:
+      af-spin 3s linear infinite,
+      af-fade 7s ease forwards;
+  }
+  .once::after {
+    animation:
+      af-spin 3s linear infinite,
+      af-fade-soft 7s ease forwards;
+  }
+  .settle::before {
+    animation:
+      af-spin 3s linear infinite,
+      af-settle 6s ease forwards;
+  }
+  .settle::after {
+    animation:
+      af-spin 3s linear infinite,
+      af-fade-soft 6s ease forwards;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .once::before,
+  .once::after {
+    animation: af-fade 7s ease forwards;
+  }
+  .settle::after {
+    opacity: 0;
+  }
+  .settle::before {
+    opacity: 0.55;
+  }
+}
+@keyframes af-spin {
+  to {
+    --af-angle: 360deg;
+  }
+}
+@keyframes af-fade {
+  0%,
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes af-fade-soft {
+  0%,
+  65% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes af-settle {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.55;
+  }
+}

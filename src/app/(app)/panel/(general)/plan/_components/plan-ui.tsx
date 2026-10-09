@@ -1,5 +1,6 @@
 "use client";
 
+import flow from "@/components/ui/ai-flow.module.css";
 import { CheckIcon } from "@/components/ui/icons";
 import { formatSlot, fromLocalInputs, toDateInput, toTimeInput } from "@/modules/plan/calendar";
 import { kindLabel, type PlanInput, type PlanItem, type PlanKind } from "@/modules/plan/types";
@@ -92,14 +93,16 @@ export function PlanRow({
   onOpen,
   onToggle,
   showDate,
+  glow = false,
 }: {
+  glow?: boolean;
   item: PlanItem;
   onOpen: () => void;
   onToggle: () => void;
   showDate?: string;
 }) {
   return (
-    <li className="flex items-start gap-3 rounded-row px-2 py-2 transition-colors hover:bg-sunken/70">
+    <li className={`flex items-start gap-3 rounded-row px-2 py-2 transition-colors hover:bg-sunken/70 ${glow ? flow.once : ""}`}>
       <button
         type="button"
         role="checkbox"

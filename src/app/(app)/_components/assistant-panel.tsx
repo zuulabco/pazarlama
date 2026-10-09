@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import flow from "@/components/ui/ai-flow.module.css";
+import { CalendarIcon, SearchIcon } from "@/components/ui/icons";
+import type { AssistantAction, AssistantAnswer } from "@/modules/outreach/assistant-types";
 import { api } from "../panel/(automation)/kisiler/_components/contact-ui";
 
-type Turn = { role: "user" | "assistant"; content: string; links?: { path: string; label: string }[] };
+type Turn = { role: "user" | "assistant"; content: string; links?: { path: string; label: string }[]; action?: AssistantAction };
 
-const suggestions = ["Otomasyonlarım nasıl gidiyor?", "Geri dönen oranım neden önemli?", "Hangi gönderici adresim sorunlu?", "Yeni bir otomasyon için nereden başlamalıyım?"];
+/** "2026-10-10T09:00:00Z" → İstanbul gün anahtarı "2026-10-10" (takvim sayfasında günü seçmek için). */
+const istanbulDay = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date(iso));
+
+const suggestions = ["Otomasyonlarım nasıl gidiyor?", "Yarın saat 12:00'de dişçi randevum var, takvime ekle", "İstanbul'daki makine mühendislerini ara", "Kayıtlı kişilerimde reklam sektöründe olan var mı?"];
 
 /** Yapay zekâ simgesi: büyük ve küçük parıltı, marka mavisi geçişli. */
 function AiIcon({ size = 20, id }: { size?: number; id: string }) {
@@ -25,6 +32,54 @@ function AiIcon({ size = 20, id }: { size?: number; id: string }) {
   );
 }
 
+/** Ajanın yaptığı işi gösteren kart: marka renklerinde akan çerçeve ("Adspine AI yaptı"). */
+function ActionCard({ action, undone, onUndo, onNavigate }: { action: AssistantAction; undone: boolean; onUndo: (id: string) => void; onNavigate: () => void }) {
+  if (action.type === "plan") {
+    return (
+      <div className={`${flow.settle} mt-2 grid max-w-[22rem] gap-2.5 rounded-row bg-surface p-3.5 text-sm`}>
+        <div className="flex items-start gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-forest-soft text-accent">
+            <CalendarIcon size={18} />
+          </span>
+          <div className="min-w-0">
+            <p className={`font-medium ${undone ? "text-muted line-through" : ""}`}>{action.title}</p>
+            <p className="text-xs text-muted">
+              {action.kind} · {action.when}
+              {action.location ? ` · ${action.location}` : ""}
+            </p>
+          </div>
+        </div>
+        {undone ? (
+          <p className="text-xs text-muted">Geri alındı; takvimden kaldırıldı.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/panel/plan?ai=${action.id}&gun=${istanbulDay(action.startsAt)}`} onClick={onNavigate} className="inline-flex h-8 items-center rounded-full bg-forest px-3.5 text-xs font-medium text-white transition-colors hover:bg-forest-hover">
+              Takvimde aç
+            </Link>
+            <button type="button" onClick={() => onUndo(action.id)} className="inline-flex h-8 items-center rounded-full px-3.5 text-xs font-medium ring-1 ring-line-strong ring-inset transition-colors hover:bg-sunken">
+              Geri al
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className={`${flow.settle} mt-2 flex max-w-[22rem] items-center gap-3 rounded-row bg-surface p-3.5 text-sm`}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-forest-soft text-accent">
+        <SearchIcon size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">{action.label}</p>
+        {action.detail && <p className="truncate text-xs text-muted">{action.detail}</p>}
+      </div>
+      <Link href={action.path} onClick={onNavigate} className="shrink-0 text-xs font-medium text-accent underline underline-offset-4 hover:no-underline">
+        Aç →
+      </Link>
+    </div>
+  );
+}
+
 /**
  * Sağdan açılan yapay zekâ yardımcısı. Kullanıcının kendi rakamlarına dayanarak sorulara yanıt verir ve ilgili sayfaya
  * yönlendirir. Sohbet yalnızca bu oturumda tarayıcıda tutulur.
@@ -35,6 +90,8 @@ export function AssistantPanel() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
+  const [undone, setUndone] = useState<Set<string>>(new Set());
   const end = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLTextAreaElement>(null);
 
@@ -72,13 +129,24 @@ export function AssistantPanel() {
     if (box.current) box.current.style.height = "auto";
     setError("");
     setBusy(true);
-    const r = await api<{ reply: string; links: { path: string; label: string }[] }>("/api/outreach/assistant", {
+    const r = await api<AssistantAnswer>("/api/outreach/assistant", {
       method: "POST",
       body: JSON.stringify({ messages: next.map(({ role, content: c }) => ({ role, content: c })) }),
     });
     setBusy(false);
     if (!r.ok) return setError(r.error);
-    setTurns([...next, { role: "assistant", content: r.data.reply, links: r.data.links }]);
+    setTurns([...next, { role: "assistant", content: r.data.reply, links: r.data.links, action: r.data.action }]);
+    // Ajan işi yaptıysa ilgili sayfa açılır (panel açık kalır; kullanıcı yapılanı kartta görür).
+    const a = r.data.action;
+    if (a?.type === "plan") router.push(`/panel/plan?ai=${a.id}&gun=${istanbulDay(a.startsAt)}`);
+    if (a?.type === "go") setTimeout(() => router.push(a.path), 700);
+  }
+
+  async function undoPlan(id: string) {
+    const r = await api<{ ok: true }>(`/api/plan/${id}`, { method: "DELETE" });
+    if (!r.ok) return setError(r.error);
+    setUndone((s) => new Set(s).add(id));
+    router.refresh();
   }
 
   useEffect(() => {
@@ -121,7 +189,7 @@ export function AssistantPanel() {
         <div className="grid flex-1 content-start gap-3 overflow-y-auto px-4 py-4" aria-live="polite">
           {turns.length === 0 && (
             <div className="grid gap-3">
-              <p className="text-sm text-muted">Son 30 günlük otomasyon, gönderici adresi ve Spine Kredi rakamlarınıza bakarak sorularınızı yanıtlarım. Rakamınız olmayan bir şeyi uydurmam.</p>
+              <p className="text-sm text-muted">Verilerinize (kişiler, takvim, yanıtlar, rakamlar) bakarak sorularınızı yanıtlarım ve sizin için işler yaparım: takvime plan eklerim, müşteri aramasını başlatırım, sayfaları açarım.</p>
               <div className="grid gap-2">
                 {suggestions.map((s) => (
                   <button key={s} type="button" onClick={() => void ask(s)} className="rounded-control px-3 py-2 text-left text-sm ring-1 ring-line transition-colors hover:bg-sunken">
@@ -134,6 +202,7 @@ export function AssistantPanel() {
           {turns.map((t, i) => (
             <div key={i} className={t.role === "user" ? "justify-self-end" : "justify-self-start"}>
               <p className={`max-w-[22rem] rounded-panel px-3.5 py-2.5 text-sm whitespace-pre-wrap ${t.role === "user" ? "bg-forest text-white" : "bg-sunken"}`}>{t.content}</p>
+              {t.action && <ActionCard action={t.action} undone={t.action.type === "plan" && undone.has(t.action.id)} onUndo={undoPlan} onNavigate={() => setOpen(false)} />}
               {t.links && t.links.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   {t.links.map((l) => (

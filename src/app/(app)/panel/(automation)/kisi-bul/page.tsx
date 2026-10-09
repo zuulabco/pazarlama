@@ -10,7 +10,7 @@ import { LeadSearchWorkspace } from "./_components/lead-search-workspace";
 
 export const metadata: Metadata = { title: "Potansiyel müşterilerimi bul" };
 
-async function Content() {
+async function Content({ searchParams }: { searchParams: PageProps<"/panel/kisi-bul">["searchParams"] }) {
   const user = await requireUser();
   if (!(await getProfile(user.uid))) redirect("/onboarding");
 
@@ -31,13 +31,16 @@ async function Content() {
   }
   // Profilde ülke sorulmaz; hedef bölge Türkiye ya da Türkiye şehirleridir. İleride profile ülke eklenince buradan okunur.
   const defaultCountry = "turkey";
-  return <LeadSearchWorkspace initialAccount={account} defaultCountry={defaultCountry} />;
+  // Adspine AI sohbetinden gelen arama isteği: sayfa açılır açılmaz filtreler hazırlanır ve arama başlar.
+  const ara = (await searchParams).ara;
+  const initialAsk = typeof ara === "string" && ara.trim().length >= 4 ? ara.trim().slice(0, 400) : null;
+  return <LeadSearchWorkspace key={initialAsk ?? "yeni"} initialAccount={account} defaultCountry={defaultCountry} initialAsk={initialAsk} />;
 }
 
-export default function LeadSearchPage() {
+export default function LeadSearchPage(props: PageProps<"/panel/kisi-bul">) {
   return (
     <Suspense fallback={<LeadsSkeleton />}>
-      <Content />
+      <Content searchParams={props.searchParams} />
     </Suspense>
   );
 }

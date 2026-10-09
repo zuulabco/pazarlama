@@ -32,14 +32,15 @@ type Stage = { kind: "idle" } | { kind: "running" } | { kind: "results"; search:
  * Kişi bul (Instantly SuperSearch yapısı): solda filtreler, sağda başlangıç ekranı / sonuç tablosu.
  * Akış: ara (kredi düşmez) → satırları seç → "Kişileri ekle" (kişi başına 1 Spine Kredi) → otomasyona ekle.
  */
-export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initialAccount: AccountSummary; defaultCountry: string }) {
+export function LeadSearchWorkspace({ initialAccount, defaultCountry, initialAsk = null }: { initialAccount: AccountSummary; defaultCountry: string; initialAsk?: string | null }) {
   const [account, setAccount] = useState(initialAccount);
   const [q, setQ] = useState<LeadSearchInput>(() => emptySearch(defaultCountry));
   const aiInput = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>({ kind: "idle" });
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState(false);
-  const [aiText, setAiText] = useState("");
+  const [aiText, setAiText] = useState(initialAsk ?? "");
+  const askedOnce = useRef(false);
   const [aiBusy, setAiBusy] = useState(false);
   /** Son çalıştırılan aramanın filtre özeti: filtreler sonradan değişirse "yeniden ara" çubuğu çıkar. */
   const [searchedKey, setSearchedKey] = useState<string | null>(null);
@@ -56,6 +57,16 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
     return () => {
       alive.current = false;
     };
+  }, []);
+
+  // Adspine AI sohbetinden ("İstanbul'daki makine mühendislerini ara") gelindiyse arama kendiliğinden başlar.
+  useEffect(() => {
+    if (!initialAsk || askedOnce.current) return;
+    askedOnce.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    const t = setTimeout(() => void askAi(initialAsk), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const set = (patch: Partial<LeadSearchInput>) => setQ((cur) => ({ ...cur, ...patch }));
@@ -118,10 +129,10 @@ export function LeadSearchWorkspace({ initialAccount, defaultCountry }: { initia
     await poll(r.data.search.id);
   }
 
-  async function askAi() {
-    if (aiBusy || aiText.trim().length < 4) return;
+  async function askAi(textArg: string = aiText) {
+    if (aiBusy || textArg.trim().length < 4) return;
     setAiBusy(true);
-    const r = await api<{ filters: Partial<LeadSearchInput> }>("/api/outreach/leads/ai", { method: "POST", body: JSON.stringify({ text: aiText }) });
+    const r = await api<{ filters: Partial<LeadSearchInput> }>("/api/outreach/leads/ai", { method: "POST", body: JSON.stringify({ text: textArg }) });
     setAiBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });
     // Filtreler hazırsa arama kendiliğinden başlar: varsayılan ${DEFAULT_COUNT} kişi (hakkınız azsa o kadar); sonuçtan sonra "Daha fazla listele" vardır.

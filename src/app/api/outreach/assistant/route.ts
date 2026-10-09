@@ -3,6 +3,7 @@ import { z } from "zod";
 import { chatText } from "@/lib/llm/nvidia";
 import { assistantMessages, contextText, fallbackReply, toAnswer } from "@/modules/outreach/assistant-rules";
 import { knowledgeFor } from "@/modules/outreach/assistant-data";
+import { runAgent } from "@/modules/outreach/assistant-agent";
 import { fail, guard, outreachFailure, rateLimiter } from "@/modules/outreach/http";
 import { loadReports } from "@/modules/outreach/reports";
 import { accountSummary } from "@/modules/outreach/usage";
@@ -24,6 +25,13 @@ export async function POST(req: NextRequest) {
   if (!body.success || body.data.messages.at(-1)?.role !== "user") return fail("Geçersiz istek.", 400);
 
   try {
+    // Ajan: mesaj bir iş isteğiyse (takvime ekle, müşteri ara, sayfa aç) iş yapılır ve yapılan bildirilir.
+    const done = await runAgent(g.user.uid, body.data.messages.at(-1)!.content).catch((e) => {
+      console.error("Ajan çalışamadı:", e instanceof Error ? e.message : e);
+      return null;
+    });
+    if (done) return NextResponse.json(done);
+
     const [reports, account, knowledge] = await Promise.all([loadReports(g.user.uid, 30), accountSummary(g.user.uid), knowledgeFor(g.user.uid, body.data.messages).catch(() => "")]);
     const summary = contextText(reports, { planName: account.plan.label, credits: account.credits, senders: account.senders, campaigns: account.campaigns }, 30);
     const context = knowledge ? `${summary}\n\n${knowledge}` : summary;

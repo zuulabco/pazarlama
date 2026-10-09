@@ -44,8 +44,16 @@ async function Content({ searchParams }: { searchParams: PageProps<"/panel/plan"
 
   const sp = await searchParams;
   const firma = one(sp.firma);
+  // Adspine AI sohbetinden eklenen plan: o gün açılır, yeni satır akan çerçeveyle vurgulanır.
+  const ai = one(sp.ai);
+  const gun = one(sp.gun);
+  const glowId = ai && z.uuid().safeParse(ai).success ? ai : null;
+  const focusDay = gun && /^\d{4}-\d{2}-\d{2}$/.test(gun) ? gun : null;
   return (
     <PlanWorkspace
+      key={glowId ?? "plan"}
+      glowId={glowId}
+      focusDay={focusDay}
       favorites={favorites.map((f) => ({ id: f.id, name: f.name, category: f.category, district: f.city }))}
       initialItems={items}
       unavailable={unavailable}

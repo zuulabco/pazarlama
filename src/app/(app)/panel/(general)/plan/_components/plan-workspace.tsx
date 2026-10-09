@@ -43,6 +43,8 @@ export function PlanWorkspace({
   todayKey,
   nowMs,
   openFirmId,
+  glowId = null,
+  focusDay = null,
 }: {
   favorites: Favorite[];
   initialItems: PlanItem[];
@@ -51,10 +53,14 @@ export function PlanWorkspace({
   nowMs: number;
   /** Takip sayfasından "Plan yap" ile gelindiyse, o firma için hazır dolu form açılır. */
   openFirmId: string | null;
+  /** Adspine AI'nın az önce eklediği plan: satırı akan çerçeveyle vurgulanır. */
+  glowId?: string | null;
+  /** Açılışta seçilecek gün ("YYYY-MM-DD"); verilmezse bugün. */
+  focusDay?: string | null;
 }) {
-  const start = parseDayKey(todayKey);
+  const start = parseDayKey(focusDay ?? todayKey);
   const [cursor, setCursor] = useState({ y: start.getFullYear(), m: start.getMonth() });
-  const [selected, setSelected] = useState(todayKey);
+  const [selected, setSelected] = useState(focusDay ?? todayKey);
   const [view, setView] = useState<View>("ay");
   const [items, setItems] = useState(initialItems);
   const [unavailable, setUnavailable] = useState(initialUnavailable);
@@ -284,7 +290,7 @@ export function PlanWorkspace({
             onDelete={panel.item ? () => remove(panel.item!) : undefined}
           />
         ) : (
-          <DayPanel selected={selected} items={byDay.get(selected) ?? []} all={items} nowMs={nowMs} onNew={openNew} onOpen={openEdit} onToggle={toggle} onSelectDay={showDay} />
+          <DayPanel glowId={glowId} selected={selected} items={byDay.get(selected) ?? []} all={items} nowMs={nowMs} onNew={openNew} onOpen={openEdit} onToggle={toggle} onSelectDay={showDay} />
         )}
       </aside>
     </div>

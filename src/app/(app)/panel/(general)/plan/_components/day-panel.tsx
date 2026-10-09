@@ -30,6 +30,7 @@ type Parsed = {
  * boş günde hazır başlangıçlar; altında geciken görevler ve yaklaşan planlar.
  */
 export function DayPanel({
+  glowId = null,
   selected,
   items,
   all,
@@ -39,6 +40,8 @@ export function DayPanel({
   onToggle,
   onSelectDay,
 }: {
+  /** Adspine AI'nın az önce eklediği planın kimliği (satırı vurgulanır). */
+  glowId?: string | null;
   selected: string;
   items: PlanItem[];
   all: PlanItem[];
@@ -137,7 +140,7 @@ export function DayPanel({
       {items.length > 0 ? (
         <ul className="grid gap-0.5">
           {items.map((i) => (
-            <PlanRow key={i.id} item={i} onOpen={() => onOpen(i)} onToggle={() => onToggle(i)} />
+            <PlanRow key={i.id} item={i} glow={i.id === glowId} onOpen={() => onOpen(i)} onToggle={() => onToggle(i)} />
           ))}
         </ul>
       ) : (

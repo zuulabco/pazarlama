@@ -90,3 +90,33 @@ describe("hesap verilerine erişim: yönlendirme ve arama", () => {
     expect(text).toContain("Geçmiş ve tamamlanmamış 1 plan");
   });
 });
+
+describe("ajan: niyet kapısı ve plan girdisi", () => {
+  it("iş isteği olabilecek mesajları ayırır, sıradan soruları atlar", async () => {
+    const { maybeAction } = await import("./assistant-rules");
+    for (const t of ["yarın saat 12:00 da dişçi randevum var", "istanbuldaki makine mühendislerini ara", "gelen kutusunu aç", "cuma 14:30 toplantı ekle"]) expect(maybeAction(t), t).toBe(true);
+    for (const t of ["otomasyonlarım nasıl gidiyor?", "geri dönen oranım neden önemli?", "kayıtlı kişilerimde reklam sektöründe olan var mı?"]) expect(maybeAction(t), t).toBe(false);
+  });
+  it("model çıktısını güvenli niyete çevirir", async () => {
+    const { toIntent } = await import("./assistant-rules");
+    expect(toIntent({ niyet: "musteri_ara", sorgu: "İstanbul'daki makine mühendisleri" })).toMatchObject({ niyet: "musteri_ara" });
+    expect(toIntent({ niyet: "musteri_ara", sorgu: "" })).toEqual({ niyet: "soru" });
+    expect(toIntent({ niyet: "sayfa_ac", sayfa: "gelen-kutusu" })).toMatchObject({ niyet: "sayfa_ac", sayfa: "gelen-kutusu" });
+    expect(toIntent({ niyet: "sayfa_ac", sayfa: "/etc/passwd" })).toEqual({ niyet: "soru" });
+    expect(toIntent({ niyet: "baska" }).niyet).toBe("soru");
+    expect(toIntent(null).niyet).toBe("soru");
+  });
+  it("planı Türkiye saatiyle kaydeder; saat yoksa tüm gün olur ve şema geçer", async () => {
+    const { planInputFrom, whenText } = await import("./assistant-rules");
+    const { planInputSchema } = await import("@/modules/plan/types");
+    const timed = planInputFrom({ kind: "randevu", title: "Dişçi randevu", date: "2026-10-10", time: "12:00", endTime: null, allDay: false, withName: null, location: null, details: null });
+    expect(timed.startsAt).toBe("2026-10-10T09:00:00.000Z");
+    expect(timed.allDay).toBe(false);
+    expect(() => planInputSchema.parse(timed)).not.toThrow();
+    expect(whenText(timed.startsAt, false)).toContain("12:00");
+    const noTime = planInputFrom({ kind: "gorev", title: "Teklif hazırla", date: "2026-10-12", time: null, endTime: null, allDay: false, withName: null, location: null, details: null });
+    expect(noTime.allDay).toBe(true);
+    expect(noTime.startsAt).toBe("2026-10-11T21:00:00.000Z");
+    expect(() => planInputSchema.parse(noTime)).not.toThrow();
+  });
+});
