@@ -3,21 +3,40 @@ import { chatJson } from "@/lib/llm/nvidia";
 import { normalizeSiteUrl } from "@/lib/url";
 import { extractPage } from "@/modules/profile/site/extract";
 import { fetchPublicHtml } from "@/modules/profile/site/safe-fetch";
-import { openerMessages, openerSchema, sequenceMessages, sequenceSchema, stepFromTemplate, cleanSubject, stripClosing, templateMessages, templateSchema, type SenderContext } from "./ai-prompts";
+import { fixTemplate, lintTemplate, openerMessages, openerSchema, sequenceMessages, sequenceSchema, stepFromTemplate, templateMessages, templateSchema, type SenderContext } from "./ai-prompts";
 import type { AiSettings, EmailType, Step } from "./sequence-schema";
 
 /** Model çağrıları: şablon yazma, otomasyon üretme, kişisel açılış cümlesi. Hepsi doğrulanır; geçersiz çıktı hata verir. */
 
-export async function writeTemplate(input: { settings: AiSettings; mode: "asistan" | "istem"; prompt?: string; service?: string | null; previousSubject?: string; sender: SenderContext }) {
-  const raw = await chatJson(templateMessages(input), { maxTokens: 1500, timeoutMs: 40_000, thinking: false, temperature: 0.4 });
-  const t = templateSchema.parse(raw);
-  return { subject: cleanSubject(t.konu), body: stripClosing(t.metin) };
+/**
+ * Şablon yazar: model üretir, kod düzeltir (değişkenler, selamlama, ünlem, kapanış) ve denetler (uzunluk, soru, yasak kalıp, spam ifadesi).
+ * Sorun varsa model sorunların listesiyle bir kez daha yazar; iki sonuçtan sorunu daha az olan döner.
+ */
+export async function writeTemplate(input: { settings: AiSettings; mode: "asistan" | "istem"; prompt?: string; service?: string | null; previousSubject?: string; previousBody?: string; sender: SenderContext }) {
+  const messages = templateMessages(input);
+  const once = async (msgs: { role: "system" | "user" | "assistant"; content: string }[]) => {
+    const t = templateSchema.parse(await chatJson(msgs, { maxTokens: 1500, timeoutMs: 40_000, thinking: false, temperature: 0.45 }));
+    const fixed = fixTemplate(t);
+    return { fixed, raw: t, issues: lintTemplate(fixed, input.settings) };
+  };
+  const first = await once(messages);
+  if (first.issues.length === 0) return first.fixed;
+  try {
+    const second = await once([
+      ...messages,
+      { role: "assistant" as const, content: JSON.stringify(first.raw) },
+      { role: "user" as const, content: `Bu taslakta düzeltilmesi gereken sorunlar var:\n${first.issues.map((i) => `- ${i}`).join("\n")}\nTüm kurallara uyarak, aynı JSON biçiminde yeniden yaz.` },
+    ]);
+    return second.issues.length <= first.issues.length ? second.fixed : first.fixed;
+  } catch {
+    return first.fixed;
+  }
 }
 
 export async function writeSequence(input: { goal: string; audience: string; steps: number; tone: AiSettings["tone"]; sender: SenderContext }): Promise<Omit<Step, "id" | "position">[]> {
   const raw = await chatJson(sequenceMessages(input), { maxTokens: 3500, timeoutMs: 55_000, thinking: false, temperature: 0.4 });
   const parsed = sequenceSchema.parse(raw);
-  return parsed.adimlar.map((a, i) => stepFromTemplate({ konu: i === 0 && !cleanSubject(a.konu) ? "Kısa bir soru" : cleanSubject(a.konu), metin: stripClosing(a.metin) }, (i === 0 ? "tanisma" : i === parsed.adimlar.length - 1 && i > 1 ? "son" : a.tip) as EmailType, i === 0 ? 0 : a.bekleme_gun * 1440));
+  return parsed.adimlar.map((a, i) => stepFromTemplate(((t) => ({ konu: i === 0 && !t.subject ? "Kısa bir soru" : t.subject, metin: t.body }))(fixTemplate({ konu: a.konu, metin: a.metin })), (i === 0 ? "tanisma" : i === parsed.adimlar.length - 1 && i > 1 ? "son" : a.tip) as EmailType, i === 0 ? 0 : a.bekleme_gun * 1440));
 }
 
 /** Firmanın sitesinden okunan gerçeklere dayanan tek cümlelik açılış; site yoksa/okunamazsa ya da anlamlı bir şey yoksa null. */

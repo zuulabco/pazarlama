@@ -65,6 +65,7 @@ export function StepCard({
   total,
   firstEmailIndex,
   firstSubject,
+  firstBody,
   sender,
   onChange,
   onRemove,
@@ -78,6 +79,7 @@ export function StepCard({
   total: number;
   firstEmailIndex: number;
   firstSubject: string;
+  firstBody: string;
   sender: Sender;
   onChange: (s: Step) => void;
   onRemove: () => void;
@@ -127,7 +129,7 @@ export function StepCard({
     setAiBusy(true);
     const r = await api<{ subject: string; body: string }>("/api/outreach/ai/template", {
       method: "POST",
-      body: JSON.stringify({ settings: v.ai, mode: v.mode === "istem" ? "istem" : "asistan", prompt: v.mode === "istem" ? v.ai.extra : undefined, previousSubject: isFollowUp ? firstSubject || undefined : undefined }),
+      body: JSON.stringify({ settings: v.ai, mode: v.mode === "istem" ? "istem" : "asistan", prompt: v.mode === "istem" ? v.ai.extra : undefined, previousSubject: isFollowUp ? firstSubject || undefined : undefined, previousBody: isFollowUp ? firstBody || undefined : undefined }),
     });
     setAiBusy(false);
     if (!r.ok) return toast(r.error, { kind: "error" });

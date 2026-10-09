@@ -1,10 +1,10 @@
 import "server-only";
 import { db } from "@/lib/supabase/server";
-import { site } from "@/lib/site";
 import { createPlan } from "@/modules/plan/repository";
 import { writeOpener } from "./ai";
 import { addSuppression, OutreachUnavailableError, getContact } from "./contacts";
-import { decryptSecret, signToken } from "./crypto";
+import { decryptSecret } from "./crypto";
+import { unsubscribeLinks } from "./unsubscribe-links";
 import { addEvent, claimDue, finishContactEnrollments, isSuppressedIn, suppressionSets, updateEnrollment, type EnrollmentRow, type FinishReason } from "./enrollments";
 import { mailboxCapacity, campaignCapacity, type Counts } from "./limits";
 import { effectiveDailyLimit } from "./warmup-rules";
@@ -152,11 +152,6 @@ async function advance(en: EnrollmentRow, seq: Sequence, active: Step[], patch: 
   await release(en.id, { ...patch, current_step: nextIdx, next_run_at: (at ?? new Date(Date.now() + 86_400_000)).toISOString(), attempts: 0, last_error: null });
   return "advanced" as const;
 }
-
-const unsubscribeLinks = (enrollmentId: string) => {
-  const token = signToken(`e:${enrollmentId}`);
-  return { unsubscribeUrl: `${site.url}/u/${token}`, oneClickUrl: `${site.url}/api/outreach/unsub/${token}` };
-};
 
 /** Manuel adım (arama, görev, WhatsApp, manuel e-posta): Plan'a bir görev düşer ve otomasyon sonraki adıma geçer. */
 async function runManualStep(en: EnrollmentRow, seq: Sequence, active: Step[], step: Step, ctx: Ctx, res: TickResult) {

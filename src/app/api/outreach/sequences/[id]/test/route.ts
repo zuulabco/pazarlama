@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { signToken } from "@/modules/outreach/crypto";
+import { unsubscribeLinks } from "@/modules/outreach/unsubscribe-links";
 import { fail, guard, outreachFailure, rateLimiter } from "@/modules/outreach/http";
 import { getMailboxCredentials, listMailboxes } from "@/modules/outreach/mailboxes";
 import { buildOutgoing, newMessageId } from "@/modules/outreach/mime";
@@ -8,7 +8,6 @@ import { renderTemplate, sampleVars } from "@/modules/outreach/render";
 import { getSequence } from "@/modules/outreach/sequences";
 import { deliver } from "@/modules/outreach/mailer";
 import { friendlySmtpError } from "@/modules/outreach/smtp";
-import { site } from "@/lib/site";
 
 export const maxDuration = 60;
 
@@ -44,7 +43,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/se
     if (!creds) return fail("Gönderici adresi bulunamadı.", 404);
 
     const vars = { ...sampleVars, sender_name: chosen.fromName ?? sampleVars.sender_name };
-    const token = signToken(`e:00000000-0000-0000-0000-000000000000`); // örnek: gerçek bir kişiye bağlı değil, tıklanınca "geçersiz" der
+    const links = unsubscribeLinks("00000000-0000-0000-0000-000000000000"); // örnek: gerçek bir kişiye bağlı değil, tıklanınca "geçersiz" der
     const mail = buildOutgoing({
       fromName: chosen.fromName,
       fromEmail: chosen.email,
@@ -54,8 +53,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/outreach/se
       signature: chosen.signature,
       includeSignature: seq.settings.includeSignature,
       identity: [chosen.fromName, seq.settings.footerAddress].filter(Boolean).join(" · "),
-      unsubscribeUrl: `${site.url}/u/${token}`,
-      oneClickUrl: `${site.url}/api/outreach/unsub/${token}`,
+      ...links,
       messageId: newMessageId(chosen.email.slice(chosen.email.lastIndexOf("@") + 1)),
     });
     try {

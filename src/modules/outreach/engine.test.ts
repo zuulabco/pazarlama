@@ -106,7 +106,7 @@ describe("mime", () => {
   it("gövdeye imza ve zorunlu abonelik alt bilgisi ekler", () => {
     const t = composeText(base);
     expect(t).toContain("Kısa bir sorum var.\n\nElif\nYıldız MM\n\n--\nElif Yıldız · Yıldız Mali Müşavirlik");
-    expect(t).toContain("abonelikten çıkabilirsiniz: https://adspine.app/u/TOKEN");
+    expect(t).toContain("Abonelikten çıkmak için: https://adspine.app/u/TOKEN");
     expect(composeText({ ...base, includeSignature: false })).not.toContain("Yıldız MM\n");
   });
   it("tek tıkla abonelik başlıklarını ve thread başlıklarını koyar", () => {

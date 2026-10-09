@@ -47,3 +47,16 @@ describe("signToken / verifyToken", () => {
     expect(verifyToken("saçma")).toBeNull();
   });
 });
+
+describe("kısa abonelik jetonu", () => {
+  const id = "3f2b8c1e-5a4d-4e7f-9b21-0c6d7e8f9a10";
+  it("34 karakterdir, doğrulanınca kimliği verir; kurcalanırsa reddedilir", async () => {
+    const { shortEnrollmentToken, verifyShortEnrollmentToken } = await import("./crypto");
+    const t = shortEnrollmentToken(id);
+    expect(t).toHaveLength(34);
+    expect(verifyShortEnrollmentToken(t)).toBe(id);
+    expect(verifyShortEnrollmentToken(t.slice(0, -1) + (t.endsWith("A") ? "B" : "A"))).toBeNull();
+    expect(verifyShortEnrollmentToken("kisa")).toBeNull();
+    expect(verifyShortEnrollmentToken(signToken(`e:${id}`))).toBeNull();
+  });
+});

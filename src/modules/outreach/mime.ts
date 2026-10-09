@@ -1,3 +1,4 @@
+import { ensureHttps } from "@/lib/links";
 import type { OutgoingMail } from "./smtp";
 
 /** Giden e-posta gövdesi, imza, abonelik alt bilgisi ve başlıkları (saf; `smtp.ts`'e bağımlı olmayan tür hariç). */
@@ -36,9 +37,11 @@ export function threadSubject(subject: string, isFollowUp: boolean, rootSubject?
 }
 
 export function composeText(i: Pick<BuildInput, "body" | "signature" | "includeSignature" | "identity" | "unsubscribeUrl">): string {
-  const parts = [i.body.trim()];
-  if (i.includeSignature && i.signature.trim()) parts.push(i.signature.trim());
-  const footer = [i.identity.trim(), `Bu iletileri almak istemiyorsanız abonelikten çıkabilirsiniz: ${i.unsubscribeUrl}`].filter(Boolean).join("\n");
+  // Başında https olmayan web adresleri ("adspine.app") tam bağlantıya çevrilir; yoksa posta istemcileri düz metin sayar.
+  const parts = [ensureHttps(i.body.trim())];
+  if (i.includeSignature && i.signature.trim()) parts.push(ensureHttps(i.signature.trim()));
+  // Alt bilgi kısa tutulur: tek satır kimlik, tek satır kısa abonelik bağlantısı (başlıktaki tek tık düğmesi ayrıca vardır).
+  const footer = [i.identity.trim(), `Abonelikten çıkmak için: ${i.unsubscribeUrl}`].filter(Boolean).join("\n");
   return `${parts.join("\n\n")}\n\n--\n${footer}\n`;
 }
 

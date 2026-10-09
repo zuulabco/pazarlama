@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ensureHttps } from "@/lib/links";
 import { services as serviceOptions } from "@/modules/profile/options";
 
 /**
@@ -93,7 +94,7 @@ export function whatsappNumber(phone: string | null | undefined): string | null 
 
 export const whatsappHref = (phone: string | null | undefined, text: string) => {
   const n = whatsappNumber(phone);
-  return n ? `https://wa.me/${n}?text=${encodeURIComponent(text)}` : null;
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(ensureHttps(text))}` : null;
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -114,13 +115,13 @@ export function parseRecipient(text: string): Recipient | null {
 
 /** Gmail'de (web) yazma penceresini alıcı, konu ve metin dolu olarak açar. */
 export function gmailHref(to: string, subject: string | null, body: string): string {
-  const q = new URLSearchParams({ view: "cm", fs: "1", to, su: subject ?? "", body });
+  const q = new URLSearchParams({ view: "cm", fs: "1", to, su: subject ?? "", body: ensureHttps(body) });
   return `https://mail.google.com/mail/?${q.toString().replace(/\+/g, "%20")}`;
 }
 
 /** Varsayılan e-posta uygulamasını alıcı, konu ve metin dolu olarak açar. */
 export function mailtoHref(to: string, subject: string | null, body: string): string {
-  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject ?? "")}&body=${encodeURIComponent(body)}`;
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject ?? "")}&body=${encodeURIComponent(ensureHttps(body))}`;
 }
 
 export type WorkFirm = {

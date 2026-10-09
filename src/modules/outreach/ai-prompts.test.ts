@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { openerMessages, openerSchema, sequenceMessages, sequenceSchema, stepFromTemplate, stripClosing, cleanSubject, templateMessages, templateSchema, type SenderContext } from "./ai-prompts";
+import { fixTemplate, lintTemplate, openerMessages, openerSchema, sequenceMessages, sequenceSchema, stepFromTemplate, stripClosing, cleanSubject, templateMessages, templateSchema, type SenderContext } from "./ai-prompts";
 
 const sender: SenderContext = { businessName: "Yıldız Mali Müşavirlik", firstName: "Elif", workType: "buro", services: ["Muhasebe", "Vergi danışmanlığı"], description: "Küçük işletmelere muhasebe veriyoruz." };
 const ai = { type: "tanisma", tone: "samimi", length: "kisa", extra: "" } as const;
@@ -75,5 +75,28 @@ describe("kapanış ve konu temizliği (Türkçe büyük harf)", () => {
     expect(cleanSubject("Re: Re: Kısa bir soru")).toBe("Kısa bir soru");
     expect(cleanSubject("Yanıt: konu")).toBe("konu");
     expect(cleanSubject("Revize teklif")).toBe("Revize teklif");
+  });
+});
+
+describe("fixTemplate / lintTemplate", () => {
+  it("selamlamayı, değişkenleri ve ünlemi kodla düzeltir", () => {
+    const t = fixTemplate({ konu: "Re: \"Kısa bir soru!\"", metin: "Merhaba,\n\n{{bilinmeyen}} Muhasebe konusunda yazıyorum! Uygun musunuz?\n\nSaygılarımla,\nElif" });
+    expect(t.subject).toBe("Kısa bir soru");
+    expect(t.body.startsWith("Merhaba {{first_name|}},")).toBe(true);
+    expect(t.body).not.toContain("bilinmeyen");
+    expect(t.body).not.toContain("!");
+    expect(t.body).not.toContain("Saygılarımla");
+  });
+  it("selamlaması olmayan metne selamlama ekler", () => {
+    expect(fixTemplate({ konu: "x y", metin: "Muhasebe için yazıyorum, uygun musunuz?" }).body).toBe("Merhaba {{first_name|}},\n\nMuhasebe için yazıyorum, uygun musunuz?");
+  });
+  it("uzunluk, soru ve yasak kalıpları bildirir", () => {
+    const long = "kelime ".repeat(130);
+    const issues = lintTemplate({ subject: "Kısa konu", body: `Merhaba, umarım iyisinizdir. ${long}` }, { type: "tanisma", length: "kisa" });
+    expect(issues.join(" ")).toMatch(/Çok uzun/);
+    expect(issues.join(" ")).toMatch(/soru/);
+    expect(issues.join(" ")).toMatch(/umarım iyisinizdir/);
+    const ok = lintTemplate({ subject: "Kısa bir soru", body: "Merhaba {{first_name|}},\n\nYıldız Mali Müşavirlik adına yazıyorum. Küçük işletmelerin aylık defter işlerini düzenli takip ediyoruz; böylece vergi dönemlerinde sürpriz yaşanmıyor. Sizin için de bir değerlendirme yapabilirim.\n\nKısa bir görüşme için uygun bir gün var mı?" }, { type: "tanisma", length: "kisa" });
+    expect(ok).toEqual([]);
   });
 });

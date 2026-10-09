@@ -65,7 +65,7 @@ describe("SMTP gönderimi (yerel yem sunucusu)", () => {
     expect(first.subject).toBe("Kısa bir soru");
     expect(first.text).toContain("Kısa bir sorum var");
     expect(first.text).toContain("Elif\nYıldız MM");
-    expect(first.text).toContain("abonelikten çıkabilirsiniz: https://adspine.app/u/T");
+    expect(first.text).toContain("Abonelikten çıkmak için: https://adspine.app/u/T");
     // mailparser bu iki başlığı özel alanlara çevirir; ham satırlar denetlenir.
     const raw = (key: string) => first.headerLines.find((h) => h.key === key)?.line;
     expect(raw("list-unsubscribe")).toContain("<https://adspine.app/api/outreach/unsub/T>");

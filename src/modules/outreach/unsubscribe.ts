@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/supabase/server";
 import { addSuppression } from "./contacts";
-import { verifyToken } from "./crypto";
+import { verifyShortEnrollmentToken, verifyToken } from "./crypto";
 import { addEvent, finishContactEnrollments } from "./enrollments";
 
 /**
@@ -12,8 +12,9 @@ import { addEvent, finishContactEnrollments } from "./enrollments";
 type Target = { uid: string; contactId: string; sequenceId: string; email: string };
 
 async function resolve(token: string): Promise<Target | null> {
-  const payload = verifyToken(token);
-  const id = payload?.startsWith("e:") ? payload.slice(2) : null;
+  // Yeni kısa jeton; daha önce gönderilmiş e-postalardaki eski uzun jeton da çalışmaya devam eder.
+  const payload = verifyShortEnrollmentToken(token) ? null : verifyToken(token);
+  const id = verifyShortEnrollmentToken(token) ?? (payload?.startsWith("e:") ? payload.slice(2) : null);
   if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { data: en } = await db().from("outreach_enrollments").select("user_uid, contact_id, sequence_id").eq("id", id).maybeSingle();
   if (!en) return null;

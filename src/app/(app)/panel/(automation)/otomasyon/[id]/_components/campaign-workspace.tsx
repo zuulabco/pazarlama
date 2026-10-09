@@ -146,6 +146,7 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
 
   const emailIdx = seq.steps.findIndex((s) => s.kind === "email");
   const firstSubject = seq.steps[emailIdx]?.variants[0]?.subject ?? "";
+  const firstBody = seq.steps[emailIdx]?.variants[0]?.body ?? "";
   const active = seq.status === "aktif";
 
   return (
@@ -218,6 +219,7 @@ export function CampaignWorkspace({ initial, mailboxes, sender }: { initial: Seq
               total={seq.steps.length}
               firstEmailIndex={emailIdx}
               firstSubject={firstSubject}
+              firstBody={firstBody}
               sender={sender}
               onChange={(next) => setSteps(seq.steps.map((x) => (x.id === s.id ? next : x)))}
               onRemove={() => setSteps(seq.steps.filter((x) => x.id !== s.id))}

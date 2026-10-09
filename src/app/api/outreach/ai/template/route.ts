@@ -20,6 +20,7 @@ const bodySchema = z.object({
   prompt: z.string().max(500).optional(),
   service: z.string().max(80).nullish(),
   previousSubject: z.string().max(150).optional(),
+  previousBody: z.string().max(2500).optional(),
 });
 
 /** Adım için yapay zekâ şablonu yazar (asistanlı: seçeneklerle, istem: serbest istemle). Sonuç düzenlenebilir şablondur. */
