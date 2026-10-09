@@ -380,7 +380,7 @@ export function StepCard({
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-muted">İmzanız ve abonelikten çıkma satırı her e-postaya otomatik eklenir; mesaja yazmayın.</p>
+                <p className="text-xs text-muted">İmzanız ve çıkış satırı (“İPTAL” yazarak yanıtlayın) her e-postaya otomatik eklenir; mesaja yazmayın.</p>
               </div>
 
               <Toggle

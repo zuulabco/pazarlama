@@ -35,6 +35,16 @@ export async function previewUnsubscribe(token: string): Promise<{ email: string
   return t ? { email: maskEmail(t.email) } : null;
 }
 
+/**
+ * Alıcı e-postayı yanıtlayıp "İPTAL" yazdı: adresi kara listeye alır, kişinin tüm etkin otomasyon kayıtlarını bitirir ve olayı yazar.
+ * Bağlantıyla çıkışla aynı sonucu verir; tekrar çağrılsa da zararsızdır.
+ */
+export async function applyReplyOptOut(uid: string, sent: { to_email: string; contact_id: string | null; sequence_id: string | null; enrollment_id: string | null }): Promise<void> {
+  await addSuppression(uid, { email: sent.to_email, reason: "abonelik" });
+  if (sent.contact_id) await finishContactEnrollments(uid, sent.contact_id, "abonelik");
+  await addEvent({ uid, kind: "abonelik", sequenceId: sent.sequence_id ?? undefined, enrollmentId: sent.enrollment_id ?? undefined, contactId: sent.contact_id ?? undefined, meta: { via: "yanit" } });
+}
+
 export async function applyUnsubscribe(token: string): Promise<boolean> {
   const t = await resolve(token);
   if (!t) return false;

@@ -162,7 +162,7 @@ export function MailboxWizard({ onDone, onCancel, googleReady }: { onDone: (m: M
             </ul>
             <label className="flex items-start gap-2.5 text-xs text-muted">
               <input type="checkbox" checked={googleConsent} onChange={(e) => setGoogleConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-[var(--color-forest)]" />
-              <span>Yalnızca izinli, işle ilgili alıcılara yazacağımı ve her e-postada abonelikten çıkma bağlantısı bulunacağını kabul ediyorum.</span>
+              <span>Yalnızca izinli, işle ilgili alıcılara yazacağımı ve her e-postada çıkış yolu (“İPTAL” yazarak yanıtlama) bulunacağını kabul ediyorum.</span>
             </label>
             {googleTouched && !googleConsent && (
               <p role="alert" className="-mt-2 text-sm text-danger">

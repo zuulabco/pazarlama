@@ -1,7 +1,7 @@
 import { ensureHttps } from "@/lib/links";
 import type { OutgoingMail } from "./smtp";
 
-/** Giden e-posta gövdesi, imza, abonelik alt bilgisi ve başlıkları (saf; `smtp.ts`'e bağımlı olmayan tür hariç). */
+/** Giden e-posta gövdesi, imza, çıkış alt bilgisi ("İPTAL yazın"; bağlantı yok) ve başlıkları (saf; `smtp.ts`'e bağımlı olmayan tür hariç). */
 
 export type BuildInput = {
   fromName: string | null;
@@ -14,8 +14,6 @@ export type BuildInput = {
   includeSignature: boolean;
   /** Alt bilgide görünen gönderici kimliği: "Elif Yıldız · Yıldız Mali Müşavirlik · adres". Ticari iletide zorunludur. */
   identity: string;
-  /** Alt bilgide görünen, insanlar için abonelikten çıkma sayfası (HTTPS). */
-  unsubscribeUrl: string;
   /** `List-Unsubscribe` başlığındaki tek tık (POST) adresi (RFC 8058); posta istemcileri doğrudan buna POST eder. */
   oneClickUrl: string;
   /** Bu iletinin RFC Message-ID'si (köşeli parantezli). */
@@ -36,12 +34,13 @@ export function threadSubject(subject: string, isFollowUp: boolean, rootSubject?
   return `Re: ${base}`;
 }
 
-export function composeText(i: Pick<BuildInput, "body" | "signature" | "includeSignature" | "identity" | "unsubscribeUrl">): string {
+export function composeText(i: Pick<BuildInput, "body" | "signature" | "includeSignature" | "identity">): string {
   // Başında https olmayan web adresleri ("adspine.app") tam bağlantıya çevrilir; yoksa posta istemcileri düz metin sayar.
   const parts = [ensureHttps(i.body.trim())];
   if (i.includeSignature && i.signature.trim()) parts.push(ensureHttps(i.signature.trim()));
-  // Alt bilgi kısa tutulur: tek satır kimlik, tek satır kısa abonelik bağlantısı (başlıktaki tek tık düğmesi ayrıca vardır).
-  const footer = [i.identity.trim(), `Abonelikten çıkmak için: ${i.unsubscribeUrl}`].filter(Boolean).join("\n");
+  // Gövdede bağlantı yok (bağlantılar spam riskini artırır): çıkış, e-postayı "İPTAL" yazarak yanıtlamaktır; yanıt otomatik işlenir.
+  // Gmail/Yahoo'nun "abonelikten çık" düğmesi için görünmez List-Unsubscribe başlığı ayrıca gönderilir.
+  const footer = [i.identity.trim(), 'Bu iletileri almak istemiyorsanız bu e-postayı yanıtlayıp "İPTAL" yazmanız yeterli.'].filter(Boolean).join("\n");
   return `${parts.join("\n\n")}\n\n--\n${footer}\n`;
 }
 

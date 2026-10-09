@@ -6,6 +6,8 @@ import { decryptSecret } from "./crypto";
 import { companyDomain } from "./company";
 import { addEvent, finishContactEnrollments } from "./enrollments";
 import { storeReply } from "./unibox";
+import { isOptOutReply } from "./reply-rules";
+import { applyReplyOptOut } from "./unsubscribe";
 import { onWarmupArrival, rescueSpam } from "./warmup";
 import { getProfile, getRaw, newInboxMessageIds } from "./gmail";
 import { withImap, type ImapConfig } from "./imap";
@@ -209,6 +211,12 @@ async function handleInbound(row: Pick<MailboxRow, "id" | "user_uid">, item: Inb
       res.ooo++;
     } else if (kind === "yanit" && sent) {
       const parsed = await parseSource(item);
+      // "İPTAL" gibi çıkış yanıtı: kara listeye alınır, yanıt sayılmaz; yine de Gelen kutusunda görünür.
+      if (isOptOutReply(parsed.text)) {
+        await applyReplyOptOut(row.user_uid, sent);
+        await keepReply(row, sent, item, "yanit", parsed);
+        return;
+      }
       await onReply(row.user_uid, sent, { subject: item.subject, from: item.from, snippet: replySnippet(parsed.text) });
       await keepReply(row, sent, item, "yanit", parsed);
       res.replies++;

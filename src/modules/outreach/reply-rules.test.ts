@@ -33,3 +33,18 @@ describe("yanıt etiketleme (kural tabanlı)", () => {
     expect(previewOf("a".repeat(300), 20)).toHaveLength(20);
   });
 });
+
+describe("yanıtla çıkış (İPTAL)", () => {
+  it("kısa çıkış yanıtlarını ve açık ifadeleri tanır", async () => {
+    const { isOptOutReply } = await import("./reply-rules");
+    for (const t of ["İPTAL", "iptal", "İptal edin lütfen", "ÇIKAR", "stop", "Unsubscribe", "Abonelikten çıkmak istiyorum", "Lütfen beni listeden çıkarın", "Bir daha yazmayın", "Please remove me", "iptal\n\n> Merhaba, kısa bir sorum var"]) {
+      expect(isOptOutReply(t), t).toBe(true);
+    }
+  });
+  it("normal yanıtları çıkış saymaz", async () => {
+    const { isOptOutReply } = await import("./reply-rules");
+    for (const t of ["Randevumu iptal etmek istiyorum, perşembe yerine cuma olabilir mi?", "Teşekkürler, fiyat bilgisi alabilir miyiz?", "Şu an ilgilenmiyoruz ama sonra yazabilirsiniz", "", "Stop motion animasyon hizmetiniz var mı?"]) {
+      expect(isOptOutReply(t), t).toBe(false);
+    }
+  });
+});

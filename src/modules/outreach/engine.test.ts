@@ -99,14 +99,14 @@ describe("mime", () => {
     signature: "Elif\nYıldız MM",
     includeSignature: true,
     identity: "Elif Yıldız · Yıldız Mali Müşavirlik",
-    unsubscribeUrl: "https://adspine.app/u/TOKEN",
     oneClickUrl: "https://adspine.app/api/outreach/unsub/TOKEN",
     messageId: "<m1@firma.com>",
   };
   it("gövdeye imza ve zorunlu abonelik alt bilgisi ekler", () => {
     const t = composeText(base);
     expect(t).toContain("Kısa bir sorum var.\n\nElif\nYıldız MM\n\n--\nElif Yıldız · Yıldız Mali Müşavirlik");
-    expect(t).toContain("Abonelikten çıkmak için: https://adspine.app/u/TOKEN");
+    expect(t).toContain('yanıtlayıp "İPTAL" yazmanız yeterli.');
+    expect(t).not.toMatch(/https?:\/\//);
     expect(composeText({ ...base, includeSignature: false })).not.toContain("Yıldız MM\n");
   });
   it("tek tıkla abonelik başlıklarını ve thread başlıklarını koyar", () => {

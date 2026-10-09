@@ -48,7 +48,7 @@ const sections = [
       "Adspine kullanıcıları, herkese açık iş bilgilerinden potansiyel müşteri arayabilir. Arama sonucunda şu veriler işlenir: ad, soyad, unvan, çalıştığı şirket ve şirket alan adı, şehir/ülke, iş e-posta adresi ve herkese açık LinkedIn adresi. Veriler Apify aracılığıyla herkese açık kaynaklardan alınır; kişiyle doğrudan bir ilişkimiz yoktur.",
       "Amaç: kullanıcılarımızın ilgili iş bağlantılarına bire bir ticari iletişim kurabilmesi. Hukuki sebep: veri sorumlusunun meşru menfaati (KVKK m. 5/2-f) ve verinin ilgili kişi tarafından alenileştirilmiş olması (KVKK m. 5/2-d). Bu veriler ilgili kişinin haklarına ve temel özgürlüklerine zarar vermeyecek şekilde, yalnızca iş amaçlı kullanılır.",
       "Ortak kişi havuzu: aynı kişi için sağlayıcıdan tekrar veri çekmemek üzere, şirket alan adlı iş e-posta adresleri ve yukarıdaki bilgiler şifrelenmiş olarak (e-posta adresi şifreli) saklanır. gmail, hotmail gibi kişisel e-posta adresleri havuzda saklanmaz. Kullanılmayan kayıtlar 24 ay sonra otomatik silinir.",
-      "Bu kapsamda verisi işlenen kişiler, e-posta adreslerinin silinmesini ve bir daha eklenmemesini https://adspine.app/veri-silme sayfasından doğrudan talep edebilir; ayrıca bu metindeki iletişim adresine başvurabilir. Her ticari e-postada abonelikten çıkma bağlantısı bulunur.",
+      "Bu kapsamda verisi işlenen kişiler, e-posta adreslerinin silinmesini ve bir daha eklenmemesini https://adspine.app/veri-silme sayfasından doğrudan talep edebilir; ayrıca bu metindeki iletişim adresine başvurabilir. Her ticari e-postada, e-postayı yanıtlayıp “İPTAL” yazmanın yeterli olduğu bir çıkış yolu bulunur; bu talep otomatik işlenir ve adres bir daha e-posta almaz.",
     ],
   },
   {

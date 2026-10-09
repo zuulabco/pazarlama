@@ -38,3 +38,23 @@ export function previewOf(body: string, max = 140): string {
   const t = ownText(body).replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 }
+
+const OPT_OUT_WORD = /\b(iptal|cikar|cikarin|cikart|stop|unsubscribe|remove|durdur|durdurun)\b/;
+const OPT_OUT_PHRASE =
+  /abonelik(ten)? (cik|iptal)|aboneligimi iptal|aboneligi iptal|listeden cik|listenizden cik|listeden silin|beni listeden|bir daha (yazma|mail|e-?posta|ulas|gonder)|mail(ler)?(i)?(mi)? (gondermeyin|atmayin)|e-?posta(lar)?(i)?(mi)? gondermeyin|rahatsiz etmeyin|unsubscribe|remove me|stop (emailing|contacting|sending)|don.?t (email|contact) me/;
+
+/**
+ * Yanıt bir "listeden çıkar" talebi mi? E-postanın altındaki "İPTAL yazın" satırına karşılık gelen kısa yanıtlar ("İPTAL", "iptal edin", "çıkar", "stop")
+ * ve açık ifadeler ("abonelikten çıkmak istiyorum", "bir daha yazmayın") true döner. Uzun bir metinde tek başına "iptal" geçmesi
+ * (örn. "randevumu iptal etmek istiyorum") çıkış sayılmaz; yanlış kişiyi kara listeye almamak için kural bilerek dardır.
+ */
+export function isOptOutReply(body: string): boolean {
+  const t = fold(ownText(body))
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return false;
+  const words = t.split(" ").length;
+  if (words <= 3 && OPT_OUT_WORD.test(t)) return true;
+  return words <= 40 && OPT_OUT_PHRASE.test(t);
+}

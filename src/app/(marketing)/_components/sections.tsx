@@ -115,7 +115,7 @@ export function Hero() {
 const principles = [
   ["Kendi adresinizden", "E-postalar sizin gönderici adresinizden gider; itibar sizde kalır."],
   ["Isındırma dahil", "Yeni adresler havuzda doğal e-postalarla ısınır, limit kademeli artar."],
-  ["Yasalara uygun", "Her e-postada abonelikten çıkma bağlantısı; kara liste otomatik."],
+  ["Yasalara uygun", "Her e-postada kolay çıkış: \"İPTAL\" yazan alıcı otomatik kara listeye alınır."],
   ["Adspine AI", "Metni yazar, sonuçları yorumlar, sorularınızı verilerinize bakarak yanıtlar."],
 ];
 
@@ -348,7 +348,7 @@ export const faqs = [
   },
   {
     q: "Spam ve yasal uyum nasıl sağlanıyor?",
-    a: "Her e-postada abonelikten çıkma bağlantısı bulunur; çıkanlar, geri dönenler ve şikâyet edenler kara listeye alınır ve bir daha e-posta almaz. Geri dönen oranı yükselirse gönderim otomatik duraklar.",
+    a: "Her e-postanın altında, yanıtlayıp “İPTAL” yazmanın yeterli olduğu bir çıkış satırı bulunur (e-postada bağlantı yoktur); çıkanlar, geri dönenler ve şikâyet edenler kara listeye alınır ve bir daha e-posta almaz. Geri dönen oranı yükselirse gönderim otomatik duraklar.",
   },
   {
     q: "Kimler için uygun?",
