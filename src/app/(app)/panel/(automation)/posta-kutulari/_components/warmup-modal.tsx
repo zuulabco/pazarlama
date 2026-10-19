@@ -101,7 +101,7 @@ export function WarmupModal({ mailbox, onChange, onClose }: { mailbox: Mailbox; 
       </div>
 
       <p className="text-sm text-muted">
-        Yeni ya da az kullanılan bir adres birden çok e-posta yollarsa spam&apos;e düşer. Isındırma, havuzdaki diğer adreslerle kısa ve doğal yazışmalar yaparak adresinize güven kazandırır; sayı her gün yavaşça artar.
+        Yeni ya da az kullanılan bir adres birden çok e-posta yollarsa spam&apos;e düşer. Isındırma, havuzdaki diğer adreslerle kısa ve doğal yazışmalar yaparak adresinize güven kazandırır; adres başına günde 20 e-posta gider.
       </p>
 
       <section aria-label="Kademe" className="grid gap-2">

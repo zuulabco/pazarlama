@@ -52,18 +52,10 @@ export function warmupRamp(): { from: number; to: number | null; quota: number }
 export const daysSince = (startedAt: string | null, now = Date.now()) => (startedAt ? Math.max(Math.floor((now - Date.parse(startedAt)) / DAY), 0) : 0);
 
 /**
- * Bir adresin günde göndereceği ısınma e-postası: yavaş başlar, haftalar içinde artar.
- * Gün 0-2: 2 · 3-5: 4 · 6-9: 8 · 10-14: 12 · 15-21: 16 · sonra 20.
+ * Bir adresin günde göndereceği ısınma e-postası: ilk günden itibaren günde 20.
+ * Isınma trafiği havuzdaki adresler arasında karşılıklıdır (soğuk e-posta değil); 20/gün Gmail/Workspace günlük sınırlarının çok altındadır.
  */
-export function warmupQuota(days: number): number {
-  const steps: [number, number][] = [
-    [2, 2],
-    [5, 4],
-    [9, 8],
-    [14, 12],
-    [21, 16],
-  ];
-  for (const [until, n] of steps) if (days <= until) return n;
+export function warmupQuota(_days: number): number {
   return 20;
 }
 

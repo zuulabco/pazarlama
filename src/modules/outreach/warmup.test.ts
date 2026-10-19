@@ -3,8 +3,8 @@ import { effectiveDailyLimit, summarize, warmupDue, warmupQuota, warmupRamp, war
 import { newWarmupToken, warmupMessage, warmupReply } from "./warmup-bank";
 
 describe("ısındırma kotası", () => {
-  it("yavaş başlar ve haftalar içinde artar", () => {
-    expect([0, 2, 3, 5, 6, 9, 10, 14, 15, 21, 22, 60].map(warmupQuota)).toEqual([2, 2, 4, 4, 8, 8, 12, 12, 16, 16, 20, 20]);
+  it("ilk günden itibaren günde 20", () => {
+    expect([0, 2, 3, 10, 22, 60].map(warmupQuota)).toEqual([20, 20, 20, 20, 20, 20]);
   });
 });
 
@@ -44,7 +44,7 @@ describe("ısınma skoru", () => {
       "2026-10-01T00:00:00Z",
       now,
     );
-    expect(s).toMatchObject({ days: 9, quota: 8, sentToday: 1, sent14d: 3, inbox: 2, spam: 1, replied: 1, score: null });
+    expect(s).toMatchObject({ days: 9, quota: 20, sentToday: 1, sent14d: 3, inbox: 2, spam: 1, replied: 1, score: null });
   });
 });
 
@@ -84,9 +84,7 @@ describe("ısındırma takvimi", () => {
     expect(warmupDue({ quota: 20, sentToday: 0, now: at(20, 25) })).toBe(true);
     expect(warmupDue({ quota: 20, sentToday: 19, now: at(20, 25) })).toBe(true);
   });
-  it("kademe tablosu 1. günden başlar ve sonsuza uzanır", () => {
-    const r = warmupRamp();
-    expect(r[0]).toEqual({ from: 1, to: 3, quota: 2 });
-    expect(r[r.length - 1]).toEqual({ from: 23, to: null, quota: 20 });
+  it("kademe tablosu tek satırdır: 1. günden sonsuza 20", () => {
+    expect(warmupRamp()).toEqual([{ from: 1, to: null, quota: 20 }]);
   });
 });
