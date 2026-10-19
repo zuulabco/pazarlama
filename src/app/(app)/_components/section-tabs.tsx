@@ -11,7 +11,7 @@ import { toggleSection, useSectionCollapsed } from "./section-state";
  */
 export function SectionTabs({ title, tabs = [] }: { title: string; tabs?: readonly { href: string; label: string; active?: boolean }[] }) {
   const path = usePathname();
-  const inSection = sectionOf(path) !== null;
+  const inSection = sectionOf(path)?.sidebar === true;
   const collapsed = useSectionCollapsed();
   return (
     <header className="sticky top-0 z-20 -mx-4 mb-5 flex h-12 items-center gap-6 border-b border-line bg-paper/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 md:-ml-6 md:pl-6">

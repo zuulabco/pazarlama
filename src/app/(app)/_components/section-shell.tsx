@@ -16,7 +16,7 @@ export function SectionShell({ children }: { children: ReactNode }) {
   const section = sectionOf(path);
   const collapsed = useSectionCollapsed();
 
-  if (!section) return children;
+  if (!section?.sidebar) return children;
 
   return (
     <div className="md:flex">

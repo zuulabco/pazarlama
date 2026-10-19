@@ -3,7 +3,7 @@ import { BoltIcon, BookmarkIcon, ChartIcon, InboxIcon, PenIcon, SearchIcon, Send
 type Icon = typeof SearchIcon;
 
 export type SectionLink = { label: string; href: string; icon: Icon; prefixes: readonly string[] };
-export type Section = { key: "bul" | "ulas"; label: string; hint: string; icon: Icon; href: string; links: readonly SectionLink[] };
+export type Section = { key: "bul" | "ulas"; label: string; hint: string; icon: Icon; href: string; links: readonly SectionLink[]; sidebar: boolean };
 
 /**
  * İki ana iş akışı bölümü. Sol çubukta her biri tek simgedir; açılınca kendi ikinci sol çubuğunu (alt sayfalar) gösterir.
@@ -16,6 +16,8 @@ export const sections: readonly Section[] = [
     hint: "Potansiyel müşterileri bulun ve kaydedin",
     icon: SearchIcon,
     href: "/panel/kisi-bul",
+    // Alt sayfalar sayfanın üst çubuğundaki sekmelerde (FindBar); ikinci sol çubuk içeriği daraltıyordu.
+    sidebar: false,
     links: [
       { label: "Müşteri bul", href: "/panel/kisi-bul", icon: SearchIcon, prefixes: ["/panel/kisi-bul"] },
       { label: "Kayıtlı kişiler", href: "/panel/kisiler", icon: BookmarkIcon, prefixes: ["/panel/kisiler"] },
@@ -27,6 +29,7 @@ export const sections: readonly Section[] = [
     hint: "Onlara ulaşın ve sonuçları izleyin",
     icon: SendIcon,
     href: "/panel/otomasyon",
+    sidebar: true,
     links: [
       { label: "Otomasyon", href: "/panel/otomasyon", icon: BoltIcon, prefixes: ["/panel/otomasyon"] },
       { label: "Gelen kutusu", href: "/panel/gelen-kutusu", icon: InboxIcon, prefixes: ["/panel/gelen-kutusu"] },
